@@ -27,7 +27,7 @@ namespace hsm {
         StateIdx m_currentState;
 
         public:
-            Sm(TransitionTable transitionTable, InitialState inititalState) : m_transitionTable(transitionTable), m_currentState(getIdx(makeIndexMap(states()), inititalState))
+            Sm(TransitionTable transitionTable, InitialState inititalState) : m_transitionTable(transitionTable), m_currentState(getStateIdx(inititalState))
             {
                 makeDispatchTable();
             }
@@ -35,12 +35,12 @@ namespace hsm {
             template <class T>
             auto process_event(T event)
             {
-                m_currentState = m_dispatchTable[m_currentState][getIdx(makeIndexMap(events()), event)];
+                m_currentState = m_dispatchTable[m_currentState].at(getEventIdx(event));
             }
 
             template <class T>
             auto is(T state) -> bool {
-                return m_currentState == getIdx(makeIndexMap(states()), state);
+                return m_currentState == getStateIdx(state);
             };
 
         private:
@@ -70,12 +70,22 @@ namespace hsm {
                 auto eventsMap = makeIndexMap(events());
 
                 for_each(m_transitionTable, [&](auto row){
-                    auto from = getIdx(statesMap, front(row));
-                    auto to = getIdx(statesMap, back(row));
-                    auto with = getIdx(eventsMap, at_c<1>(row));
+                    auto from = getStateIdx(front(row));
+                    auto to = getStateIdx(back(row));
+                    auto with = getEventIdx(at_c<1>(row));
 
                     m_dispatchTable[from][with] = to;
                 });
+            }
+
+            template <class T>
+            auto getStateIdx(T state){
+                return getIdx(makeIndexMap(states()), state);
+            }
+
+            template <class T>
+            auto getEventIdx(T event){
+                return getIdx(makeIndexMap(events()), event);
             }
 
             template <class T, class B>
