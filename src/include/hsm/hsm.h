@@ -12,21 +12,34 @@ namespace hsm {
     using Idx = std::uint16_t;   
     using StateIdx = Idx;
     using EventIdx = Idx;
-            
-    const auto states_impl = [](auto transitionTable){
-        return to<tuple_tag>(fold_left(transitionTable,  make_set(), [](auto states, auto row){
-            return insert(insert(states, front(row)), back(row));
-        }));
+
+    auto has_transition_table = is_valid([](auto&& state) -> decltype(state.make_transition_table()) { });
+
+    template<class T>
+    constexpr auto subStates(T&& state);
+
+    const auto states_impl = [](auto state){
+        return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto states, auto row){
+            return concat(append(append(states, front(row)), back(row)), subStates(back(row)));
+        })));
     };
+
+    template<class T>
+    constexpr auto subStates(T&& state){
+        return if_(has_transition_table(state),
+            [](auto& x){ return states_impl(x.make_transition_table());},
+            [](auto&){ return make_tuple();})(state);
+    };        
 
     template <class State>    
     class Sm
     {
-        std::array<std::map<EventIdx, StateIdx>, length(states_impl(State{}.make_transition_table()))> m_dispatchTable;
+        std::array<std::map<EventIdx, StateIdx>, length(states_impl(State{}))> m_dispatchTable;
         StateIdx m_currentState;
+        StateIdx m_currentParentState;
 
         public:
-            Sm() :  m_currentState(getStateIdx(inititalState()))
+            Sm() : m_currentState(getStateIdx(inititalState())), m_currentParentState(getStateIdx(rootState()))
             {
                 makeDispatchTable();
             }
@@ -42,6 +55,11 @@ namespace hsm {
                 return m_currentState == getStateIdx(state);
             };
 
+            template <class T, class B>
+            auto is(T parentState, B state) -> bool {
+                return m_currentParentState == getStateIdx(parentState) && m_currentState == getStateIdx(state);
+            };
+
         private:
             auto transitionTable(){
                 return State{}.make_transition_table();    
@@ -51,8 +69,12 @@ namespace hsm {
                 return State{}.initial_state();    
             }
 
+            auto rootState(){
+                return type<State>{};    
+            }
+
             constexpr auto states(){
-                return states_impl(transitionTable());
+                return append(states_impl(State{}), type<State>{});
             }
 
             auto events(){
