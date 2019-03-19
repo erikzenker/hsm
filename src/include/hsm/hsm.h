@@ -19,15 +19,14 @@ namespace hsm {
         }));
     };
 
-    template <class TransitionTable, class InitialState>    
+    template <class State>    
     class Sm
     {
-        TransitionTable m_transitionTable;
-        std::array<std::map<EventIdx, StateIdx>, length(states_impl(TransitionTable{}))> m_dispatchTable;
+        std::array<std::map<EventIdx, StateIdx>, length(states_impl(State{}.make_transition_table()))> m_dispatchTable;
         StateIdx m_currentState;
 
         public:
-            Sm(TransitionTable transitionTable, InitialState inititalState) : m_transitionTable(transitionTable), m_currentState(getStateIdx(inititalState))
+            Sm() :  m_currentState(getStateIdx(inititalState()))
             {
                 makeDispatchTable();
             }
@@ -44,12 +43,20 @@ namespace hsm {
             };
 
         private:
+            auto transitionTable(){
+                return State{}.make_transition_table();    
+            }
+
+            auto inititalState(){
+                return State{}.initial_state();    
+            }
+
             constexpr auto states(){
-                return states_impl(m_transitionTable);
+                return states_impl(transitionTable());
             }
 
             auto events(){
-                return to<tuple_tag>(fold_left(m_transitionTable,  make_set(), [](auto events, auto row){
+                return to<tuple_tag>(fold_left(transitionTable(),  make_set(), [](auto events, auto row){
                     return insert(events, at_c<1>(row));
                 }));
             }
@@ -69,7 +76,7 @@ namespace hsm {
                 auto statesMap = makeIndexMap(states());
                 auto eventsMap = makeIndexMap(events());
 
-                for_each(m_transitionTable, [&](auto row){
+                for_each(transitionTable(), [&](auto row){
                     auto from = getStateIdx(front(row));
                     auto to = getStateIdx(back(row));
                     auto with = getEventIdx(at_c<1>(row));

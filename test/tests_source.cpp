@@ -22,10 +22,8 @@ struct a1{};
 using namespace ::testing;
 using namespace boost::hana;
 
-class HsmTests : public Test {
-public:
-
-    auto make_transition_table(){
+struct mainState {
+    constexpr auto make_transition_table(){
         return boost::hana::make_tuple(
               boost::hana::make_tuple(type<S1>{}, type<e1>{}, type<g1>{}, type<a1>{}, type<S2>{}) 
             , boost::hana::make_tuple(type<S1>{}, type<e2>{}, type<g1>{}, type<a1>{}, type<S3>{}) 
@@ -35,18 +33,24 @@ public:
         );
     }
 
-    auto initialState(){
-        return  type<S1>{};
-    }    
+    constexpr auto initial_state(){
+        return type<S1>{};
+    }  
+};
+
+class HsmTests : public Test {
+public:
+
+  
 };
 
 TEST_F(HsmTests, should_start_in_initial_state){
-    hsm::Sm sm(make_transition_table(), initialState());
-    ASSERT_TRUE(sm.is(initialState()));
+    hsm::Sm<mainState> sm;
+    ASSERT_TRUE(sm.is(type<S1>{}));
 }
 
 TEST_F(HsmTests, should_process_event){
-    hsm::Sm sm(make_transition_table(), initialState());
+    hsm::Sm<mainState> sm;   
     ASSERT_TRUE(sm.is(type<S1>{}));
 
     sm.process_event(type<e1>{});
@@ -54,12 +58,12 @@ TEST_F(HsmTests, should_process_event){
 }
 
 TEST_F(HsmTests, should_throw_on_unexpected_event){
-    hsm::Sm sm(make_transition_table(), initialState());
+    hsm::Sm<mainState> sm;     
     EXPECT_THROW(sm.process_event(type<e3>{}), std::exception);
 }
 
 TEST_F(HsmTests, should_process_alot_event){
-    hsm::Sm sm(make_transition_table(), initialState());
+    hsm::Sm<mainState> sm;            
     ASSERT_TRUE(sm.is(type<S1>{}));
 
     for(int i = 0; i < 1000000; i++){
