@@ -17,22 +17,36 @@ namespace hsm {
     auto has_transition_table = is_valid([](auto&& state) -> decltype(state.make_transition_table()) { });
 
     template<class T>
-    constexpr auto subStates(T&& state);
+    constexpr auto collect_sub_states(T&& state);
 
-    class S1{};
+    template<class T>
+    constexpr auto collect_sub_events(T&& state);
 
     const auto collect_states = [](auto state){
         return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto const& states, auto row){
-            return concat(append(append(states, typeid_(front(row))), typeid_(back(row))), subStates(back(row)));    
+            return concat(append(append(states, typeid_(front(row))), typeid_(back(row))), collect_sub_states(back(row)));    
         })));
     };
 
     template<class T>
-    constexpr auto subStates(T&& state){
+    constexpr auto collect_sub_states(T&& state){
         return if_(has_transition_table(state),
             [](auto& stateWithTransitionTable){ return collect_states(stateWithTransitionTable);},
             [](auto&){ return make_tuple();})(state);
     };        
+
+    const auto collect_events = [](auto state){
+        return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto events, auto row){
+              return concat(append(events, typeid_(at_c<1>(row))), collect_sub_events(back(row)));
+        })));
+    };
+
+    template<class T>
+    constexpr auto collect_sub_events(T&& state){
+        return if_(has_transition_table(state),
+            [](auto& stateWithTransitionTable){ return collect_events(stateWithTransitionTable);},
+            [](auto&){ return make_tuple();})(state);
+    };  
 
     const auto collect_parent_states2 = [](auto state){
         return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto const& states, auto row){
@@ -78,30 +92,24 @@ namespace hsm {
             };
 
         private:
-            auto transitionTable(){
-                return State{}.make_transition_table();    
-            }
-
-            auto inititalState(){
-                return State{}.initial_state();    
-            }
-
             auto rootState(){
                 return State{};    
             }
 
+            auto inititalState(){
+                return rootState().initial_state();    
+            }
+
             auto parentStates(){
-                return collect_parent_states(State{});
+                return collect_parent_states(rootState());
             }
 
             constexpr auto states(){
-                return append(collect_states(State{}), type<State>{});
+                return append(collect_states(rootState()), type<State>{});
             }
 
             auto events(){
-                return to<tuple_tag>(fold_left(transitionTable(),  make_set(), [](auto events, auto row){
-                    return insert(events, typeid_(at_c<1>(row)));
-                }));
+                return collect_events(rootState());
             }
 
             template <class T>
