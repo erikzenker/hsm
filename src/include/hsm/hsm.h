@@ -18,23 +18,25 @@ namespace hsm {
     template<class T>
     constexpr auto subStates(T&& state);
 
-    const auto states_impl = [](auto state){
-        return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto states, auto row){
-            return concat(append(append(states, front(row)), back(row)), subStates(back(row)));
+    class S1{};
+
+    const auto collect_states = [](auto state){
+        return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto const& states, auto row){
+            return concat(append(append(states, typeid_(front(row))), typeid_(back(row))), subStates(back(row)));    
         })));
     };
 
     template<class T>
     constexpr auto subStates(T&& state){
         return if_(has_transition_table(state),
-            [](auto& x){ return states_impl(x.make_transition_table());},
+            [](auto& stateWithTransitionTable){ return collect_states(stateWithTransitionTable);},
             [](auto&){ return make_tuple();})(state);
     };        
 
     template <class State>    
     class Sm
     {
-        std::array<std::map<EventIdx, StateIdx>, length(states_impl(State{}))> m_dispatchTable;
+        std::array<std::map<EventIdx, StateIdx>, length(collect_states(State{}))> m_dispatchTable;
         StateIdx m_currentState;
         StateIdx m_currentParentState;
 
@@ -74,12 +76,12 @@ namespace hsm {
             }
 
             constexpr auto states(){
-                return append(states_impl(State{}), type<State>{});
+                return append(collect_states(State{}), type<State>{});
             }
 
             auto events(){
                 return to<tuple_tag>(fold_left(transitionTable(),  make_set(), [](auto events, auto row){
-                    return insert(events, at_c<1>(row));
+                    return insert(events, typeid_(at_c<1>(row)));
                 }));
             }
 
@@ -109,12 +111,12 @@ namespace hsm {
 
             template <class T>
             auto getStateIdx(T state){
-                return getIdx(makeIndexMap(states()), state);
+                return getIdx(makeIndexMap(states()), typeid_(state));
             }
 
             template <class T>
             auto getEventIdx(T event){
-                return getIdx(makeIndexMap(events()), event);
+                return getIdx(makeIndexMap(events()), typeid_(event));
             }
 
             template <class T, class B>
