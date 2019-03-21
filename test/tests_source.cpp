@@ -24,10 +24,24 @@ struct a1{};
 using namespace ::testing;
 using namespace boost::hana;
 
+struct SubSubState {
+    constexpr auto make_transition_table(){
+        return boost::hana::make_tuple(
+              boost::hana::make_tuple(S1{}, e1{}, type<g1>{}, type<a1>{}, S2{}) 
+        );
+    }
+
+    constexpr auto initial_state(){
+        return S1{};
+    }  
+};
+
+
 struct SubState {
     constexpr auto make_transition_table(){
         return boost::hana::make_tuple(
-              boost::hana::make_tuple(S4{}, e1{}, type<g1>{}, type<a1>{}, S2{}) 
+                boost::hana::make_tuple(S4{}, e1{}, type<g1>{}, type<a1>{}, S2{}) 
+              , boost::hana::make_tuple(S2{}, e1{}, type<g1>{}, type<a1>{}, SubSubState{}) 
         );
     }
 
@@ -84,7 +98,16 @@ TEST_F(HsmTests, should_transit_into_SubState){
     hsm::Sm<MainState> sm;     
     sm.process_event(e4{});
 
-    ASSERT_TRUE(sm.is(type<SubState>{}, S4{}));    
+    ASSERT_TRUE(sm.is(SubState{}, S4{}));    
+}
+
+TEST_F(HsmTests, should_transit_into_SubSubState){
+    hsm::Sm<MainState> sm;     
+    sm.process_event(e4{});
+    sm.process_event(e1{});
+    sm.process_event(e1{});
+
+    ASSERT_TRUE(sm.is(SubSubState{}, S1{}));    
 }
 
 TEST_F(HsmTests, should_process_alot_event){
