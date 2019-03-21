@@ -64,7 +64,7 @@ TEST_F(HsmTests, should_start_in_initial_state){
 
 TEST_F(HsmTests, should_start_in_root_state){
     hsm::Sm<MainState> sm;
-    ASSERT_TRUE(sm.is(type<MainState>{}, S1{}));
+    ASSERT_TRUE(sm.is(MainState{}, S1{}));
 }
 
 TEST_F(HsmTests, should_process_event){

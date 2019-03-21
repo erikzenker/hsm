@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <map>
 #include <array>
+#include <iostream>
 
 namespace hsm {
 
@@ -33,23 +34,37 @@ namespace hsm {
             [](auto&){ return make_tuple();})(state);
     };        
 
+    const auto collect_parent_states2 = [](auto state){
+        return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto const& states, auto row){
+            auto state = back(row);
+            auto subParentStates = if_(has_transition_table(state),
+                [&states](auto& stateWithTransitionTable){ return append(collect_parent_states2(stateWithTransitionTable), typeid_(stateWithTransitionTable));},
+                [&states](auto&){ return states;})(state);
+            return concat(states, subParentStates);
+        })));
+    };
+
+    const auto collect_parent_states = [](auto state){
+        return append(collect_parent_states2(state), typeid_(state));
+    };
+
     template <class State>    
     class Sm
     {
-        std::array<std::map<EventIdx, StateIdx>, length(collect_states(State{}))> m_dispatchTable;
+        std::array<std::map<StateIdx, std::map<EventIdx, std::pair<StateIdx, StateIdx>>>, length(collect_parent_states(State{}))> m_dispatchTable;
         StateIdx m_currentState;
         StateIdx m_currentParentState;
 
         public:
-            Sm() : m_currentState(getStateIdx(inititalState())), m_currentParentState(getStateIdx(rootState()))
+            Sm() : m_currentState(getStateIdx(inititalState())), m_currentParentState(getParentStateIdx(rootState()))
             {
-                makeDispatchTable();
+                makeDispatchTable(rootState());
             }
 
             template <class T>
             auto process_event(T event)
             {
-                m_currentState = m_dispatchTable[m_currentState].at(getEventIdx(event));
+                std::tie(m_currentParentState, m_currentState) = m_dispatchTable[m_currentParentState].at(m_currentState).at(getEventIdx(event));
             }
 
             template <class T>
@@ -59,7 +74,7 @@ namespace hsm {
 
             template <class T, class B>
             auto is(T parentState, B state) -> bool {
-                return m_currentParentState == getStateIdx(parentState) && m_currentState == getStateIdx(state);
+                return m_currentParentState == getParentStateIdx(parentState) && m_currentState == getStateIdx(state);
             };
 
         private:
@@ -72,7 +87,11 @@ namespace hsm {
             }
 
             auto rootState(){
-                return type<State>{};    
+                return State{};    
+            }
+
+            auto parentStates(){
+                return collect_parent_states(State{});
             }
 
             constexpr auto states(){
@@ -96,22 +115,43 @@ namespace hsm {
                 })));
             }
 
-            auto makeDispatchTable(){
+            template <class T>
+            auto makeDispatchTable(T state){
+                auto parentStatesMap = makeIndexMap(parentStates());
                 auto statesMap = makeIndexMap(states());
                 auto eventsMap = makeIndexMap(events());
 
-                for_each(transitionTable(), [&](auto row){
+                auto fromParent = getParentStateIdx(state);
+
+                for_each(state.make_transition_table(), [&](auto row){
                     auto from = getStateIdx(front(row));
-                    auto to = getStateIdx(back(row));
+
+                    auto to = if_(has_transition_table(back(row))
+                        ,[this](auto state){ return getStateIdx(state.initial_state()); }
+                        ,[this](auto state){ return getStateIdx(state);})(back(row));
+
+                    auto toParent = if_(has_transition_table(back(row))
+                        ,[this](auto state){ return getParentStateIdx(state);}
+                        ,[this, &state](auto){ return getParentStateIdx(state);})(back(row));
+
                     auto with = getEventIdx(at_c<1>(row));
 
-                    m_dispatchTable[from][with] = to;
+                    m_dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
+
+                    if_(has_transition_table(back(row))
+                        ,[this](auto state){ makeDispatchTable(state);}
+                        ,[](auto){})(back(row));
                 });
             }
 
             template <class T>
             auto getStateIdx(T state){
                 return getIdx(makeIndexMap(states()), typeid_(state));
+            }
+
+            template <class T>
+            auto getParentStateIdx(T parentState){
+                return getIdx(makeIndexMap(parentStates()), typeid_(parentState));
             }
 
             template <class T>
