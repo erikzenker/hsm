@@ -22,7 +22,7 @@ namespace hsm {
     template<class T>
     constexpr auto collect_sub_events(T&& state);
 
-    const auto collect_states = [](auto state){
+    const auto collect_states_recursive = [](auto state){
         return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto const& states, auto row){
             return concat(append(append(states, typeid_(front(row))), typeid_(back(row))), collect_sub_states(back(row)));    
         })));
@@ -31,11 +31,17 @@ namespace hsm {
     template<class T>
     constexpr auto collect_sub_states(T&& state){
         return if_(has_transition_table(state),
-            [](auto& stateWithTransitionTable){ return collect_states(stateWithTransitionTable);},
+            [](auto& stateWithTransitionTable){ return collect_states_recursive(stateWithTransitionTable);},
             [](auto&){ return make_tuple();})(state);
     };        
 
-    const auto collect_events = [](auto state){
+    const auto collect_states = [](auto state){
+        return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto const& states, auto row){
+            return append(append(states, typeid_(front(row))), typeid_(back(row)));    
+        })));
+    };    
+
+    const auto collect_event_recursive = [](auto state){
         return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto events, auto row){
               return concat(append(events, typeid_(at_c<1>(row))), collect_sub_events(back(row)));
         })));
@@ -44,9 +50,15 @@ namespace hsm {
     template<class T>
     constexpr auto collect_sub_events(T&& state){
         return if_(has_transition_table(state),
-            [](auto& stateWithTransitionTable){ return collect_events(stateWithTransitionTable);},
+            [](auto& stateWithTransitionTable){ return collect_event_recursive(stateWithTransitionTable);},
             [](auto&){ return make_tuple();})(state);
     };  
+
+    const auto collect_events = [](auto state){
+        return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto events, auto row){
+              return append(events, typeid_(at_c<1>(row)));
+        })));
+    };
 
     const auto collect_parent_states2 = [](auto state){
         return to<tuple_tag>(to<set_tag>(fold_left(state.make_transition_table(),  make_tuple(), [](auto const& states, auto row){
@@ -105,11 +117,11 @@ namespace hsm {
             }
 
             constexpr auto states(){
-                return append(collect_states(rootState()), type<State>{});
+                return append(collect_states_recursive(rootState()), type<State>{});
             }
 
             auto events(){
-                return collect_events(rootState());
+                return collect_event_recursive(rootState());
             }
 
             template <class T>
@@ -146,9 +158,25 @@ namespace hsm {
 
                     m_dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
 
+                    // Add dispatch table of sub states                    
                     if_(has_transition_table(back(row))
                         ,[this](auto state){ makeDispatchTable(state);}
                         ,[](auto){})(back(row));
+
+                    // Add dispatch table of sub states exits
+                    if_(has_transition_table(front(row))
+                        ,[this, with, toParent, to](auto parentState){ 
+                            auto states = collect_states(parentState);
+
+                            for_each(states, [this, parentState, with, toParent, to](auto state){
+                                auto fromParent = getParentStateIdx(parentState);
+                                auto from = getStateIdx(state);
+                                m_dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
+                            });
+                            
+                            makeDispatchTable(parentState);}
+                        ,[](auto){})(front(row));
+                    
                 });
             }
 
