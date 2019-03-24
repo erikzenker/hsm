@@ -1,0 +1,12 @@
+BasedOnStyle: WebKit
+Language: Cpp
+NamespaceIndentation: None
+DerivePointerAlignment: false
+PointerAlignment: Left
+ColumnLimit: 100
+Standard: Cpp11
+AccessModifierOffset: -2
+AllowShortFunctionsOnASingleLine: false
+BinPackArguments: false
+BinPackParameters: false
+AlignAfterOpenBracket: AlwaysBreak

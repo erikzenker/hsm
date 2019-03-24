@@ -1,5 +1,7 @@
 #pragma once
 
+#include "details/collect_events.h"
+#include "details/collect_parent_states.h"
 #include "details/collect_states.h"
 #include "details/traits.h"
 
@@ -20,48 +22,6 @@ namespace hsm {
     using StateIdx = Idx;
     using EventIdx = Idx;
 
-    // const auto from = [](auto&& row) -> auto& { return bh::front(row);};
-    // const auto to = [](auto&& row) -> auto& { return bh::back(row);};
-    // const auto with = [](auto&& row) -> auto& { return bh::at_c<1>(row);};
-
-
-    
-
-    template<class T>
-    constexpr auto collect_sub_events(T&& state);
-
-    const auto collect_event_recursive = [](auto state){
-        return bh::to<bh::tuple_tag>(bh::to<bh::set_tag>(bh::fold_left(state.make_transition_table(),  bh::make_tuple(), [](auto events, auto row){
-              return bh::concat(bh::append(events, bh::typeid_(bh::at_c<1>(row))), collect_sub_events(bh::back(row)));
-        })));
-    };
-
-    template<class T>
-    constexpr auto collect_sub_events(T&& state){
-        return bh::if_(has_transition_table(state),
-            [](auto& stateWithTransitionTable){ return collect_event_recursive(stateWithTransitionTable);},
-            [](auto&){ return bh::make_tuple();})(state);
-    };  
-
-    const auto collect_events = [](auto state){
-        return bh::to<bh::tuple_tag>(bh::to<bh::set_tag>(bh::fold_left(state.make_transition_table(),  bh::make_tuple(), [](auto events, auto row){
-              return bh::append(events, bh::typeid_(bh::at_c<1>(row)));
-        })));
-    };
-
-    const auto collect_parent_states2 = [](auto state){
-        return bh::to<bh::tuple_tag>(bh::to<bh::set_tag>(bh::fold_left(state.make_transition_table(),  bh::make_tuple(), [](auto const& states, auto row){
-            auto subParentStates = bh::if_(has_transition_table(bh::back(row)),
-                [&states](auto& stateWithTransitionTable){ return bh::append(collect_parent_states2(stateWithTransitionTable), bh::typeid_(stateWithTransitionTable));},
-                [&states](auto&){ return states;})(bh::back(row));
-            return bh::concat(states, subParentStates);
-        })));
-    };
-
-    const auto collect_parent_states = [](auto state){
-        return bh::append(collect_parent_states2(state), bh::typeid_(state));
-    };
-
     template <class State>    
     class Sm
     {
@@ -72,7 +32,7 @@ namespace hsm {
         public:
             Sm() : m_currentState(getStateIdx(inititalState())), m_currentParentState(getParentStateIdx(rootState()))
             {
-                makeDispatchTable(rootState());
+                makeDispatchTable(rootState(), m_dispatchTable);
             }
 
             template <class T>
@@ -123,8 +83,8 @@ namespace hsm {
                 })));
             }
 
-            template <class T>
-            auto makeDispatchTable(T state){
+            template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
+            {
                 auto parentStatesMap = makeIndexMap(parentStates());
                 auto statesMap = makeIndexMap(states());
                 auto eventsMap = makeIndexMap(events());
@@ -146,24 +106,33 @@ namespace hsm {
 
                     m_dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
 
-                    // Add dispatch table of sub states                    
-                    bh::if_(has_transition_table(bh::back(row))
-                        ,[this](auto state){ makeDispatchTable(state);}
-                        ,[](auto){})(bh::back(row));
+                    // Add dispatch table of sub states
+                    bh::if_(
+                        has_transition_table(bh::back(row)),
+                        [this, &dispatchTable](auto state) {
+                            makeDispatchTable(state, dispatchTable);
+                        },
+                        [](auto) {})(bh::back(row));
 
                     // Add dispatch table of sub states exits
-                    bh::if_(has_transition_table(bh::front(row))
-                        ,[this, with, toParent, to](auto parentState){ 
+                    bh::if_(
+                        has_transition_table(bh::front(row)),
+                        [this, with, toParent, to, &dispatchTable](auto parentState) {
                             auto states = collect_states(parentState);
 
-                            bh::for_each(states, [this, parentState, with, toParent, to](auto state){
-                                auto fromParent = getParentStateIdx(parentState);
-                                auto from = getStateIdx(state);
-                                m_dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
-                            });
-                            
-                            makeDispatchTable(parentState);}
-                        ,[](auto){})(bh::front(row));
+                            bh::for_each(
+                                states,
+                                [this, parentState, with, toParent, to, &dispatchTable](
+                                    auto state) {
+                                    auto fromParent = getParentStateIdx(parentState);
+                                    auto from = getStateIdx(state);
+                                    m_dispatchTable[fromParent][from][with]
+                                        = std::make_pair(toParent, to);
+                                });
+
+                            makeDispatchTable(parentState, dispatchTable);
+                        },
+                        [](auto) {})(bh::front(row));
                     
                 });
             }
