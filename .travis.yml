@@ -1,0 +1,31 @@
+language: cpp
+dist: trusty
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:mhier/libboost-latest'
+      - ubuntu-toolchain-r-test
+    packages:
+      - cmake
+      - lcov
+      - g++-7
+      - boost1.67
+      - libgtest-dev
+compiler:
+  - gcc
+os:
+  - linux
+install:
+  - cd /usr/src/gtest
+  - sudo cmake CMakeLists.txt
+  - sudo make
+  - sudo cp *.a /usr/lib
+script:
+  - export CXX=g++-7
+  - export CC=gcc-7
+  - cd $TRAVIS_BUILD_DIR
+  - mkdir build && cd build
+  - mkdir install
+  - cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install
+  - cmake --build . --target install
+  - ctest -VV
