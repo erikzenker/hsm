@@ -3,6 +3,7 @@
 #include "details/collect_events.h"
 #include "details/collect_parent_states.h"
 #include "details/collect_states.h"
+#include "details/index_map.h"
 #include "details/traits.h"
 
 #include <boost/hana.hpp>
@@ -18,14 +19,17 @@ namespace hsm {
         using namespace boost::hana; 
     };
     
-    using Idx = std::uint16_t;   
-    using StateIdx = Idx;
-    using EventIdx = Idx;
-
     template <class State>    
     class Sm
     {
-        std::array<std::map<StateIdx, std::map<EventIdx, std::pair<StateIdx, StateIdx>>>, bh::length(collect_parent_states(State{}))> m_dispatchTable;
+        using Idx = std::uint16_t;
+        using StateIdx = Idx;
+        using EventIdx = Idx;
+        using DispatchTable = std::array<
+            std::map<StateIdx, std::map<EventIdx, std::pair<StateIdx, StateIdx>>>,
+            bh::length(collect_parent_states(State {}))>;
+
+        DispatchTable m_dispatchTable;
         StateIdx m_currentState;
         StateIdx m_currentParentState;
 
@@ -65,30 +69,15 @@ namespace hsm {
             }
 
             constexpr auto states(){
-                return bh::append(collect_states_recursive(rootState()), bh::type<State>{});
+                return collect_states_recursive(rootState());
             }
 
             auto events(){
                 return collect_event_recursive(rootState());
             }
 
-            template <class T>
-            auto makeIndexMap(T tuple){
-                return bh::to<bh::map_tag>(bh::second(bh::fold_left(tuple, bh::make_pair(bh::int_c<0>, bh::make_tuple()), [](auto acc, auto element){
-                    auto i = bh::first(acc);        
-                    auto tuple = bh::second(acc);        
-                    auto inc = bh::plus(i, bh::int_c<1>);
-
-                    return bh::make_pair(inc, bh::append(tuple, bh::make_pair(element, i)));
-                })));
-            }
-
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
             {
-                auto parentStatesMap = makeIndexMap(parentStates());
-                auto statesMap = makeIndexMap(states());
-                auto eventsMap = makeIndexMap(events());
-
                 auto fromParent = getParentStateIdx(state);
 
                 bh::for_each(state.make_transition_table(), [&](auto row){
@@ -139,17 +128,17 @@ namespace hsm {
 
             template <class T>
             auto getStateIdx(T state){
-                return getIdx(makeIndexMap(states()), bh::typeid_(state));
+                return getIdx(make_index_map(states()), bh::typeid_(state));
             }
 
             template <class T>
             auto getParentStateIdx(T parentState){
-                return getIdx(makeIndexMap(parentStates()), bh::typeid_(parentState));
+                return getIdx(make_index_map(parentStates()), bh::typeid_(parentState));
             }
 
             template <class T>
             auto getEventIdx(T event){
-                return getIdx(makeIndexMap(events()), bh::typeid_(event));
+                return getIdx(make_index_map(events()), bh::typeid_(event));
             }
 
             template <class T, class B>

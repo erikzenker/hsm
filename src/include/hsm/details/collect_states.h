@@ -13,10 +13,21 @@ namespace hsm {
     template<class T>
     constexpr auto collect_sub_states(T&& state);
 
-    const auto collect_states_recursive = [](auto state){
-        return bh::to<bh::tuple_tag>(bh::to<bh::set_tag>(bh::fold_left(state.make_transition_table(),  bh::make_tuple(), [](auto const& states, auto row){
-            return bh::concat(bh::append(bh::append(states, bh::typeid_(bh::front(row))), bh::typeid_(bh::back(row))), collect_sub_states(bh::back(row)));    
-        })));
+    const auto collect_states_recursive = [](auto state) {
+        auto states = bh::append(
+            bh::fold_left(
+                state.make_transition_table(),
+                bh::make_tuple(),
+                [](auto const& states, auto row) {
+                    return bh::concat(
+                        bh::append(
+                            bh::append(states, bh::typeid_(bh::front(row))),
+                            bh::typeid_(bh::back(row))),
+                        collect_sub_states(bh::back(row)));
+                }),
+            bh::typeid_(state));
+
+        return bh::to<bh::tuple_tag>(bh::to<bh::set_tag>(states));
     };
 
     template<class T>

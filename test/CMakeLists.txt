@@ -1,20 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(hsmTests)
+project(hsm)
 
-# dependencies
-enable_testing()
-find_package(GTest MODULE REQUIRED)
-if(NOT TARGET MyCompany::hsm)
-    find_package(hsm CONFIG REQUIRED)
-endif()
-
-# target defintion
-add_executable(hsmTests tests_source.cpp)
-target_link_libraries(hsmTests
-        PRIVATE
-          MyCompany::hsm
-          GTest::Main
-)
-add_test(NAME hsm.UnitTests
-        COMMAND hsmTests
-)
+add_subdirectory(unit)
+add_subdirectory(integration)
