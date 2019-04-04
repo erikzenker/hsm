@@ -107,7 +107,7 @@ namespace hsm {
                     bh::if_(
                         has_transition_table(bh::front(row)),
                         [this, with, toParent, to, &dispatchTable](auto parentState) {
-                            auto states = collect_states(parentState);
+                            auto states = collect_child_states(parentState);
 
                             bh::for_each(
                                 states,
