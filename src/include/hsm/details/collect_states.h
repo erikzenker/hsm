@@ -49,6 +49,6 @@ namespace hsm {
                     bh::append(states, bh::typeid_(bh::front(row))), bh::typeid_(bh::back(row)));
             });
 
-        return remove_duplicates(collect_child_states);
+        return remove_duplicates(collectedStates);
     };
 }
