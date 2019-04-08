@@ -9,12 +9,20 @@ if(NOT TARGET hsm::hsm)
 endif()
 
 # target defintion
-add_executable(hsmUnitTests main.cpp)
+add_executable(
+        hsmUnitTests 
+          main.cpp 
+          collect_states_tests.cpp 
+          collect_events_tests.cpp
+          index_map_tests.cpp)
+
+gtest_add_tests(
+        TARGET
+          hsmUnitTests
+        TEST_SUFFIX .noArgs
+        TEST_LIST   noArgsTests)
+
 target_link_libraries(hsmUnitTests
         PRIVATE
           hsm::hsm
-          GTest::Main
-)
-add_test(NAME hsm.UnitTests
-        COMMAND hsmUnitTests
-)
+          GTest::Main)

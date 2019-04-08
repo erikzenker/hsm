@@ -73,7 +73,7 @@ namespace hsm {
             }
 
             auto events(){
-                return collect_event_recursive(rootState());
+                return collect_events_recursive(rootState());
             }
 
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)

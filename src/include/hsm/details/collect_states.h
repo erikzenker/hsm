@@ -1,6 +1,7 @@
 #pragma once
 
 #include "traits.h"
+#include "utils.h"
 
 #include <boost/hana.hpp>
 
@@ -12,9 +13,6 @@ namespace hsm {
 
     template<class T>
     constexpr auto collect_sub_states(T&& state);
-
-    const auto remove_duplicates
-        = [](auto tuple) { return bh::to<bh::tuple_tag>(bh::to<bh::set_tag>(tuple)); };
 
     const auto collect_child_states_recursive = [](auto parentState) {
         auto collectedStates = bh::fold_left(
