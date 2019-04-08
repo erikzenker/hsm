@@ -14,19 +14,26 @@ namespace hsm {
     template<class T>
     constexpr auto collect_sub_states(T&& state);
 
-    const auto collect_child_states_recursive = [](auto parentState) {
-        auto collectedStates = bh::fold_left(
-            parentState.make_transition_table(), bh::make_tuple(), [](auto const& acc, auto row) {
-                return bh::concat(
-                    bh::append(
-                        bh::append(acc, bh::typeid_(bh::front(row))), bh::typeid_(bh::back(row))),
-                    collect_sub_states(bh::back(row)));
-            });
+    const auto collect_transition_states = [](auto&& transition) {
+        return bh::make_tuple(
+            bh::typeid_(bh::front(transition)), bh::typeid_(bh::back(transition)));
+    };
+
+    const auto collect_child_states_recursive = [](auto&& parentState) {
+        auto transitions = parentState.make_transition_table();
+
+        auto collect = [](auto const& states, auto&& transition) {
+            return bh::concat(
+                bh::concat(states, collect_transition_states(transition)),
+                collect_sub_states(bh::back(transition)));
+        };
+
+        auto collectedStates = bh::fold_left(transitions, bh::make_tuple(), collect);
 
         return remove_duplicates(collectedStates);
     };
 
-    const auto collect_states_recursive = [](auto parentState) {
+    const auto collect_states_recursive = [](auto&& parentState) {
         auto collectedStates
             = bh::append(collect_child_states_recursive(parentState), bh::typeid_(parentState));
 
@@ -40,12 +47,14 @@ namespace hsm {
             [](auto&){ return bh::make_tuple();})(state);
     };
 
-    const auto collect_child_states = [](auto state) {
-        auto collectedStates = bh::fold_left(
-            state.make_transition_table(), bh::make_tuple(), [](auto const& states, auto row) {
-                return bh::append(
-                    bh::append(states, bh::typeid_(bh::front(row))), bh::typeid_(bh::back(row)));
-            });
+    const auto collect_child_states = [](auto&& state) {
+        auto transitions = state.make_transition_table();
+
+        auto collect = [](auto const& states, auto&& transition) {
+            return bh::concat(states, collect_transition_states(transition));
+        };
+
+        auto collectedStates = bh::fold_left(transitions, bh::make_tuple(), collect);
 
         return remove_duplicates(collectedStates);
     };
