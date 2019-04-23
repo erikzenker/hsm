@@ -1,5 +1,6 @@
 #include "hsm/hsm.h"
 
+#include <boost/hana.hpp>
 #include <gtest/gtest.h>
 
 // States
@@ -25,12 +26,10 @@ struct e5 {
 };
 
 // Guards
-struct g1 {
-};
+const auto g1 = []() {};
 
 // Actions
-struct a1 {
-};
+const auto a1 = []() {};
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -38,8 +37,7 @@ using namespace boost::hana;
 struct SubSubState {
     constexpr auto make_transition_table()
     {
-        return boost::hana::make_tuple(
-            boost::hana::make_tuple(S1 {}, e1 {}, type<g1> {}, type<a1> {}, S2 {}));
+        return hsm::transition_table(hsm::transition(S1 {}, e1 {}, g1, a1, S2 {}));
     }
 
     constexpr auto initial_state()
@@ -51,11 +49,11 @@ struct SubSubState {
 struct SubState {
     constexpr auto make_transition_table()
     {
-        return boost::hana::make_tuple(
-            boost::hana::make_tuple(S4 {}, e1 {}, type<g1> {}, type<a1> {}, S2 {}),
-            boost::hana::make_tuple(S4 {}, e5 {}, type<g1> {}, type<a1> {}, S3 {}),
-            boost::hana::make_tuple(S2 {}, e1 {}, type<g1> {}, type<a1> {}, SubSubState {}),
-            boost::hana::make_tuple(SubSubState {}, e2 {}, type<g1> {}, type<a1> {}, S4 {}));
+        return hsm::transition_table(
+            hsm::transition(S4 {}, e1 {}, g1, a1, S2 {}),
+            hsm::transition(S4 {}, e5 {}, g1, a1, S3 {}),
+            hsm::transition(S2 {}, e1 {}, g1, a1, SubSubState {}),
+            hsm::transition(SubSubState {}, e2 {}, g1, a1, S4 {}));
     }
 
     constexpr auto initial_state()
@@ -67,14 +65,14 @@ struct SubState {
 struct MainState {
     constexpr auto make_transition_table()
     {
-        return boost::hana::make_tuple(
-            boost::hana::make_tuple(S1 {}, e1 {}, type<g1> {}, type<a1> {}, S2 {}),
-            boost::hana::make_tuple(S1 {}, e2 {}, type<g1> {}, type<a1> {}, S3 {}),
-            boost::hana::make_tuple(S1 {}, e4 {}, type<g1> {}, type<a1> {}, SubState {}),
-            boost::hana::make_tuple(S2 {}, e1 {}, type<g1> {}, type<a1> {}, S1 {}),
-            boost::hana::make_tuple(S2 {}, e2 {}, type<g1> {}, type<a1> {}, S1 {}),
-            boost::hana::make_tuple(S2 {}, e3 {}, type<g1> {}, type<a1> {}, S3 {}),
-            boost::hana::make_tuple(SubState {}, e2 {}, type<g1> {}, type<a1> {}, S1 {}));
+        return hsm::transition_table(
+            hsm::transition(S1 {}, e1 {}, g1, a1, S2 {}),
+            hsm::transition(S1 {}, e2 {}, g1, a1, S3 {}),
+            hsm::transition(S1 {}, e4 {}, g1, a1, SubState {}),
+            hsm::transition(S2 {}, e1 {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}, e2 {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}, e3 {}, g1, a1, S3 {}),
+            hsm::transition(SubState {}, e2 {}, g1, a1, S1 {}));
     }
 
     constexpr auto initial_state()
