@@ -53,7 +53,8 @@ struct SubState {
             hsm::transition(S4 {}, e1 {}, g1, a1, S2 {}),
             hsm::transition(S4 {}, e5 {}, g1, a1, S3 {}),
             hsm::transition(S2 {}, e1 {}, g1, a1, SubSubState {}),
-            hsm::transition(SubSubState {}, e2 {}, g1, a1, S4 {}));
+            hsm::transition(SubSubState {}, e2 {}, g1, a1, S4 {}),
+            hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, e5 {}, g1, a1, S4 {}));
     }
 
     constexpr auto initial_state()
@@ -158,6 +159,19 @@ TEST_F(HsmTests, should_exit_subsubstate_on_event_in_parentstate)
     ASSERT_TRUE(sm.is(SubSubState {}, S1 {}));
 
     sm.process_event(e2 {});
+    ASSERT_TRUE(sm.is(SubState {}, S4 {}));
+}
+
+TEST_F(HsmTests, should_exit_subsubstate_from_pseudo_exit)
+{
+    hsm::Sm<MainState> sm;
+    sm.process_event(e4 {});
+    sm.process_event(e1 {});
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(SubSubState {}, S1 {}));
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(SubSubState {}, S2 {}));
+    sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(SubState {}, S4 {}));
 }
 

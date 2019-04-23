@@ -34,6 +34,29 @@ namespace hsm {
         return boost::hana::make_tuple(args...);
     }
 
+    template <class ParentState, class State> class Exit {
+      public:
+        constexpr Exit(ParentState parentState, State state)
+            : parentState(parentState)
+            , state(state)
+        {
+        }
+
+        constexpr auto get_parent_state()
+        {
+            return parentState;
+        }
+
+        constexpr auto get_state()
+        {
+            return state;
+        }
+
+      private:
+        ParentState parentState;
+        State state;
+    };
+
     template <class State>    
     class Sm
     {
@@ -108,7 +131,16 @@ namespace hsm {
 
                     auto with = getEventIdx(bh::at_c<1>(row));
 
-                    m_dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
+                    // Add dispatch table entries of pseudo exits
+                    bh::if_(
+                        is_exit_state(bh::front(row)),
+                        [this, &fromParent, &from](auto exit) {
+                            fromParent = getParentStateIdx(exit.get_parent_state());
+                            from = getStateIdx(exit.get_state());
+                        },
+                        [&](auto) {})(bh::front(row));
+
+                    dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
 
                     // Add dispatch table of sub states
                     bh::if_(
@@ -130,7 +162,7 @@ namespace hsm {
                                     auto state) {
                                     auto fromParent = getParentStateIdx(parentState);
                                     auto from = getStateIdx(state);
-                                    m_dispatchTable[fromParent][from][with]
+                                    dispatchTable[fromParent][from][with]
                                         = std::make_pair(toParent, to);
                                 });
 

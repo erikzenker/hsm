@@ -14,7 +14,8 @@ add_executable(
           main.cpp 
           collect_states_tests.cpp 
           collect_events_tests.cpp
-          index_map_tests.cpp)
+          index_map_tests.cpp
+          traits_tests.cpp)
 
 gtest_add_tests(
         TARGET
