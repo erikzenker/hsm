@@ -137,6 +137,16 @@ namespace hsm {
 
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
             {
+                bh::if_(
+                    has_transition_table(state),
+                    [this, &dispatchTable](auto state, auto& dispatchTable) {
+                        makeDispatchTable2(state, dispatchTable);
+                    },
+                    [](auto, auto&) {})(state, dispatchTable);
+            }
+
+            template <class T, class B> auto makeDispatchTable2(T state, B& dispatchTable)
+            {
                 auto fromParent = getParentStateIdx(state);
 
                 bh::for_each(state.make_transition_table(), [&](auto row){
@@ -187,13 +197,7 @@ namespace hsm {
                             }
                         })(bh::front(row));
 
-                    // Add dispatch table of sub states
-                    bh::if_(
-                        has_transition_table(bh::back(row)),
-                        [this, &dispatchTable](auto state) {
-                            makeDispatchTable(state, dispatchTable);
-                        },
-                        [](auto) {})(bh::back(row));
+                    makeDispatchTable(bh::back(row), dispatchTable);
 
                     // Add dispatch table of sub states exits
                     bh::if_(
