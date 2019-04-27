@@ -152,28 +152,42 @@ namespace hsm {
 
                     auto with = getEventIdx(bh::at_c<1>(row));
 
-                    const auto is_none_event
-                        = [](auto event) { return bh::typeid_(event) == bh::typeid_(none {}); };
+                    const auto is_anonymous_transition = [](auto transition) {
+                        return bh::typeid_(bh::at_c<1>(transition)) == bh::typeid_(none {});
+                    };
 
                     // Add entries for anonymous transition table
-                    bh::if_(
-                        is_none_event(bh::at_c<1>(row)),
-                        [this, &fromParent, &from, &toParent, to]() {
-                            m_anonymousDispatchTable[fromParent][from]
-                                = std::make_pair(toParent, to);
-                        },
-                        []() {})();
+                    if (is_anonymous_transition(row)) {
+                        m_anonymousDispatchTable[fromParent][from] = std::make_pair(toParent, to);
+                    }
 
-                    // Add dispatch table entries of pseudo exits
+                    // Add dispatch table entries
                     bh::if_(
                         is_exit_state(bh::front(row)),
-                        [this, &fromParent, &from](auto exit) {
+                        [this,
+                         is_anonymous_transition,
+                         row,
+                         &dispatchTable,
+                         with,
+                         &fromParent,
+                         &from,
+                         toParent,
+                         to](auto exit) {
                             fromParent = getParentStateIdx(exit.get_parent_state());
                             from = getStateIdx(exit.get_state());
-                        },
-                        [](auto) {})(bh::front(row));
 
-                    dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
+                            if (is_anonymous_transition(row)) {
+                                //  ...anonymous pseudo exits
+                                m_anonymousDispatchTable[fromParent][from]
+                                    = std::make_pair(toParent, to);
+                            } else {
+                                dispatchTable[fromParent][from][with]
+                                    = std::make_pair(toParent, to);
+                            }
+                        },
+                        [&](auto) {
+                            dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
+                        })(bh::front(row));
 
                     // Add dispatch table of sub states
                     bh::if_(
