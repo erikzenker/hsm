@@ -70,6 +70,8 @@ struct MainState {
             hsm::transition(S1 {}, e1 {}, g1, a1, S2 {}),
             hsm::transition(S1 {}, e2 {}, g1, a1, S3 {}),
             hsm::transition(S1 {}, e4 {}, g1, a1, SubState {}),
+            hsm::transition(S3 {}, hsm::none {}, g1, a1, S1 {}),
+            hsm::transition(S1 {}, e5 {}, g1, a1, S3 {}),
             hsm::transition(S2 {}, e1 {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, e2 {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, e3 {}, g1, a1, S3 {}),
@@ -173,6 +175,13 @@ TEST_F(HsmTests, should_exit_subsubstate_from_pseudo_exit)
     ASSERT_TRUE(sm.is(SubSubState {}, S2 {}));
     sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(SubState {}, S4 {}));
+}
+
+TEST_F(HsmTests, should_transit_with_anonymous_transition)
+{
+    hsm::Sm<MainState> sm;
+    sm.process_event(e5 {});
+    ASSERT_TRUE(sm.is(S1 {}));
 }
 
 TEST_F(HsmTests, should_process_alot_event)
