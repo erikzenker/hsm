@@ -157,22 +157,11 @@ namespace hsm {
                     };
 
                     // Add entries for anonymous transition table
-                    if (is_anonymous_transition(row)) {
-                        m_anonymousDispatchTable[fromParent][from] = std::make_pair(toParent, to);
-                    }
 
                     // Add dispatch table entries
                     bh::if_(
                         is_exit_state(bh::front(row)),
-                        [this,
-                         is_anonymous_transition,
-                         row,
-                         &dispatchTable,
-                         with,
-                         &fromParent,
-                         &from,
-                         toParent,
-                         to](auto exit) {
+                        [&](auto exit) {
                             fromParent = getParentStateIdx(exit.get_parent_state());
                             from = getStateIdx(exit.get_state());
 
@@ -181,12 +170,21 @@ namespace hsm {
                                 m_anonymousDispatchTable[fromParent][from]
                                     = std::make_pair(toParent, to);
                             } else {
+                                // ...not anonymous pseudo exits
                                 dispatchTable[fromParent][from][with]
                                     = std::make_pair(toParent, to);
                             }
                         },
                         [&](auto) {
-                            dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
+                            if (is_anonymous_transition(row)) {
+                                //  ...anonymous transitions
+                                m_anonymousDispatchTable[fromParent][from]
+                                    = std::make_pair(toParent, to);
+                            } else {
+                                //  ...not anonymous transitions
+                                dispatchTable[fromParent][from][with]
+                                    = std::make_pair(toParent, to);
+                            }
                         })(bh::front(row));
 
                     // Add dispatch table of sub states
