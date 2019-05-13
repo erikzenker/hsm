@@ -29,7 +29,8 @@ struct e5 {
 const auto g1 = []() {};
 
 // Actions
-const auto a1 = []() {};
+bool a1Called = false;
+const auto a1 = [&a1Called]() { a1Called = true; };
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -180,6 +181,14 @@ TEST_F(HsmTests, should_transit_with_anonymous_transition)
     hsm::Sm<MainState> sm;
     sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(S1 {}));
+}
+
+TEST_F(HsmTests, should_call_action)
+{
+    hsm::Sm<MainState> sm;
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(S2 {}));
+    ASSERT_TRUE(a1Called);
 }
 
 TEST_F(HsmTests, should_process_alot_event)

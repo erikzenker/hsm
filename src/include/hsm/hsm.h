@@ -1,5 +1,6 @@
 #pragma once
 
+#include "details/collect_actions.h"
 #include "details/collect_events.h"
 #include "details/collect_parent_states.h"
 #include "details/collect_states.h"
@@ -66,11 +67,15 @@ namespace hsm {
         using Idx = std::uint16_t;
         using StateIdx = Idx;
         using EventIdx = Idx;
+        using ActionIdx = Idx;
+        using GuardIdx = Idx;
         using DispatchTable = std::array<
-            std::map<StateIdx, std::map<EventIdx, std::pair<StateIdx, StateIdx>>>,
+            std::map<
+                StateIdx,
+                std::map<EventIdx, std::tuple<StateIdx, StateIdx, GuardIdx, ActionIdx>>>,
             bh::length(collect_parent_states(State {}))>;
         using AnonymousDispatchTable = std::array<
-            std::map<StateIdx, std::pair<StateIdx, StateIdx>>,
+            std::map<StateIdx, std::tuple<StateIdx, StateIdx>>,
             bh::length(collect_parent_states(State {}))>;
 
         DispatchTable m_dispatchTable;
@@ -87,7 +92,13 @@ namespace hsm {
             template <class T>
             auto process_event(T event)
             {
-                std::tie(m_currentParentState, m_currentState) = m_dispatchTable[m_currentParentState].at(m_currentState).at(getEventIdx(event));
+                ActionIdx actionIdx;
+                std::tie(m_currentParentState, m_currentState, std::ignore, actionIdx)
+                    = m_dispatchTable[m_currentParentState]
+                          .at(m_currentState)
+                          .at(getEventIdx(event));
+
+                call_actions_recursive(rootState());
                 apply_anonymous_transitions();
             }
 
@@ -135,6 +146,11 @@ namespace hsm {
                 return collect_events_recursive(rootState());
             }
 
+            auto actions()
+            {
+                return collect_actions_recursive(rootState());
+            }
+
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
             {
                 bh::if_(
@@ -162,6 +178,9 @@ namespace hsm {
 
                     auto with = getEventIdx(bh::at_c<1>(row));
 
+                    auto action = getActionIdx(bh::at_c<3>(row));
+                    auto guard = 0;
+
                     const auto is_anonymous_transition = [](auto transition) {
                         return bh::typeid_(bh::at_c<1>(transition)) == bh::typeid_(none {});
                     };
@@ -178,22 +197,22 @@ namespace hsm {
                             if (is_anonymous_transition(row)) {
                                 //  ...anonymous pseudo exits
                                 m_anonymousDispatchTable[fromParent][from]
-                                    = std::make_pair(toParent, to);
+                                    = std::make_tuple(toParent, to);
                             } else {
                                 // ...not anonymous pseudo exits
                                 dispatchTable[fromParent][from][with]
-                                    = std::make_pair(toParent, to);
+                                    = std::make_tuple(toParent, to, guard, action);
                             }
                         },
                         [&](auto) {
                             if (is_anonymous_transition(row)) {
                                 //  ...anonymous transitions
                                 m_anonymousDispatchTable[fromParent][from]
-                                    = std::make_pair(toParent, to);
+                                    = std::make_tuple(toParent, to);
                             } else {
                                 //  ...not anonymous transitions
                                 dispatchTable[fromParent][from][with]
-                                    = std::make_pair(toParent, to);
+                                    = std::make_tuple(toParent, to, guard, action);
                             }
                         })(bh::front(row));
 
@@ -202,17 +221,24 @@ namespace hsm {
                     // Add dispatch table of sub states exits
                     bh::if_(
                         has_transition_table(bh::front(row)),
-                        [this, with, toParent, to, &dispatchTable](auto parentState) {
+                        [this, with, toParent, to, guard, action, &dispatchTable](
+                            auto parentState) {
                             auto states = collect_child_states(parentState);
 
                             bh::for_each(
                                 states,
-                                [this, parentState, with, toParent, to, &dispatchTable](
-                                    auto state) {
+                                [this,
+                                 parentState,
+                                 with,
+                                 toParent,
+                                 to,
+                                 guard,
+                                 action,
+                                 &dispatchTable](auto state) {
                                     auto fromParent = getParentStateIdx(parentState);
                                     auto from = getStateIdx(state);
                                     dispatchTable[fromParent][from][with]
-                                        = std::make_pair(toParent, to);
+                                        = std::make_tuple(toParent, to, guard, action);
                                 });
 
                             makeDispatchTable(parentState, dispatchTable);
@@ -235,6 +261,11 @@ namespace hsm {
             template <class T>
             auto getEventIdx(T event){
                 return getIdx(make_index_map(events()), bh::typeid_(event));
+            }
+
+            template <class T> auto getActionIdx(T action)
+            {
+                return getIdx(make_index_map(actions()), bh::typeid_(action));
             }
 
             template <class T, class B>
