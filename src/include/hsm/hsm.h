@@ -6,6 +6,7 @@
 #include "details/collect_states.h"
 #include "details/index_map.h"
 #include "details/traits.h"
+#include "details/call.h"
 
 #include <boost/hana.hpp>
 
@@ -35,8 +36,15 @@ namespace hsm {
         return boost::hana::make_tuple(args...);
     }
 
-    struct none {
+    template <class TEvent>    
+    struct event {
+        auto getEvent() const {return TEvent{};};
     };
+
+    struct noneEvent {
+    };
+
+    using none = event<noneEvent>;
 
     template <class ParentState, class State> class Exit {
       public:
@@ -98,7 +106,8 @@ namespace hsm {
                           .at(m_currentState)
                           .at(getEventIdx(event));
 
-                call_actions_recursive(rootState());
+                //call(actionIdx, actions, event);
+
                 apply_anonymous_transitions();
             }
 
@@ -148,14 +157,14 @@ namespace hsm {
 
             auto actions()
             {
-                return collect_actions_recursive(rootState());
+                return collect_action_typeids_recursive(rootState());
             }
 
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
             {
                 bh::if_(
                     has_transition_table(state),
-                    [this, &dispatchTable](auto state, auto& dispatchTable) {
+                    [this](auto state, auto& dispatchTable) {
                         makeDispatchTable2(state, dispatchTable);
                     },
                     [](auto, auto&) {})(state, dispatchTable);
@@ -260,7 +269,11 @@ namespace hsm {
 
             template <class T>
             auto getEventIdx(T event){
-                return getIdx(make_index_map(events()), bh::typeid_(event));
+                auto then = [](auto event){return bh::typeid_(event.getEvent());};
+                auto otherwise = [](auto event){return bh::typeid_(event);};
+                auto eventId = bh::if_(is_event(event), then, otherwise)(event);
+
+                return getIdx(make_index_map(events()), eventId);
             }
 
             template <class T> auto getActionIdx(T action)

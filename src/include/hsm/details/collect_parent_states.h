@@ -10,7 +10,11 @@ namespace bh {
 using namespace boost::hana;
 };
 
-const auto collect_parent_states2 = [](auto state) {
+template <class State>
+constexpr auto collect_parent_states2(State&& state);
+
+template <class State>
+constexpr auto collect_parent_states2(State&& state) {
     return bh::to<bh::tuple_tag>(bh::to<bh::set_tag>(bh::fold_left(
         state.make_transition_table(), bh::make_tuple(), [](auto const& states, auto row) {
             auto subParentStates = bh::if_(

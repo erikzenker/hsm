@@ -14,7 +14,6 @@ class S1 {
 class S2 {
 };
 
-/// index_map.h
 TEST_F(IndexMapTests, should_make_index_map)
 {
     auto T1 = boost::hana::typeid_(S1 {});

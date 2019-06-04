@@ -29,8 +29,7 @@ struct e5 {
 const auto g1 = []() {};
 
 // Actions
-bool a1Called = false;
-const auto a1 = [&a1Called]() { a1Called = true; };
+const auto a1 = []() {};
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -38,7 +37,10 @@ using namespace boost::hana;
 struct SubSubState {
     constexpr auto make_transition_table()
     {
-        return hsm::transition_table(hsm::transition(S1 {}, e1 {}, g1, a1, S2 {}));
+        // clang-format off        
+        return hsm::transition_table(
+            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}));
+        // clang-format on
     }
 
     constexpr auto initial_state()
@@ -50,12 +52,14 @@ struct SubSubState {
 struct SubState {
     constexpr auto make_transition_table()
     {
+        // clang-format off        
         return hsm::transition_table(
-            hsm::transition(S4 {}, e1 {}, g1, a1, S2 {}),
-            hsm::transition(S4 {}, e5 {}, g1, a1, S3 {}),
-            hsm::transition(S2 {}, e1 {}, g1, a1, SubSubState {}),
-            hsm::transition(SubSubState {}, e2 {}, g1, a1, S4 {}),
-            hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, hsm::none {}, g1, a1, S4 {}));
+            hsm::transition(S4 {}                              , hsm::event<e1> {}, g1, a1, S2 {}),
+            hsm::transition(S4 {}                              , hsm::event<e5> {}, g1, a1, S3 {}),
+            hsm::transition(S2 {}                              , hsm::event<e1> {}, g1, a1, SubSubState {}),
+            hsm::transition(SubSubState {}                     , hsm::event<e2> {}, g1, a1, S4 {}),
+            hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, hsm::none {}     , g1, a1, S4 {}));
+        // clang-format on
     }
 
     constexpr auto initial_state()
@@ -67,16 +71,19 @@ struct SubState {
 struct MainState {
     constexpr auto make_transition_table()
     {
+        // clang-format off    
         return hsm::transition_table(
-            hsm::transition(S1 {}, e1 {}, g1, a1, S2 {}),
-            hsm::transition(S1 {}, e2 {}, g1, a1, S3 {}),
-            hsm::transition(S1 {}, e4 {}, g1, a1, SubState {}),
-            hsm::transition(S3 {}, hsm::none {}, g1, a1, S1 {}),
-            hsm::transition(S1 {}, e5 {}, g1, a1, S3 {}),
-            hsm::transition(S2 {}, e1 {}, g1, a1, S1 {}),
-            hsm::transition(S2 {}, e2 {}, g1, a1, S1 {}),
-            hsm::transition(S2 {}, e3 {}, g1, a1, S3 {}),
-            hsm::transition(SubState {}, e2 {}, g1, a1, S1 {}));
+            //              Source     , Event                    , Target
+            hsm::transition(S1 {}      , hsm::event<e1> {}, g1, a1, S2 {}),
+            hsm::transition(S1 {}      , hsm::event<e2> {}, g1, a1, S3 {}),
+            hsm::transition(S1 {}      , hsm::event<e4> {}, g1, a1, SubState {}),
+            hsm::transition(S3 {}      , hsm::none {}     , g1, a1, S1 {}),
+            hsm::transition(S1 {}      , hsm::event<e5> {}, g1, a1, S3 {}),
+            hsm::transition(S2 {}      , hsm::event<e1> {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}      , hsm::event<e2> {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}      , hsm::event<e3> {}, g1, a1, S3 {}),
+            hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}));
+        // clang-format on
     }
 
     constexpr auto initial_state()
@@ -181,14 +188,6 @@ TEST_F(HsmTests, should_transit_with_anonymous_transition)
     hsm::Sm<MainState> sm;
     sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(S1 {}));
-}
-
-TEST_F(HsmTests, should_call_action)
-{
-    hsm::Sm<MainState> sm;
-    sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(S2 {}));
-    ASSERT_TRUE(a1Called);
 }
 
 TEST_F(HsmTests, should_process_alot_event)
