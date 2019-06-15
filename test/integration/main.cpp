@@ -3,6 +3,9 @@
 #include <boost/hana.hpp>
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <future>
+
 // States
 struct S1 {
 };
@@ -24,12 +27,19 @@ struct e4 {
 };
 struct e5 {
 };
+struct e6 {
+    e6() : called(nullptr){}
+    e6(const std::shared_ptr<std::promise<void>>& called) : called(called){}
+    std::shared_ptr<std::promise<void>> called;
+};
+
 
 // Guards
 const auto g1 = []() {};
 
 // Actions
-const auto a1 = []() {};
+const auto a1 = [](auto event) {};
+const auto a2 = [](e6 event) {event.called->set_value();};
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -77,11 +87,12 @@ struct MainState {
             hsm::transition(S1 {}      , hsm::event<e1> {}, g1, a1, S2 {}),
             hsm::transition(S1 {}      , hsm::event<e2> {}, g1, a1, S3 {}),
             hsm::transition(S1 {}      , hsm::event<e4> {}, g1, a1, SubState {}),
-            hsm::transition(S3 {}      , hsm::none {}     , g1, a1, S1 {}),
-            hsm::transition(S1 {}      , hsm::event<e5> {}, g1, a1, S3 {}),
+            hsm::transition(S1 {}      , hsm::event<e5> {}, g1, a1, S3 {}),            
+            hsm::transition(S1 {}      , hsm::event<e6> {}, g1, a2, S1 {}),                        
             hsm::transition(S2 {}      , hsm::event<e1> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}      , hsm::event<e2> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}      , hsm::event<e3> {}, g1, a1, S3 {}),
+            hsm::transition(S3 {}      , hsm::none {}     , g1, a1, S1 {}),            
             hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}));
         // clang-format on
     }
@@ -188,6 +199,16 @@ TEST_F(HsmTests, should_transit_with_anonymous_transition)
     hsm::Sm<MainState> sm;
     sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(S1 {}));
+}
+
+TEST_F(HsmTests, should_call_action)
+{
+    auto actionCalled = std::make_shared<std::promise<void>>();
+
+    hsm::Sm<MainState> sm;
+    sm.process_event(e6 {actionCalled});
+    
+    ASSERT_EQ(std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(HsmTests, should_process_alot_event)

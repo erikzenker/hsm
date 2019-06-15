@@ -2,7 +2,7 @@
 #pragma once
 
 #include "traits.h"
-#include "utils.h"
+#include "remove_duplicates.h"
 
 #include <boost/hana.hpp>
 
@@ -21,7 +21,7 @@ const auto collect_action_typeids_recursive = [](auto state) {
                 bh::append(actions, bh::typeid_(bh::at_c<3>(row))),
                 collect_sub_action_typeids(bh::back(row)));
         });
-    return remove_duplicates(collectedActions);
+    return remove_duplicate_typeids(collectedActions);
 };
 
 template <class T> constexpr auto collect_sub_action_typeids(T&& state)
@@ -43,7 +43,7 @@ const auto collect_actions_recursive = [](auto state) {
                 bh::append(actions, bh::at_c<3>(row)),
                 collect_sub_actions(bh::back(row)));
         });
-    return collectedActions;
+    return remove_duplicate_types(collectedActions);
 };
 
 template <class T> constexpr auto collect_sub_actions(T&& state)

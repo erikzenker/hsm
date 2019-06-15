@@ -97,8 +97,8 @@ namespace hsm {
                 makeDispatchTable(rootState(), m_dispatchTable);
             }
 
-            template <class T>
-            auto process_event(T event)
+            template <class Event>
+            auto process_event(Event event)
             {
                 ActionIdx actionIdx;
                 std::tie(m_currentParentState, m_currentState, std::ignore, actionIdx)
@@ -106,7 +106,7 @@ namespace hsm {
                           .at(m_currentState)
                           .at(getEventIdx(event));
 
-                //call(actionIdx, actions, event);
+                call(actionIdx, actions(), event);
 
                 apply_anonymous_transitions();
             }
@@ -155,10 +155,15 @@ namespace hsm {
                 return collect_events_recursive(rootState());
             }
 
-            auto actions()
+            auto actionTypeids()
             {
                 return collect_action_typeids_recursive(rootState());
             }
+
+            auto actions()
+            {
+                    return collect_actions_recursive(rootState());
+            }            
 
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
             {
@@ -278,7 +283,7 @@ namespace hsm {
 
             template <class T> auto getActionIdx(T action)
             {
-                return getIdx(make_index_map(actions()), bh::typeid_(action));
+                return getIdx(make_index_map(actionTypeids()), bh::typeid_(action));
             }
 
             template <class T, class B>

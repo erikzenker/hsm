@@ -13,4 +13,13 @@ namespace hsm {
     auto is_exit_state = bh::is_valid([](auto&& state) -> decltype(state.get_parent_state()) {});
 
     auto is_event = bh::is_valid([](auto&& event) -> decltype(event.getEvent()) {});    
+
+    auto const is_callable = [](auto&& callable, auto&& args) {
+        return bh::unpack(args,
+            bh::is_valid([&callable](auto&&... args)
+                -> decltype(callable(args...))
+            {})
+        );
+    };
+
 }
