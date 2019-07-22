@@ -1,12 +1,13 @@
 #pragma once
 
+#include "details/call.h"
 #include "details/collect_actions.h"
 #include "details/collect_events.h"
+#include "details/collect_guards.h"
 #include "details/collect_parent_states.h"
 #include "details/collect_states.h"
 #include "details/index_map.h"
 #include "details/traits.h"
-#include "details/call.h"
 
 #include <boost/hana.hpp>
 
@@ -101,13 +102,22 @@ namespace hsm {
             auto process_event(Event event)
             {
                 ActionIdx actionIdx;
-                std::tie(m_currentParentState, m_currentState, std::ignore, actionIdx)
+                GuardIdx guardIdx;
+                StateIdx nextParentState;
+                StateIdx nextState;
+
+                std::tie(nextParentState, nextState, guardIdx, actionIdx)
                     = m_dispatchTable[m_currentParentState]
                           .at(m_currentState)
                           .at(getEventIdx(event));
 
-                call(actionIdx, actions(), event);
+                if (!call_guard(guardIdx, guards(), event)) {
+                    return;
+                }
 
+                m_currentParentState = nextParentState;
+                m_currentState = nextState;
+                call(actionIdx, actions(), event);
                 apply_anonymous_transitions();
             }
 
@@ -160,10 +170,20 @@ namespace hsm {
                 return collect_action_typeids_recursive(rootState());
             }
 
+            auto guardTypeids()
+            {
+                return collect_guard_typeids_recursive(rootState());
+            }
+
             auto actions()
             {
-                    return collect_actions_recursive(rootState());
-            }            
+                return collect_actions_recursive(rootState());
+            }
+
+            auto guards()
+            {
+                return collect_guards_recursive(rootState());
+            }
 
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
             {
@@ -193,7 +213,7 @@ namespace hsm {
                     auto with = getEventIdx(bh::at_c<1>(row));
 
                     auto action = getActionIdx(bh::at_c<3>(row));
-                    auto guard = 0;
+                    auto guard = getGuardIdx(bh::at_c<2>(row));
 
                     const auto is_anonymous_transition = [](auto transition) {
                         return bh::typeid_(bh::at_c<1>(transition)) == bh::typeid_(none {});
@@ -284,6 +304,11 @@ namespace hsm {
             template <class T> auto getActionIdx(T action)
             {
                 return getIdx(make_index_map(actionTypeids()), bh::typeid_(action));
+            }
+
+            template <class T> auto getGuardIdx(T guard)
+            {
+                return getIdx(make_index_map(guardTypeids()), bh::typeid_(guard));
             }
 
             template <class T, class B>
