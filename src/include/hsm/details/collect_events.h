@@ -1,7 +1,7 @@
 #pragma once
 
 #include "traits.h"
-#include "utils.h"
+#include "remove_duplicates.h"
 
 #include <boost/hana.hpp>
 
@@ -17,10 +17,10 @@ const auto collect_events_recursive = [](auto state) {
     auto collectedEvents = bh::fold_left(
         state.make_transition_table(), bh::make_tuple(), [](auto events, auto row) {
             return bh::concat(
-                bh::append(events, bh::typeid_(bh::at_c<1>(row))),
+                bh::append(events, bh::typeid_(bh::at_c<1>(row).getEvent())),
                 collect_sub_events(bh::back(row)));
         });
-    return remove_duplicates(collectedEvents);
+    return remove_duplicate_typeids(collectedEvents);
 };
 
 template <class T> constexpr auto collect_sub_events(T&& state)
@@ -36,8 +36,8 @@ template <class T> constexpr auto collect_sub_events(T&& state)
 const auto collect_events = [](auto state) {
     auto collectedEvents
         = bh::fold_left(state.make_transition_table(), bh::make_tuple(), [](auto events, auto row) {
-              return bh::append(events, bh::typeid_(bh::at_c<1>(row)));
+              return bh::append(events, bh::typeid_(bh::at_c<1>(row).getEvent()));
           });
-    return remove_duplicates(collectedEvents);
+    return remove_duplicate_typeids(collectedEvents);
 };
 }

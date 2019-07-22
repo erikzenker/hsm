@@ -1,7 +1,7 @@
 #pragma once
 
 #include "traits.h"
-#include "utils.h"
+#include "remove_duplicates.h"
 
 #include <boost/hana.hpp>
 
@@ -30,14 +30,14 @@ namespace hsm {
 
         auto collectedStates = bh::fold_left(transitions, bh::make_tuple(), collect);
 
-        return remove_duplicates(collectedStates);
+        return remove_duplicate_typeids(collectedStates);
     };
 
     const auto collect_states_recursive = [](auto&& parentState) {
         auto collectedStates
             = bh::append(collect_child_states_recursive(parentState), bh::typeid_(parentState));
 
-        return remove_duplicates(collectedStates);
+        return remove_duplicate_typeids(collectedStates);
     };
 
     template<class T>
@@ -56,6 +56,6 @@ namespace hsm {
 
         auto collectedStates = bh::fold_left(transitions, bh::make_tuple(), collect);
 
-        return remove_duplicates(collectedStates);
+        return remove_duplicate_typeids(collectedStates);
     };
 }

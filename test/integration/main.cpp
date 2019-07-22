@@ -3,6 +3,9 @@
 #include <boost/hana.hpp>
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <future>
+
 // States
 struct S1 {
 };
@@ -24,12 +27,19 @@ struct e4 {
 };
 struct e5 {
 };
+struct e6 {
+    e6() : called(nullptr){}
+    e6(const std::shared_ptr<std::promise<void>>& called) : called(called){}
+    std::shared_ptr<std::promise<void>> called;
+};
+
 
 // Guards
 const auto g1 = []() {};
 
 // Actions
-const auto a1 = []() {};
+const auto a1 = [](auto event) {};
+const auto a2 = [](e6 event) {event.called->set_value();};
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -37,7 +47,10 @@ using namespace boost::hana;
 struct SubSubState {
     constexpr auto make_transition_table()
     {
-        return hsm::transition_table(hsm::transition(S1 {}, e1 {}, g1, a1, S2 {}));
+        // clang-format off        
+        return hsm::transition_table(
+            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}));
+        // clang-format on
     }
 
     constexpr auto initial_state()
@@ -49,12 +62,14 @@ struct SubSubState {
 struct SubState {
     constexpr auto make_transition_table()
     {
+        // clang-format off        
         return hsm::transition_table(
-            hsm::transition(S4 {}, e1 {}, g1, a1, S2 {}),
-            hsm::transition(S4 {}, e5 {}, g1, a1, S3 {}),
-            hsm::transition(S2 {}, e1 {}, g1, a1, SubSubState {}),
-            hsm::transition(SubSubState {}, e2 {}, g1, a1, S4 {}),
-            hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, e5 {}, g1, a1, S4 {}));
+            hsm::transition(S4 {}                              , hsm::event<e1> {}, g1, a1, S2 {}),
+            hsm::transition(S4 {}                              , hsm::event<e5> {}, g1, a1, S3 {}),
+            hsm::transition(S2 {}                              , hsm::event<e1> {}, g1, a1, SubSubState {}),
+            hsm::transition(SubSubState {}                     , hsm::event<e2> {}, g1, a1, S4 {}),
+            hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, hsm::none {}     , g1, a1, S4 {}));
+        // clang-format on
     }
 
     constexpr auto initial_state()
@@ -66,14 +81,20 @@ struct SubState {
 struct MainState {
     constexpr auto make_transition_table()
     {
+        // clang-format off    
         return hsm::transition_table(
-            hsm::transition(S1 {}, e1 {}, g1, a1, S2 {}),
-            hsm::transition(S1 {}, e2 {}, g1, a1, S3 {}),
-            hsm::transition(S1 {}, e4 {}, g1, a1, SubState {}),
-            hsm::transition(S2 {}, e1 {}, g1, a1, S1 {}),
-            hsm::transition(S2 {}, e2 {}, g1, a1, S1 {}),
-            hsm::transition(S2 {}, e3 {}, g1, a1, S3 {}),
-            hsm::transition(SubState {}, e2 {}, g1, a1, S1 {}));
+            //              Source     , Event                    , Target
+            hsm::transition(S1 {}      , hsm::event<e1> {}, g1, a1, S2 {}),
+            hsm::transition(S1 {}      , hsm::event<e2> {}, g1, a1, S3 {}),
+            hsm::transition(S1 {}      , hsm::event<e4> {}, g1, a1, SubState {}),
+            hsm::transition(S1 {}      , hsm::event<e5> {}, g1, a1, S3 {}),            
+            hsm::transition(S1 {}      , hsm::event<e6> {}, g1, a2, S1 {}),                        
+            hsm::transition(S2 {}      , hsm::event<e1> {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}      , hsm::event<e2> {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}      , hsm::event<e3> {}, g1, a1, S3 {}),
+            hsm::transition(S3 {}      , hsm::none {}     , g1, a1, S1 {}),            
+            hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}));
+        // clang-format on
     }
 
     constexpr auto initial_state()
@@ -170,9 +191,24 @@ TEST_F(HsmTests, should_exit_subsubstate_from_pseudo_exit)
     sm.process_event(e1 {});
     ASSERT_TRUE(sm.is(SubSubState {}, S1 {}));
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(SubSubState {}, S2 {}));
-    sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(SubState {}, S4 {}));
+}
+
+TEST_F(HsmTests, should_transit_with_anonymous_transition)
+{
+    hsm::Sm<MainState> sm;
+    sm.process_event(e5 {});
+    ASSERT_TRUE(sm.is(S1 {}));
+}
+
+TEST_F(HsmTests, should_call_action)
+{
+    auto actionCalled = std::make_shared<std::promise<void>>();
+
+    hsm::Sm<MainState> sm;
+    sm.process_event(e6 {actionCalled});
+    
+    ASSERT_EQ(std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(HsmTests, should_process_alot_event)

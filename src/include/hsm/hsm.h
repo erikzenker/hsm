@@ -1,10 +1,12 @@
 #pragma once
 
+#include "details/collect_actions.h"
 #include "details/collect_events.h"
 #include "details/collect_parent_states.h"
 #include "details/collect_states.h"
 #include "details/index_map.h"
 #include "details/traits.h"
+#include "details/call.h"
 
 #include <boost/hana.hpp>
 
@@ -33,6 +35,16 @@ namespace hsm {
     {
         return boost::hana::make_tuple(args...);
     }
+
+    template <class TEvent>    
+    struct event {
+        auto getEvent() const {return TEvent{};};
+    };
+
+    struct noneEvent {
+    };
+
+    using none = event<noneEvent>;
 
     template <class ParentState, class State> class Exit {
       public:
@@ -63,11 +75,19 @@ namespace hsm {
         using Idx = std::uint16_t;
         using StateIdx = Idx;
         using EventIdx = Idx;
+        using ActionIdx = Idx;
+        using GuardIdx = Idx;
         using DispatchTable = std::array<
-            std::map<StateIdx, std::map<EventIdx, std::pair<StateIdx, StateIdx>>>,
+            std::map<
+                StateIdx,
+                std::map<EventIdx, std::tuple<StateIdx, StateIdx, GuardIdx, ActionIdx>>>,
+            bh::length(collect_parent_states(State {}))>;
+        using AnonymousDispatchTable = std::array<
+            std::map<StateIdx, std::tuple<StateIdx, StateIdx>>,
             bh::length(collect_parent_states(State {}))>;
 
         DispatchTable m_dispatchTable;
+        AnonymousDispatchTable m_anonymousDispatchTable;
         StateIdx m_currentState;
         StateIdx m_currentParentState;
 
@@ -77,10 +97,18 @@ namespace hsm {
                 makeDispatchTable(rootState(), m_dispatchTable);
             }
 
-            template <class T>
-            auto process_event(T event)
+            template <class Event>
+            auto process_event(Event event)
             {
-                std::tie(m_currentParentState, m_currentState) = m_dispatchTable[m_currentParentState].at(m_currentState).at(getEventIdx(event));
+                ActionIdx actionIdx;
+                std::tie(m_currentParentState, m_currentState, std::ignore, actionIdx)
+                    = m_dispatchTable[m_currentParentState]
+                          .at(m_currentState)
+                          .at(getEventIdx(event));
+
+                call(actionIdx, actions(), event);
+
+                apply_anonymous_transitions();
             }
 
             template <class T>
@@ -94,6 +122,19 @@ namespace hsm {
             };
 
         private:
+          auto apply_anonymous_transitions()
+          {
+              while (true) {
+                  auto it = m_anonymousDispatchTable[m_currentParentState].find(m_currentState);
+                  if (it == m_anonymousDispatchTable[m_currentParentState].end()) {
+                      break;
+                  }
+
+                  std::tie(m_currentParentState, m_currentState)
+                      = m_anonymousDispatchTable[m_currentParentState].at(m_currentState);
+              }
+          }
+
             auto rootState(){
                 return State{};    
             }
@@ -114,7 +155,27 @@ namespace hsm {
                 return collect_events_recursive(rootState());
             }
 
+            auto actionTypeids()
+            {
+                return collect_action_typeids_recursive(rootState());
+            }
+
+            auto actions()
+            {
+                    return collect_actions_recursive(rootState());
+            }            
+
             template <class T, class B> auto makeDispatchTable(T state, B& dispatchTable)
+            {
+                bh::if_(
+                    has_transition_table(state),
+                    [this](auto state, auto& dispatchTable) {
+                        makeDispatchTable2(state, dispatchTable);
+                    },
+                    [](auto, auto&) {})(state, dispatchTable);
+            }
+
+            template <class T, class B> auto makeDispatchTable2(T state, B& dispatchTable)
             {
                 auto fromParent = getParentStateIdx(state);
 
@@ -131,39 +192,67 @@ namespace hsm {
 
                     auto with = getEventIdx(bh::at_c<1>(row));
 
-                    // Add dispatch table entries of pseudo exits
+                    auto action = getActionIdx(bh::at_c<3>(row));
+                    auto guard = 0;
+
+                    const auto is_anonymous_transition = [](auto transition) {
+                        return bh::typeid_(bh::at_c<1>(transition)) == bh::typeid_(none {});
+                    };
+
+                    // Add entries for anonymous transition table
+
+                    // Add dispatch table entries
                     bh::if_(
                         is_exit_state(bh::front(row)),
-                        [this, &fromParent, &from](auto exit) {
+                        [&](auto exit) {
                             fromParent = getParentStateIdx(exit.get_parent_state());
                             from = getStateIdx(exit.get_state());
-                        },
-                        [&](auto) {})(bh::front(row));
 
-                    dispatchTable[fromParent][from][with] = std::make_pair(toParent, to);
-
-                    // Add dispatch table of sub states
-                    bh::if_(
-                        has_transition_table(bh::back(row)),
-                        [this, &dispatchTable](auto state) {
-                            makeDispatchTable(state, dispatchTable);
+                            if (is_anonymous_transition(row)) {
+                                //  ...anonymous pseudo exits
+                                m_anonymousDispatchTable[fromParent][from]
+                                    = std::make_tuple(toParent, to);
+                            } else {
+                                // ...not anonymous pseudo exits
+                                dispatchTable[fromParent][from][with]
+                                    = std::make_tuple(toParent, to, guard, action);
+                            }
                         },
-                        [](auto) {})(bh::back(row));
+                        [&](auto) {
+                            if (is_anonymous_transition(row)) {
+                                //  ...anonymous transitions
+                                m_anonymousDispatchTable[fromParent][from]
+                                    = std::make_tuple(toParent, to);
+                            } else {
+                                //  ...not anonymous transitions
+                                dispatchTable[fromParent][from][with]
+                                    = std::make_tuple(toParent, to, guard, action);
+                            }
+                        })(bh::front(row));
+
+                    makeDispatchTable(bh::back(row), dispatchTable);
 
                     // Add dispatch table of sub states exits
                     bh::if_(
                         has_transition_table(bh::front(row)),
-                        [this, with, toParent, to, &dispatchTable](auto parentState) {
+                        [this, with, toParent, to, guard, action, &dispatchTable](
+                            auto parentState) {
                             auto states = collect_child_states(parentState);
 
                             bh::for_each(
                                 states,
-                                [this, parentState, with, toParent, to, &dispatchTable](
-                                    auto state) {
+                                [this,
+                                 parentState,
+                                 with,
+                                 toParent,
+                                 to,
+                                 guard,
+                                 action,
+                                 &dispatchTable](auto state) {
                                     auto fromParent = getParentStateIdx(parentState);
                                     auto from = getStateIdx(state);
                                     dispatchTable[fromParent][from][with]
-                                        = std::make_pair(toParent, to);
+                                        = std::make_tuple(toParent, to, guard, action);
                                 });
 
                             makeDispatchTable(parentState, dispatchTable);
@@ -185,7 +274,16 @@ namespace hsm {
 
             template <class T>
             auto getEventIdx(T event){
-                return getIdx(make_index_map(events()), bh::typeid_(event));
+                auto then = [](auto event){return bh::typeid_(event.getEvent());};
+                auto otherwise = [](auto event){return bh::typeid_(event);};
+                auto eventId = bh::if_(is_event(event), then, otherwise)(event);
+
+                return getIdx(make_index_map(events()), eventId);
+            }
+
+            template <class T> auto getActionIdx(T action)
+            {
+                return getIdx(make_index_map(actionTypeids()), bh::typeid_(action));
             }
 
             template <class T, class B>
