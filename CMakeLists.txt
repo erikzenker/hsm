@@ -7,3 +7,6 @@ add_subdirectory(src)
 # add unit tests
 enable_testing()
 add_subdirectory(test)
+
+# add example
+add_subdirectory(example)
