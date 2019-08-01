@@ -14,7 +14,7 @@ struct Push {
 struct Coin {
 };
 
-// No events nor guards yet
+// No events nor guards in this example
 const auto none = []() {};
 
 struct Turnstile {
