@@ -1,27 +1,3 @@
-# Hana State Machine (HSM)
-[![Build Status](https://travis-ci.org/erikzenker/cmake-project-template.svg?branch=master)](https://travis-ci.org/erikzenker/hsm)
-=
-
-The hana state machine (hsm) is a [finite state machine](https://en.wikipedia.org/wiki/Finite-state_machine) library based on the [boost hana](https://www.boost.org/doc/libs/1_61_0/libs/hana/doc/html/index.html) meta programming library. It follows the principles of the [boost msm](https://www.boost.org/doc/libs/1_64_0/libs/msm/doc/HTML/index.html) and [boost sml](https://boost-experimental.github.io/sml/index.html) libraries, but tries to reduce complex meta programming library code to a minimum. The library is in an very early developement phase.
-
-Currently the following features are supported:
-* Initial pseudo state
-* External transitions with guards and actions
-* Anonymous transitions
-* Submachines
-* Pseudo exit states
-
-What is missing:
-* Pseudo entry states
-* Orthogonal regions
-* Explixit terminate state
-* Entry/exit state behavior
-* Internal transitions
-* Direct transitions
-* Fork Entry
-* History
-
-```c++
 #include "hsm/hsm.h"
 
 #include <cassert>
@@ -80,26 +56,3 @@ int main()
 
     return 0;
 }
-```
-## Roadmap
-
-
-## Create and Install the Package
-``` bash
-mkdir src/build
-cd src/build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
-cmake --build . --target install
-```
-
-## Compile and Run the Tests Using the Installed Library
-``` bash
-mkdir test/build/
-cd test/build/
-cmake .. -DCMAkE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
-cmake --build . --target hsmTests
-ctest -VV
-```
-
-## Author
-* erikzenker(at)hotmail.com
