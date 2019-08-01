@@ -33,9 +33,15 @@ struct e6 {
     std::shared_ptr<std::promise<void>> called;
 };
 
+struct e7 {
+};
+struct e8 {
+};
 
 // Guards
 const auto g1 = []() {};
+const auto g2 = [](auto) { return false; };
+const auto g3 = [](auto) { return true; };
 
 // Actions
 const auto a1 = [](auto event) {};
@@ -81,18 +87,20 @@ struct SubState {
 struct MainState {
     constexpr auto make_transition_table()
     {
-        // clang-format off    
+        // clang-format off
         return hsm::transition_table(
             //              Source     , Event                    , Target
-            hsm::transition(S1 {}      , hsm::event<e1> {}, g1, a1, S2 {}),
-            hsm::transition(S1 {}      , hsm::event<e2> {}, g1, a1, S3 {}),
-            hsm::transition(S1 {}      , hsm::event<e4> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}      , hsm::event<e5> {}, g1, a1, S3 {}),            
-            hsm::transition(S1 {}      , hsm::event<e6> {}, g1, a2, S1 {}),                        
-            hsm::transition(S2 {}      , hsm::event<e1> {}, g1, a1, S1 {}),
-            hsm::transition(S2 {}      , hsm::event<e2> {}, g1, a1, S1 {}),
-            hsm::transition(S2 {}      , hsm::event<e3> {}, g1, a1, S3 {}),
-            hsm::transition(S3 {}      , hsm::none {}     , g1, a1, S1 {}),            
+            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}),
+            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, S3 {}),
+            hsm::transition(S1 {}, hsm::event<e4> {}, g1, a1, SubState {}),
+            hsm::transition(S1 {}, hsm::event<e5> {}, g1, a1, S3 {}),
+            hsm::transition(S1 {}, hsm::event<e6> {}, g1, a2, S1 {}),
+            hsm::transition(S1 {}, hsm::event<e7> {}, g2, a1, S2 {}),
+            hsm::transition(S1 {}, hsm::event<e8> {}, g3, a1, S2 {}),
+            hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {}),
+            hsm::transition(S2 {}, hsm::event<e3> {}, g1, a1, S3 {}),
+            hsm::transition(S3 {}, hsm::none {}, g1, a1, S1 {}),
             hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}));
         // clang-format on
     }
@@ -209,6 +217,22 @@ TEST_F(HsmTests, should_call_action)
     sm.process_event(e6 {actionCalled});
     
     ASSERT_EQ(std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
+}
+
+TEST_F(HsmTests, should_block_transition_guard)
+{
+    hsm::Sm<MainState> sm;
+    ASSERT_TRUE(sm.is(S1 {}));
+    sm.process_event(e7 {});
+    ASSERT_TRUE(sm.is(S1 {}));
+}
+
+TEST_F(HsmTests, should_not_block_transition_by_guard)
+{
+    hsm::Sm<MainState> sm;
+    ASSERT_TRUE(sm.is(S1 {}));
+    sm.process_event(e8 {});
+    ASSERT_TRUE(sm.is(S2 {}));
 }
 
 TEST_F(HsmTests, should_process_alot_event)
