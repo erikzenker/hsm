@@ -1,0 +1,8 @@
+@startuml
+hide empty description
+[*] -r-> Locked
+Locked --> Unlocked : Coin
+Locked --> Locked : Push
+Unlocked --> Unlocked : Coin
+Unlocked --> Locked : Push
+@enduml
