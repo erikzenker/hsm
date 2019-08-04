@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="176px" preserveAspectRatio="none" style="width:209px;height:176px;" version="1.1" viewBox="0 0 209 176" width="209px" zoomAndPan="magnify"><defs><filter height="300%" id="fin129u06yxch" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><ellipse cx="16" cy="28" fill="#000000" filter="url(#fin129u06yxch)" rx="10" ry="10" style="stroke: none; stroke-width: 1.0;"/><rect fill="#FEFECE" filter="url(#fin129u06yxch)" height="40" rx="12.5" ry="12.5" style="stroke: #A80036; stroke-width: 1.5;" width="60" x="61" y="8"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="50" x="66" y="32.8467">Locked</text><rect fill="#FEFECE" filter="url(#fin129u06yxch)" height="40" rx="12.5" ry="12.5" style="stroke: #A80036; stroke-width: 1.5;" width="75" x="53.5" y="125"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="65" x="58.5" y="149.8467">Unlocked</text><!--link *start to Locked--><path d="M26.2539,28 C36.0892,28 45.9246,28 55.7599,28 " fill="none" id="*start-Locked" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="60.9032,28,51.9032,24,55.9032,28,51.9032,32,60.9032,28" style="stroke: #A80036; stroke-width: 1.0;"/><!--link Locked to Unlocked--><path d="M70.95,48.1012 C63.8388,56.5928 56.6896,67.0476 53,78 C47.937,93.0291 55.7201,108.5122 65.5336,120.8033 " fill="none" id="Locked-Unlocked" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="68.9239,124.844,66.2034,115.3783,65.7101,121.0137,60.0748,120.5204,68.9239,124.844" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="28" x="54" y="91.0669">Coin</text><!--link Unlocked to Locked--><path d="M91,124.7579 C91,104.9565 91,74.7395 91,53.3493 " fill="none" id="Unlocked-Locked" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="91,48.113,87,57.113,91,53.113,95,57.113,91,48.113" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="31" x="92" y="91.0669">Push</text><!--link Locked to Locked--><path d="M121.0879,17.8047 C139.0729,15.5391 156,18.9375 156,28 C156,36.2129 142.098,39.7739 126.1052,38.6832 " fill="none" id="Locked-Locked" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="121.0879,38.1953,129.6584,43.0477,126.0644,38.6793,130.4328,35.0853,121.0879,38.1953" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="31" x="162" y="32.5669">Push</text><!--link Unlocked to Unlocked--><path d="M128.6745,134.4177 C147.1266,133.0331 163.5,136.5605 163.5,145 C163.5,152.6483 150.0527,156.2623 133.7976,155.8422 " fill="none" id="Unlocked-Unlocked" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="128.6745,155.5823,137.4602,160.0333,133.6681,155.8357,137.8657,152.0436,128.6745,155.5823" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="28" x="169.5" y="149.5669">Coin</text><!--
+@startuml
+hide empty description
+[*] -r-> Locked
+Locked - -> Unlocked : Coin
+Locked - -> Locked : Push
+Unlocked - -> Unlocked : Coin
+Unlocked - -> Locked : Push
+@enduml
+
+PlantUML version 1.2019.06(Fri May 24 19:10:25 CEST 2019)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 10.0.2+13
+Operating System: Linux
+OS Version: 5.1.9-arch1-1-ARCH
+Default Encoding: UTF-8
+Language: de
+Country: DE
+--></g></svg>
