@@ -4,6 +4,8 @@
 
 #include <boost/hana.hpp>
 
+#include <functional>
+
 using namespace ::testing;
 using namespace hsm;
 

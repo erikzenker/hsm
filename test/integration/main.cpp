@@ -45,7 +45,7 @@ const auto g3 = [](auto) { return true; };
 
 // Actions
 const auto a1 = [](auto event) {};
-const auto a2 = [](e6 event) {event.called->set_value();};
+const auto a2 = [](auto event) {event.called->set_value();};
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -72,6 +72,7 @@ struct SubState {
         return hsm::transition_table(
             hsm::transition(S4 {}                              , hsm::event<e1> {}, g1, a1, S2 {}),
             hsm::transition(S4 {}                              , hsm::event<e5> {}, g1, a1, S3 {}),
+            hsm::transition(S4 {}                              , hsm::event<e6> {}, g1, a2, S4 {}),
             hsm::transition(S2 {}                              , hsm::event<e1> {}, g1, a1, SubSubState {}),
             hsm::transition(SubSubState {}                     , hsm::event<e2> {}, g1, a1, S4 {}),
             hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, hsm::none {}     , g1, a1, S4 {}));
@@ -214,6 +215,17 @@ TEST_F(HsmTests, should_call_action)
     auto actionCalled = std::make_shared<std::promise<void>>();
 
     hsm::Sm<MainState> sm;
+    sm.process_event(e6 {actionCalled});
+    
+    ASSERT_EQ(std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
+}
+
+TEST_F(HsmTests, should_call_substate_action)
+{
+    auto actionCalled = std::make_shared<std::promise<void>>();
+
+    hsm::Sm<MainState> sm;
+    sm.process_event(e4 {});
     sm.process_event(e6 {actionCalled});
     
     ASSERT_EQ(std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));

@@ -37,17 +37,17 @@ struct prev_song {
 };
 
 // Actions
-const auto store_cd_info = []() {};
-const auto open_drawer = []() {};
-const auto close_drawer = []() {};
-const auto stopped_again = []() {};
-const auto start_playback = []() {};
-const auto stop_and_open = []() {};
-const auto pause_playback = []() {};
-const auto stop_playback = []() {};
-const auto resume_playback = []() {};
-const auto start_next_song = [](){};
-const auto start_prev_song = [](){};
+const auto store_cd_info = [](auto) {};
+const auto open_drawer = [](auto) {};
+const auto close_drawer = [](auto) {};
+const auto stopped_again = [](auto) {};
+const auto start_playback = [](auto) {};
+const auto stop_and_open = [](auto) {};
+const auto pause_playback = [](auto) {};
+const auto stop_playback = [](auto) {};
+const auto resume_playback = [](auto) {};
+const auto start_next_song = [](auto){};
+const auto start_prev_song = [](auto){};
 
 // Guards
 const auto none = [](){};

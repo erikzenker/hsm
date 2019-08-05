@@ -1,0 +1,9 @@
+@startuml
+hide empty description
+[*] -r-> State1
+State1 -r-> State2
+
+state State2 {
+    [*] -r-> State3
+}
+@enduml

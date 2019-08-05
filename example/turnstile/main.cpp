@@ -1,3 +1,4 @@
+
 #include "hsm/hsm.h"
 
 #include <cassert>
@@ -15,7 +16,8 @@ struct Coin {
 };
 
 // No events nor guards in this example
-const auto none = []() {};
+const auto none = [](auto event) {};
+const auto g = []() {};
 
 struct Turnstile {
     constexpr auto make_transition_table()
@@ -24,11 +26,11 @@ struct Turnstile {
         return hsm::transition_table(
             //              Start      , Event              , Guard   , Action , Target
             //             +-----------+--------------------+---------+--------+---------------+
-            hsm::transition(Locked {}  , hsm::event<Push> {}, none    , none   , Locked {}    ),
-            hsm::transition(Locked {}  , hsm::event<Coin> {}, none    , none   , Unlocked {}  ),
+            hsm::transition(Locked {}  , hsm::event<Push> {}, g       , none   , Locked {}    ),
+            hsm::transition(Locked {}  , hsm::event<Coin> {}, g       , none   , Unlocked {}  ),
             //            +------------+--------------------+---------+--------+---------------+
-            hsm::transition(Unlocked {}, hsm::event<Push> {}, none    , none   , Locked {}    ),
-            hsm::transition(Unlocked {}, hsm::event<Coin> {}, none    , none   , Unlocked {} ));
+            hsm::transition(Unlocked {}, hsm::event<Push> {}, g       , none   , Locked {}    ),
+            hsm::transition(Unlocked {}, hsm::event<Coin> {}, g       , none   , Unlocked {} ));
             //            +------------+--------------------+-------+----------+---------------+
         // clang-format on
     }
