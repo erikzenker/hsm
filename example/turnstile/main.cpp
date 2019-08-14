@@ -17,7 +17,7 @@ struct Coin {
 
 // No events nor guards in this example
 const auto none = [](auto event) {};
-const auto g = []() {};
+const auto g = [](auto event) { return true; };
 
 struct Turnstile {
     constexpr auto make_transition_table()
