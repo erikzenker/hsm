@@ -39,7 +39,7 @@ struct e8 {
 };
 
 // Guards
-const auto g1 = []() {};
+const auto g1 = [](auto) { return true; };
 const auto g2 = [](auto) { return false; };
 const auto g3 = [](auto) { return true; };
 

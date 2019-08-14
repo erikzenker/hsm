@@ -45,6 +45,7 @@ namespace hsm {
         DispatchTable m_dispatchTable;
         AnonymousDispatchTable m_anonymousDispatchTable;
         decltype(make_action_map(flatten_transition_table(RootState{}) ,RootState{})) m_actionMap;
+        decltype(make_guard_map(flatten_transition_table(RootState {}), RootState {})) m_guardMap;
         StateIdx m_currentState;
         StateIdx m_currentParentState;
 
@@ -53,6 +54,7 @@ namespace hsm {
             {
                 makeDispatchTable(rootState(), m_dispatchTable);
                 makeActionMap(rootState(), m_actionMap);
+                makeGuardMap(rootState(), m_guardMap);
             }
 
             template <class Event>
@@ -63,7 +65,7 @@ namespace hsm {
                           .at(m_currentState)
                           .at(getEventIdx(event));
 
-                if (!call_guard(guardIdx, guards(), event)) {
+                if (!callGuard(guardIdx, event)) {
                     return;
                 }
 
@@ -143,12 +145,24 @@ namespace hsm {
             auto callAction(ActionIdx actionIdx, Event event)
             {
                 boost::hana::find(m_actionMap, boost::hana::typeid_(event)).value()[actionIdx](event);
-            }            
+            }
+
+            template <class Event> bool callGuard(GuardIdx guardIdx, Event event)
+            {
+                return boost::hana::find(m_guardMap, boost::hana::typeid_(event))
+                    .value()[guardIdx](event);
+            }
 
             template <class State, class ActionMap>
             auto makeActionMap(State state, ActionMap& actionMap){
                 actionMap = make_action_map(flatten_transition_table(state), state);
-            }            
+            }
+
+            template <class State, class GuardMap>
+            auto makeGuardMap(State state, GuardMap& guardMap)
+            {
+                guardMap = make_guard_map(flatten_transition_table(state), state);
+            }
 
             template <class ParentState, class Transition, class DispatchTable>
             auto addDispatchTableEntry(ParentState parentState, Transition row, DispatchTable& dispatchTable){

@@ -50,8 +50,7 @@ const auto start_next_song = [](auto){};
 const auto start_prev_song = [](auto){};
 
 // Guards
-const auto none = [](){};
-
+const auto none = [](auto event) { return true; };
 
 struct Playing {
     constexpr auto make_transition_table()
