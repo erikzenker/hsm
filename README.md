@@ -21,9 +21,8 @@ What is missing:
 * Fork Entry
 * History
 
-
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
-![Turnstile fsm](doc/plantuml/turnstile_example.svg "Turnstile fsm")
+![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
 
 ```c++
 #include "hsm/hsm.h"
@@ -87,7 +86,7 @@ int main()
 ```
 
 ## Complex Example ([Cd player](example/cdplayer/main.cpp))
-![Cd player fsm](doc/plantuml/cdplayer_example.svg "Cd player fsm")
+![Cd player fsm](doc/example/cdplayer_example.svg "Cd player fsm")
 ```c++
 #include "hsm/hsm.h"
 

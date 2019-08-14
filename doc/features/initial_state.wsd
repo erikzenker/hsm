@@ -1,0 +1,4 @@
+@startuml
+hide empty description
+[*] -r-> State1
+@enduml

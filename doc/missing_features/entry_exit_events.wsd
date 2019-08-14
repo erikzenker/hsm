@@ -1,0 +1,6 @@
+@startuml
+hide empty description
+[*] -r-> State1
+State1 : + entry / some_entry
+State1 : + exit / some_exit
+@enduml

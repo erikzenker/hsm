@@ -11,6 +11,8 @@
 #include "details/pseudo_states.h"
 #include "details/traits.h"
 #include "details/transition_table.h"
+#include "details/action_map.h"
+#include "details/flatten_transition_table.h"
 
 #include <boost/hana.hpp>
 
@@ -42,6 +44,7 @@ namespace hsm {
 
         DispatchTable m_dispatchTable;
         AnonymousDispatchTable m_anonymousDispatchTable;
+        decltype(make_action_map(flatten_transition_table(RootState{}) ,RootState{})) m_actionMap;
         StateIdx m_currentState;
         StateIdx m_currentParentState;
 
@@ -49,6 +52,7 @@ namespace hsm {
             Sm() : m_currentState(getStateIdx(inititalState())), m_currentParentState(getParentStateIdx(rootState()))
             {
                 makeDispatchTable(rootState(), m_dispatchTable);
+                makeActionMap(rootState(), m_actionMap);
             }
 
             template <class Event>
@@ -65,7 +69,8 @@ namespace hsm {
 
                 m_currentParentState = nextParentState;
                 m_currentState = nextState;
-                call(actionIdx, actions(), event);
+                
+                callAction(actionIdx, event);
                 apply_anonymous_transitions();
             }
 
@@ -111,7 +116,7 @@ namespace hsm {
             }
 
             auto events(){
-                return collect_events_recursive(rootState());
+                return collect_events_typeids_recursive(rootState());
             }
 
             auto actionTypeids()
@@ -134,10 +139,16 @@ namespace hsm {
                 return collect_guards_recursive(rootState());
             }
 
-            template <class Transition>
-            auto fromStateIdx(Transition transition){
-                    
-            }
+            template <class Event>             
+            auto callAction(ActionIdx actionIdx, Event event)
+            {
+                boost::hana::find(m_actionMap, boost::hana::typeid_(event)).value()[actionIdx](event);
+            }            
+
+            template <class State, class ActionMap>
+            auto makeActionMap(State state, ActionMap& actionMap){
+                actionMap = make_action_map(flatten_transition_table(state), state);
+            }            
 
             template <class ParentState, class Transition, class DispatchTable>
             auto addDispatchTableEntry(ParentState parentState, Transition row, DispatchTable& dispatchTable){
@@ -266,9 +277,9 @@ namespace hsm {
 
             template <class T>
             auto getEventIdx(T event){
-                auto then = [](auto event){return bh::typeid_(event.getEvent());};
-                auto otherwise = [](auto event){return bh::typeid_(event);};
-                auto eventId = bh::if_(is_event(event), then, otherwise)(event);
+                auto takeWrappedEvent = [](auto event){return bh::typeid_(event.getEvent());};
+                auto takeEvent = [](auto event){return bh::typeid_(event);};
+                auto eventId = bh::if_(is_event(event), takeWrappedEvent, takeEvent)(event);
 
                 return getIdx(make_index_map(events()), eventId);
             }

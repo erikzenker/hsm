@@ -18,7 +18,9 @@ add_executable(
           index_map_tests.cpp
           traits_tests.cpp
           call_tests.cpp
-          remove_duplicates_tests.cpp)
+          remove_duplicates_tests.cpp
+          action_map_tests.cpp
+          flatten_transition_table_tests.cpp)
 
 gtest_add_tests(
         TARGET

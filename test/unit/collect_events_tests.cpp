@@ -18,7 +18,7 @@ class E2 {
 
 
 
-TEST_F(CollectEventsTests, should_collect_events)
+TEST_F(CollectEventsTests, should_collect_events_typeidsg)
 {
     struct S {
         auto make_transition_table()
@@ -29,7 +29,7 @@ TEST_F(CollectEventsTests, should_collect_events)
         }
     };
 
-    auto collectedEvents = hsm::collect_events(S {});
+    auto collectedEvents = hsm::collect_events_typeids(S {});
     auto expectedEvents
         = boost::hana::make_tuple(boost::hana::typeid_(E1 {}), boost::hana::typeid_(E2 {}));
 
@@ -58,9 +58,32 @@ TEST_F(CollectEventsTests, should_construct_events_with_parameters)
         }
     };
 
-    auto collectedEvents = hsm::collect_events(S {});
+    auto collectedEvents = hsm::collect_events_typeids(S {});
     auto expectedEvents
         = boost::hana::make_tuple(boost::hana::typeid_(E1 {}), boost::hana::typeid_(E3 {}));
+
+    ASSERT_EQ(expectedEvents, collectedEvents);
+}
+
+TEST_F(CollectEventsTests, should_collect_events_typeids_recursive)
+{
+    struct P {
+        auto make_transition_table()
+        {
+            return boost::hana::make_tuple(boost::hana::make_tuple(0, hsm::event<E2> {}, 0, 0, 0));
+        }
+    };
+
+    struct S {
+        auto make_transition_table()
+        {
+            return boost::hana::make_tuple(boost::hana::make_tuple(0, hsm::event<E1> {}, 0, 0, P {}));
+        }
+    };
+
+    auto collectedEvents = hsm::collect_events_typeids_recursive(S {});
+    auto expectedEvents
+        = boost::hana::make_tuple(boost::hana::typeid_(E1 {}), boost::hana::typeid_(E2 {}));
 
     ASSERT_EQ(expectedEvents, collectedEvents);
 }
@@ -82,8 +105,8 @@ TEST_F(CollectEventsTests, should_collect_events_recursive)
     };
 
     auto collectedEvents = hsm::collect_events_recursive(S {});
-    auto expectedEvents
-        = boost::hana::make_tuple(boost::hana::typeid_(E1 {}), boost::hana::typeid_(E2 {}));
+    // auto expectedEvents
+    //     = boost::hana::make_tuple(E1 {}, E2 {});
 
-    ASSERT_EQ(expectedEvents, collectedEvents);
+    ASSERT_EQ(boost::hana::size_c<2>, boost::hana::size(collectedEvents));
 }
