@@ -8,8 +8,9 @@ namespace hsm
 namespace bh{
     using namespace boost::hana;    
 }    
-
-template <class T> constexpr auto flatten_sub_transition_table(T&& state);
+namespace {
+template <class State> constexpr auto flatten_sub_transition_table(State&& state);
+}
 
 const auto flatten_transition_table = [](auto state){
         auto transitionTable = state.make_transition_table();
@@ -22,8 +23,8 @@ const auto flatten_transition_table = [](auto state){
 
 };
 
-template <class T> constexpr 
-auto flatten_sub_transition_table(T&& state)
+namespace {
+template <class State> constexpr auto flatten_sub_transition_table(State&& state)
 {
     return bh::if_(
         has_transition_table(state),
@@ -32,5 +33,6 @@ auto flatten_sub_transition_table(T&& state)
         },
         [](auto&) { return bh::make_tuple(); })(state);
 };
+}
 
 } // namespace hsm
