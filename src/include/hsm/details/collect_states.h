@@ -13,16 +13,16 @@ namespace hsm {
     };
 
     namespace {
-    const auto collectState = [](auto const& states, auto&& transition) {
-        return bh::append(
-            bh::append(states, bh::typeid_(bh::front(transition))),
-            bh::typeid_(bh::back(transition)));
+    const auto extractStates = [](auto transition) {
+        return bh::make_tuple(
+            bh::typeid_(bh::at_c<0>(transition)), bh::typeid_(bh::at_c<4>(transition)));
     };
     }
 
-    const auto collect_child_states_recursive = [](auto&& parentState) {
+    const auto collect_child_states_recursive = [](auto parentState) {
         auto transitions = flatten_transition_table(parentState);
-        auto collectedStates = bh::fold_left(transitions, bh::make_tuple(), collectState);
+        auto collectedStates = bh::flatten(bh::transform(transitions, extractStates));
+
         return remove_duplicate_typeids(collectedStates);
     };
 
@@ -34,7 +34,7 @@ namespace hsm {
 
     const auto collect_child_states = [](auto&& state) {
         auto transitions = state.make_transition_table();
-        auto collectedStates = bh::fold_left(transitions, bh::make_tuple(), collectState);
+        auto collectedStates = bh::flatten(bh::transform(transitions, extractStates));
 
         return remove_duplicate_typeids(collectedStates);
     };
