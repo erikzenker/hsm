@@ -17,7 +17,6 @@ add_executable(
           collect_actions_tests.cpp
           index_map_tests.cpp
           traits_tests.cpp
-          call_tests.cpp
           remove_duplicates_tests.cpp
           action_map_tests.cpp
           flatten_transition_table_tests.cpp)
