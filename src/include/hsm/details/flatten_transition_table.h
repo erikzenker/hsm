@@ -1,5 +1,7 @@
 #pragma once
 
+#include "traits.h"
+
 #include <boost/hana.hpp>
 
 namespace hsm
