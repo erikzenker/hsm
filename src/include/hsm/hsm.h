@@ -1,6 +1,5 @@
 #pragma once
 
-#include "details/call.h"
 #include "details/collect_actions.h"
 #include "details/collect_events.h"
 #include "details/collect_guards.h"
@@ -186,6 +185,32 @@ namespace hsm {
                         return bh::typeid_(bh::at_c<1>(transition)) == bh::typeid_(none {});
                     };
 
+                    // TODO: entry and exit in same row should not be allowed
+                    auto entryAdded = false;
+
+                    entryAdded = bh::if_(
+                        is_entry_state(bh::back(row)),
+                        [&](auto entry) {
+                            toParent = getParentStateIdx(entry.get_parent_state());
+                            to = getStateIdx(entry.get_state());
+                            if (is_anonymous_transition(row)) {
+                                //  ...anonymous pseudo entries
+                                m_anonymousDispatchTable[fromParent][from]
+                                    = std::make_tuple(toParent, to);
+                            } else {
+                                // ...not anonymous pseudo entries
+                                dispatchTable[fromParent][from][with]
+                                    = std::make_tuple(toParent, to, guard, action);
+                            }
+                            return true;
+                        },
+                        [](auto) { return false; })(bh::back(row));
+
+                    // TODO: Thats so ugly.
+                    if (entryAdded) {
+                        return;
+                    }
+
                     bh::if_(
                         is_exit_state(bh::front(row)),
                         [&](auto exit) {
@@ -202,6 +227,7 @@ namespace hsm {
                                     = std::make_tuple(toParent, to, guard, action);
                             }
                         },
+                        // ...Just normal transitions
                         [&](auto) {
                             if (is_anonymous_transition(row)) {
                                 //  ...anonymous transitions
@@ -213,7 +239,6 @@ namespace hsm {
                                     = std::make_tuple(toParent, to, guard, action);
                             }
                         })(bh::front(row));
-
             }
 
             template <class ParentState, class Transition, class DispatchTable>
