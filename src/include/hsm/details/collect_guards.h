@@ -14,7 +14,7 @@ using namespace boost::hana;
 };
 
 namespace {
-    const auto collectGuard = [](auto transition){return bh::at_c<2>(transition);};
+const auto collectGuard = [](auto transition) { return bh::at_c<3>(transition); };
 }
 
 const auto collect_guards_recursive = [](auto state) {

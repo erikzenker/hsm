@@ -1,5 +1,6 @@
 #pragma once
 
+#include "flatten_transition_table.h"
 #include "remove_duplicates.h"
 #include "traits.h"
 
@@ -11,27 +12,11 @@ namespace bh {
 using namespace boost::hana;
 };
 
-template <class State> constexpr auto collect_parent_states2(State&& state);
+const auto collect_parent_states = [](auto state) {
+    auto toParentState = [](auto transition) { return bh::typeid_(bh::front(transition)); };
 
-template <class State> constexpr auto collect_parent_states2(State&& state)
-{
-    auto transitions = state.make_transition_table();
-
-    auto collectedParentStates = bh::fold_left(
-        transitions, bh::make_tuple(), [](auto const& states, auto row) {
-            auto subParentStates = bh::if_(
-                has_transition_table(bh::back(row)),
-                [&states](auto& stateWithTransitionTable) {
-                    return bh::append(
-                        collect_parent_states2(stateWithTransitionTable),
-                        bh::typeid_(stateWithTransitionTable));
-                },
-                [&states](auto&) { return bh::make_tuple(); })(bh::back(row));
-            return bh::concat(states, subParentStates);
-        });
+    auto transitions = flatten_transition_table(state);
+    auto collectedParentStates = bh::transform(transitions, toParentState);
     return remove_duplicate_typeids(collectedParentStates);
 };
-
-const auto collect_parent_states
-    = [](auto state) { return bh::append(collect_parent_states2(state), bh::typeid_(state)); };
 }

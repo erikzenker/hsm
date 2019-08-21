@@ -13,7 +13,7 @@ using namespace boost::hana;
 };
 
 namespace {
-const auto collectEvent = [](auto transition) { return bh::at_c<1>(transition).getEvent(); };
+const auto collectEvent = [](auto transition) { return bh::at_c<2>(transition).getEvent(); };
 }
 
 const auto collect_events_recursive = [](auto state) {
