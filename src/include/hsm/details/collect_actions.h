@@ -14,7 +14,7 @@ using namespace boost::hana;
 };
 
 namespace {
-const auto collectAction = [](auto transition) { return bh::at_c<3>(transition); };
+const auto collectAction = [](auto transition) { return bh::at_c<4>(transition); };
 }
 
 const auto collect_actions_recursive = [](auto state) {

@@ -71,7 +71,7 @@ class ActionMapTests : public Test {
 
 TEST_F(ActionMapTests, should_make_action_map)
 {
-    auto actionMap = hsm::make_action_map(hsm::flatten_sub_transition_table(S {}), S {});
+    auto actionMap = hsm::make_action_map(S {});
 
     ASSERT_EQ(boost::hana::size_c<4>, boost::hana::size(actionMap));
     ASSERT_EQ(1, boost::hana::find(actionMap, boost::hana::typeid_(e1 {})).value().size());
@@ -88,7 +88,7 @@ TEST_F(ActionMapTests, should_make_action_map)
 
 TEST_F(ActionMapTests, should_make_guard_map)
 {
-    auto guardMap = hsm::make_guard_map(hsm::flatten_sub_transition_table(S {}), S {});
+    auto guardMap = hsm::make_guard_map(S {});
 
     ASSERT_EQ(boost::hana::size_c<4>, boost::hana::size(guardMap));
     ASSERT_EQ(1, boost::hana::find(guardMap, boost::hana::typeid_(e1 {})).value().size());
