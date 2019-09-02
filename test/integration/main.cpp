@@ -28,9 +28,8 @@ struct e4 {
 struct e5 {
 };
 struct e6 {
-    e6() : called(nullptr){}
     e6(const std::shared_ptr<std::promise<void>>& called) : called(called){}
-    std::shared_ptr<std::promise<void>> called;
+    std::shared_ptr<std::promise<void>> called;    
 };
 
 struct e7 {
@@ -148,7 +147,8 @@ TEST_F(HsmTests, should_transit_into_SubState)
     hsm::Sm<MainState> sm;
     sm.process_event(e4 {});
 
-    ASSERT_TRUE(sm.is(SubState {}, S4 {}));
+    ASSERT_TRUE(sm
+    .is(SubState {}, S4 {}));
 }
 
 TEST_F(HsmTests, should_transit_into_SubSubState)
