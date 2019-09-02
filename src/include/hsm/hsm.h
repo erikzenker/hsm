@@ -272,7 +272,7 @@ namespace hsm {
 
             template <class T>
             auto getEventIdx(T event){
-                auto takeWrappedEvent = [](auto event){return bh::typeid_(event.getEvent());};
+                auto takeWrappedEvent = [](auto event){return event.typeid_;};
                 auto takeEvent = [](auto event){return bh::typeid_(event);};
                 auto eventId = bh::if_(is_event(event), takeWrappedEvent, takeEvent)(event);
 

@@ -1,12 +1,11 @@
 #pragma once
 
+#include <boost/hana.hpp>
+
 namespace hsm {
 
 template <class Event> struct event {
-    auto getEvent() const
-    {
-        return Event {};
-    };
+    static constexpr boost::hana::type<Event> typeid_{};
 };
 
 struct noneEvent {

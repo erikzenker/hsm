@@ -13,14 +13,11 @@ using namespace boost::hana;
 };
 
 namespace {
-const auto collectEvent = [](auto transition) { return bh::at_c<2>(transition).getEvent(); };
+constexpr auto collectEventTypeids = [](auto transition) { return bh::at_c<2>(transition).typeid_; };
 }
 
-const auto collect_events_recursive = [](auto state) {
-    auto collectedEvents = bh::transform(flatten_transition_table(state), collectEvent);
-    return remove_duplicate_types(collectedEvents);
+constexpr auto collect_events_typeids_recursive
+    = [](auto state) { 
+        return bh::transform(flatten_transition_table(state), collectEventTypeids);    
 };
-
-const auto collect_events_typeids_recursive
-    = [](auto state) { return bh::transform(collect_events_recursive(state), bh::typeid_); };
 }
