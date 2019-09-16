@@ -16,7 +16,7 @@ class E1 {
 class E2 {
 };
 
-TEST_F(CollectEventsTests, should_collect_events_typeids_recursive)
+TEST_F(CollectEventsTests, should_collect_event_typeids_recursive)
 {
     struct P {
         auto make_transition_table()
@@ -32,7 +32,7 @@ TEST_F(CollectEventsTests, should_collect_events_typeids_recursive)
         }
     };
 
-    auto collectedEvents = hsm::collect_events_typeids_recursive(S {});
+    auto collectedEvents = hsm::collect_event_typeids_recursive(S {});
     auto expectedEvents
         = boost::hana::make_tuple(boost::hana::typeid_(E1 {}), boost::hana::typeid_(E2 {}));
 

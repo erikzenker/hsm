@@ -23,14 +23,14 @@ namespace hsm {
     };    
     }
 
-    const auto collect_child_states_recursive = [](auto parentState) {
+    constexpr auto collect_child_states_recursive = [](auto parentState) {
         auto transitions = flatten_transition_table(parentState);
         auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStates));
 
         return remove_duplicate_typeids(collectedStates);
     };
 
-    const auto collect_states_recursive = [](auto&& parentState) {
+    constexpr auto collect_states_recursive = [](auto&& parentState) {
         auto collectedStates
             = bh::append(collect_child_states_recursive(parentState), bh::typeid_(parentState));
         return remove_duplicate_typeids(collectedStates);

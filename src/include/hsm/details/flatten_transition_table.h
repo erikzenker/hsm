@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "traits.h"
 
 #include <boost/hana.hpp>
@@ -12,22 +13,22 @@ namespace bh{
     }
 
 namespace {
-template <class State> constexpr auto flatten_sub_transition_table2(State&& state);
+template <class State> constexpr auto flatten_sub_transition_table(State&& state);
 }
 
-const auto flatten_transition_table = [](auto state) {
-    auto transitionTable = state.make_transition_table();
-    auto collectedTransitions = bh::fold_left(
+constexpr auto flatten_transition_table = [](auto state) {
+    const auto transitionTable = state.make_transition_table();
+    const auto collectedTransitions = bh::fold_left(
         transitionTable, bh::make_tuple(), [state](auto transitions, auto transition) {
             return bh::concat(
                 bh::append(transitions, bh::prepend(transition, state)),
-                flatten_sub_transition_table2(bh::back(transition)));
+                flatten_sub_transition_table(bh::back(transition)));
         });
     return collectedTransitions;
 };
 
 namespace {
-template <class State> constexpr auto flatten_sub_transition_table2(State&& state)
+template <class State> constexpr auto flatten_sub_transition_table(State&& state)
 {
     return bh::if_(
         has_transition_table(state),
