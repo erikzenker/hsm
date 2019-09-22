@@ -10,9 +10,9 @@ Currently the following features are supported:
 * Anonymous transitions
 * Submachines
 * Pseudo exit states
+* Pseudo entry states
 
 What is missing:
-* Pseudo entry states
 * Orthogonal regions
 * Explixit terminate state
 * Entry/exit state behavior
