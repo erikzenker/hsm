@@ -16,7 +16,7 @@ namespace {
 constexpr auto collectEventTypeids = [](auto transition) { return bh::at_c<2>(transition).typeid_; };
 }
 
-constexpr auto collect_events_typeids_recursive
+constexpr auto collect_event_typeids_recursive
     = [](auto state) { 
         return bh::transform(flatten_transition_table(state), collectEventTypeids);    
 };
