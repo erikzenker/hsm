@@ -108,14 +108,13 @@ const auto addDispatchTableEntryOfSubMachineExits
 
 
 
-template <class Transitions, class EventTypeid>
-constexpr auto filter_transitions(const Transitions& transitions, const EventTypeid& eventTypeid)
+constexpr auto filter_transitions = [](const auto& transitions, const auto& eventTypeid)
 {
     auto isEvent
         = [&eventTypeid](auto elem) { return bh::equal(bh::at_c<2>(elem).typeid_, eventTypeid); };
 
     return bh::filter(transitions, isEvent);
-}
+};
 
 template <class RootState> constexpr auto fill_dispatch_table(const RootState& rootState)
 {

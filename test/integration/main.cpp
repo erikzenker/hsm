@@ -36,6 +36,8 @@ struct e7 {
 };
 struct e8 {
 };
+struct e9 {
+};
 
 // Guards
 const auto g1 = [](auto) { return true; };
@@ -97,6 +99,7 @@ struct MainState {
             hsm::transition(S1 {}, hsm::event<e6> {}, g1, a2, S1 {}),
             hsm::transition(S1 {}, hsm::event<e7> {}, g2, a1, S2 {}),
             hsm::transition(S1 {}, hsm::event<e8> {}, g3, a1, S2 {}),
+            hsm::transition(S1 {}, hsm::event<e9> {}, g1, a1, hsm::Entry {SubState{}, S2{}}),
             hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e3> {}, g1, a1, S3 {}),
@@ -178,6 +181,13 @@ TEST_F(HsmTests, should_exit_substate_on_event_in_parentstate)
 
     sm.process_event(e2 {});
     ASSERT_TRUE(sm.is(MainState {}, S1 {}));
+}
+
+TEST_F(HsmTests, should_entry_substate_on_pseudo_entry)
+{
+    hsm::Sm<MainState> sm;
+    sm.process_event(e9 {});
+    ASSERT_TRUE(sm.is(SubState {}, S2 {}));
 }
 
 TEST_F(HsmTests, should_exit_subsubstate_on_event_in_parentstate)
