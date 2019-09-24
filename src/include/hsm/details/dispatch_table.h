@@ -5,9 +5,9 @@
 
 #include <boost/hana.hpp>
 
-#include <tuple>
-#include <optional>
 #include <functional>
+#include <optional>
+#include <tuple>
 
 namespace hsm {
 
@@ -22,8 +22,7 @@ constexpr auto nStates
 constexpr auto nEvents
     = [](const auto& rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
 
-template <class Event>
-struct NextState {
+template <class Event> struct NextState {
     StateIdx parentState;
     StateIdx state;
     std::function<bool(Event)> guard;
@@ -31,23 +30,22 @@ struct NextState {
 };
 
 template <class RootState, class Event>
-using DispatchArray = std::array<std::array<NextState<Event>, nStates(RootState {})>, nParentStates(RootState {})>;
+using DispatchArray
+    = std::array<std::array<NextState<Event>, nStates(RootState {})>, nParentStates(RootState {})>;
 
 template <class RootState, class Event> struct DispatchTable {
     static DispatchArray<RootState, Event> table;
 };
 
 template <class RootState, class Event>
-DispatchArray<RootState, Event> DispatchTable<RootState, Event>::table{};
+DispatchArray<RootState, Event> DispatchTable<RootState, Event>::table {};
 
-constexpr auto resolveDst
-    = [](const auto& transition) {
-          return switch_(
-              case_(
-                  has_transition_table, [](auto submachine) { return submachine.initial_state(); }),
-              case_(is_entry_state, [](auto entry) { return entry.get_state(); }),
-              case_(otherwise, [](auto state) { return state; }))(getDst(transition));
-      };
+constexpr auto resolveDst = [](const auto& transition) {
+    return switch_(
+        case_(has_transition_table, [](auto submachine) { return submachine.initial_state(); }),
+        case_(is_entry_state, [](auto entry) { return entry.get_state(); }),
+        case_(otherwise, [](auto state) { return state; }))(getDst(transition));
+};
 
 constexpr auto resolveDstParent = [](const auto& transition) {
     return switch_(
@@ -71,10 +69,18 @@ constexpr auto resolveSrcParent = [](const auto& transition) {
 };
 
 constexpr auto resolveAction = [](const auto& transition) {
-    return switch_(
-        case_(has_entry_action, [](auto dst) { return dst.on_entry();}), 
-        case_(otherwise, [transition](auto) { return getAction(transition);}))
-        (getDst(transition));
+    const auto exitAction = switch_(
+        case_(has_exit_action, [](auto src) { return src.on_exit(); }),
+        case_(otherwise, [transition](auto) { return [](auto) {}; }))(getSrc(transition));
+    const auto action = getAction(transition);
+    const auto entryAction = switch_(
+        case_(has_entry_action, [](auto dst) { return dst.on_entry(); }),
+        case_(otherwise, [transition](auto) { return [](auto) {}; }))(getDst(transition));
+    return [exitAction, action, entryAction](const auto& event) {
+        exitAction(event);    
+        action(event);
+        entryAction(event);
+    };
 };
 
 const auto addDispatchTableEntry
@@ -86,7 +92,7 @@ const auto addDispatchTableEntry
           const auto toParent = getParentStateIdx(rootState, resolveDstParent(transition));
           const auto to = getStateIdx(rootState, resolveDst(transition));
 
-          dispatchTable[fromParent][from] = {toParent, to, guard, action};
+          dispatchTable[fromParent][from] = { toParent, to, guard, action };
       };
 
 const auto addDispatchTableEntryOfSubMachineExits
@@ -106,17 +112,13 @@ const auto addDispatchTableEntryOfSubMachineExits
                               = getParentStateIdx(rootState, resolveDstParent(transition));
                           const auto to = getStateIdx(rootState, resolveDst(transition));
 
-                          dispatchTable[fromParent][from]
-                              = {toParent, to, guard, action};
+                          dispatchTable[fromParent][from] = { toParent, to, guard, action };
                       });
               },
               [](auto) {})(getSrc(transition));
       };
 
-
-
-constexpr auto filter_transitions = [](const auto& transitions, const auto& eventTypeid)
-{
+constexpr auto filter_transitions = [](const auto& transitions, const auto& eventTypeid) {
     auto isEvent
         = [&eventTypeid](auto elem) { return bh::equal(bh::at_c<2>(elem).typeid_, eventTypeid); };
 

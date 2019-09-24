@@ -13,6 +13,9 @@ struct S1 {
     constexpr auto on_entry(){
     }
 
+    constexpr auto on_exit(){
+    }
+
     constexpr auto make_transition_table(){
     }    
 };
@@ -82,6 +85,16 @@ TEST_F(TraitsTests, should_recognize_on_entry_function)
     namespace bh = boost::hana;
 
     auto result = bh::if_(hsm::has_entry_action(S1{}),
+                    [](){ return true;},
+                    [](){ return false;})();
+    ASSERT_TRUE(result);
+}
+
+TEST_F(TraitsTests, should_recognize_on_exit_function)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(hsm::has_exit_action(S1{}),
                     [](){ return true;},
                     [](){ return false;})();
     ASSERT_TRUE(result);

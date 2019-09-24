@@ -9,6 +9,10 @@
 
 using namespace ::testing;
 
+namespace {
+namespace bh = boost::hana;
+}
+
 class DispatchTableTests : public Test {
 };
 
@@ -16,21 +20,25 @@ struct S {
 
     constexpr auto on_entry()
     {
-        return [](){return true;};
+        return [](auto counter) { (*counter)++; };
+    }
+    constexpr auto on_exit()
+    {
+        return [](auto counter) { (*counter)++; };
     }
 };
 
 TEST_F(DispatchTableTests, should_resolve_action)
 {
-    namespace bh = boost::hana;
+    auto counter = std::make_shared<int>(0);
 
-    auto action = []() {return false;};
+    auto action = [](auto counter) { (*counter)++; };
 
-    auto foo = S{}.on_entry();
-
-    auto transition = bh::make_tuple(0, 1, 2, 3, action, S{});
+    auto transition = bh::make_tuple(0, S {}, 2, 3, action, S {});
 
     auto resolvedAction = hsm::resolveAction(transition);
 
-    ASSERT_TRUE(resolvedAction());
+    resolvedAction(counter);
+
+    ASSERT_EQ(3, *counter);
 }
