@@ -11,11 +11,11 @@ Currently the following features are supported:
 * Submachines
 * Pseudo exit states
 * Pseudo entry states
+* Entry/exit state behavior
 
 What is missing:
 * Orthogonal regions
 * Explixit terminate state
-* Entry/exit state behavior
 * Internal transitions
 * Direct transitions
 * Fork Entry

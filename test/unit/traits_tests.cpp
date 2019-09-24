@@ -9,9 +9,18 @@ using namespace ::testing;
 class TraitsTests : public Test {
 };
 
-class S1 {
+struct S1 {
+    constexpr auto on_entry(){
+    }
+
+    constexpr auto on_exit(){
+    }
+
+    constexpr auto make_transition_table(){
+    }    
 };
-class S2 {
+
+struct S2 {
 };
 
 TEST_F(TraitsTests, should_recognize_exit_state)
@@ -58,4 +67,35 @@ TEST_F(TraitsTests, should_not_call_callable)
     bh::if_(hsm::is_callable(not_callable, args),
                     [arg](auto callable){ return callable(arg);},
                     [](auto callable){ return 1; })(not_callable);
+}
+
+TEST_F(TraitsTests, should_recognize_transition_table)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(hsm::has_transition_table(S1{}),
+                    [](){ return true;},
+                    [](){ return false;})();
+    ASSERT_TRUE(result);
+}
+
+
+TEST_F(TraitsTests, should_recognize_on_entry_function)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(hsm::has_entry_action(S1{}),
+                    [](){ return true;},
+                    [](){ return false;})();
+    ASSERT_TRUE(result);
+}
+
+TEST_F(TraitsTests, should_recognize_on_exit_function)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(hsm::has_exit_action(S1{}),
+                    [](){ return true;},
+                    [](){ return false;})();
+    ASSERT_TRUE(result);
 }

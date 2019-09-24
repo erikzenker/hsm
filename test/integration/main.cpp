@@ -15,6 +15,14 @@ struct S3 {
 };
 struct S4 {
 };
+struct S5 {
+    constexpr auto on_entry(){
+        return [](auto event){event.called->set_value();};    
+    }
+    constexpr auto on_exit(){
+        return [](auto event){event.called->set_value();};
+    }
+};
 
 // Events
 struct e1 {
@@ -24,6 +32,8 @@ struct e2 {
 struct e3 {
 };
 struct e4 {
+    e4() : called(std::make_shared<std::promise<void>>()){}
+    std::shared_ptr<std::promise<void>> called;    
 };
 struct e5 {
 };
@@ -31,13 +41,21 @@ struct e6 {
     e6(const std::shared_ptr<std::promise<void>>& called) : called(called){}
     std::shared_ptr<std::promise<void>> called;    
 };
-
 struct e7 {
 };
 struct e8 {
 };
 struct e9 {
 };
+struct e10 {
+    e10(const std::shared_ptr<std::promise<void>>& called) : called(called){}
+    std::shared_ptr<std::promise<void>> called;    
+};
+struct e11 {
+    e11(const std::shared_ptr<std::promise<void>>& called) : called(called){}
+    std::shared_ptr<std::promise<void>> called;    
+};
+
 
 // Guards
 const auto g1 = [](auto) { return true; };
@@ -79,6 +97,10 @@ struct SubState {
             hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, hsm::none {}     , g1, a1, S4 {}));
         // clang-format on
     }
+    
+    constexpr auto on_entry(){
+        return [](auto event){event.called->set_value();};    
+    }
 
     constexpr auto initial_state()
     {
@@ -100,10 +122,13 @@ struct MainState {
             hsm::transition(S1 {}, hsm::event<e7> {}, g2, a1, S2 {}),
             hsm::transition(S1 {}, hsm::event<e8> {}, g3, a1, S2 {}),
             hsm::transition(S1 {}, hsm::event<e9> {}, g1, a1, hsm::Entry {SubState{}, S2{}}),
+            hsm::transition(S1 {}, hsm::event<e10> {}, g1, a1, SubState {}),
+            hsm::transition(S1 {}, hsm::event<e11> {}, g1, a1, S5 {}),
             hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e3> {}, g1, a1, S3 {}),
             hsm::transition(S3 {}, hsm::none {}, g1, a1, S1 {}),
+            hsm::transition(S5 {}, hsm::event<e11> {}, g1, a1, S1 {}),
             hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}));
         // clang-format on
     }
@@ -152,6 +177,30 @@ TEST_F(HsmTests, should_transit_into_SubState)
 
     ASSERT_TRUE(sm
     .is(SubState {}, S4 {}));
+}
+
+TEST_F(HsmTests, should_call_entry_action)
+{
+    auto entryActionCalled = std::make_shared<std::promise<void>>();
+
+    hsm::Sm<MainState> sm;
+    sm.process_event(e10 {entryActionCalled});
+
+    ASSERT_EQ(std::future_status::ready, entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
+
+}
+
+TEST_F(HsmTests, should_call_entry_and_exit_action)
+{
+    auto entryActionCalled = std::make_shared<std::promise<void>>();    
+    auto exitActionCalled = std::make_shared<std::promise<void>>();
+
+    hsm::Sm<MainState> sm;
+    sm.process_event(e11 {entryActionCalled});
+    ASSERT_TRUE(sm.is(S5 {}));
+    sm.process_event(e11 {exitActionCalled});
+
+    ASSERT_EQ(std::future_status::ready, exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(HsmTests, should_transit_into_SubSubState)
