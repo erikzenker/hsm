@@ -70,12 +70,19 @@ constexpr auto resolveSrcParent = [](const auto& transition) {
         getSrc(transition));
 };
 
+constexpr auto resolveAction = [](const auto& transition) {
+    return switch_(
+        case_(has_entry_action, [](auto dst) { return dst.on_entry();}), 
+        case_(otherwise, [transition](auto) { return getAction(transition);}))
+        (getDst(transition));
+};
+
 const auto addDispatchTableEntry
     = [](const auto& rootState, const auto& transition, auto& dispatchTable) {
           const auto fromParent = getParentStateIdx(rootState, resolveSrcParent(transition));
           const auto from = getStateIdx(rootState, resolveSrc(transition));
           const auto guard = getGuard(transition);
-          const auto action = getAction(transition);
+          const auto action = resolveAction(transition);
           const auto toParent = getParentStateIdx(rootState, resolveDstParent(transition));
           const auto to = getStateIdx(rootState, resolveDst(transition));
 
