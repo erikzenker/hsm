@@ -9,12 +9,24 @@ if(NOT TARGET hsm::hsm)
 endif()
 
 # target defintion
-add_executable(hsmIntegrationTests main.cpp)
+add_executable(hsmIntegrationTests 
+        main.cpp 
+        integration.cpp
+        direct_transition.cpp
+)
+
+gtest_add_tests(
+        TARGET
+          hsmIntegrationTests
+        TEST_SUFFIX .noArgs
+        TEST_LIST   noArgsTests)
+
 target_link_libraries(hsmIntegrationTests
         PRIVATE
           hsm::hsm
           GTest::Main
 )
-add_test(NAME hsm.IntegrationTests
-        COMMAND hsmIntegrationTests
-)
+
+#add_test(NAME hsm.IntegrationTests
+#        COMMAND hsmIntegrationTests
+#)
