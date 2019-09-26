@@ -55,6 +55,10 @@ struct e11 {
     e11(const std::shared_ptr<std::promise<void>>& called) : called(called){}
     std::shared_ptr<std::promise<void>> called;    
 };
+struct e12 {
+};
+struct e13 {
+};
 
 
 // Guards
@@ -108,6 +112,22 @@ struct SubState {
     }
 };
 
+struct SubState2 {
+    constexpr auto make_transition_table()
+    {
+        // clang-format off        
+        return hsm::transition_table(
+            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}));
+        // clang-format on
+    }
+    
+    constexpr auto initial_state()
+    {
+        return S1 {};
+    }
+};
+
+
 struct MainState {
     constexpr auto make_transition_table()
     {
@@ -124,12 +144,15 @@ struct MainState {
             hsm::transition(S1 {}, hsm::event<e9> {}, g1, a1, hsm::Entry {SubState{}, S2{}}),
             hsm::transition(S1 {}, hsm::event<e10> {}, g1, a1, SubState {}),
             hsm::transition(S1 {}, hsm::event<e11> {}, g1, a1, S5 {}),
+            hsm::transition(S1 {}, hsm::event<e13> {}, g1, a1, SubState2 {}),
             hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e3> {}, g1, a1, S3 {}),
             hsm::transition(S3 {}, hsm::none {}, g1, a1, S1 {}),
             hsm::transition(S5 {}, hsm::event<e11> {}, g1, a1, S1 {}),
-            hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}));
+            hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}),
+            hsm::transition(S1{}, hsm::event<e12> {}, g1, a1, hsm::Direct{SubState{}, S4{}}),
+            hsm::transition(hsm::Direct{SubState{}, S4{}}, hsm::event<e12> {}, g1, a1, hsm::Direct{SubState2{}, S1{}}));
         // clang-format on
     }
 
@@ -304,6 +327,23 @@ TEST_F(HsmTests, should_not_block_transition_by_guard)
     ASSERT_TRUE(sm.is(S1 {}));
     sm.process_event(e8 {});
     ASSERT_TRUE(sm.is(S2 {}));
+}
+
+TEST_F(HsmTests, should_transit_directly_into_substate)
+{
+    hsm::Sm<MainState> sm;
+    sm.process_event(e12 {});
+    ASSERT_TRUE(sm.is(SubState{}, S4 {}));
+}
+
+TEST_F(HsmTests, should_transit_directly_between_substates)
+{
+    hsm::Sm<MainState> sm;
+    
+    sm.process_event(e4 {});
+    ASSERT_TRUE(sm.is(SubState{}, S4 {}));
+    sm.process_event(e12 {});    
+    ASSERT_TRUE(sm.is(SubState2{}, S1 {}));
 }
 
 TEST_F(HsmTests, should_process_alot_event)

@@ -44,6 +44,7 @@ constexpr auto resolveDst = [](const auto& transition) {
     return switch_(
         case_(has_transition_table, [](auto submachine) { return submachine.initial_state(); }),
         case_(is_entry_state, [](auto entry) { return entry.get_state(); }),
+        case_(is_direct_state, [](auto direct) { return direct.get_state(); }),
         case_(otherwise, [](auto state) { return state; }))(getDst(transition));
 };
 
@@ -51,6 +52,7 @@ constexpr auto resolveDstParent = [](const auto& transition) {
     return switch_(
         case_(has_transition_table, [](auto submachine) { return submachine; }),
         case_(is_entry_state, [](auto entry) { return entry.get_parent_state(); }),
+        case_(is_direct_state, [](auto direct) { return direct.get_parent_state(); }),
         case_(otherwise, [&transition](auto) { return getSrcParent(transition); }))(
         getDst(transition));
 };
@@ -58,12 +60,14 @@ constexpr auto resolveDstParent = [](const auto& transition) {
 constexpr auto resolveSrc = [](const auto& transition) {
     return switch_(
         case_(is_exit_state, [](auto exit) { return exit.get_state(); }),
+        case_(is_direct_state, [](auto direct) { return direct.get_state(); }),
         case_(otherwise, [](auto state) { return state; }))(getSrc(transition));
 };
 
 constexpr auto resolveSrcParent = [](const auto& transition) {
     return switch_(
         case_(is_exit_state, [](auto exit) { return exit.get_parent_state(); }),
+        case_(is_direct_state, [](auto direct) { return direct.get_parent_state(); }),
         case_(otherwise, [transition](auto) { return getSrcParent(transition); }))(
         getSrc(transition));
 };

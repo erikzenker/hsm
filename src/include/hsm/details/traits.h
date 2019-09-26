@@ -16,6 +16,7 @@ namespace hsm {
 
     auto is_exit_state = bh::is_valid([](auto&& state) -> decltype(state.isExitState) {});
     auto is_entry_state = bh::is_valid([](auto&& state) -> decltype(state.isEntryState) {});
+    auto is_direct_state = bh::is_valid([](auto&& state) -> decltype(state.isDirectState) {});
 
     auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});    
 
