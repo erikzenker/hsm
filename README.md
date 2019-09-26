@@ -12,12 +12,12 @@ Currently the following features are supported:
 * Pseudo exit states
 * Pseudo entry states
 * Entry/exit state behavior
+* Direct transitions
 
 What is missing:
 * Orthogonal regions
 * Explixit terminate state
 * Internal transitions
-* Direct transitions
 * Fork Entry
 * History
 
