@@ -9,10 +9,9 @@ Currently the following features are supported:
 * External transitions with guards and actions
 * Anonymous transitions
 * Submachines
-* Pseudo exit states
-* Pseudo entry states
-* Entry/exit state behavior
-* Direct transitions
+* [Pseudo entry/exit states](test/integration/entry_exit_pseudo_states.cpp)
+* [Entry/exit state behavior](test/integration/entry_exit_actions.cpp)
+* [Direct transitions](test/integration/direct_transitions.cpp)
 
 What is missing:
 * Orthogonal regions

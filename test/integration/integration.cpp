@@ -6,6 +6,8 @@
 #include <future>
 #include <memory>
 
+namespace {
+
 // States
 struct S1 {
 };
@@ -136,6 +138,8 @@ struct MainState {
         return S1 {};
     }
 };
+
+}
 
 class HsmTests : public Test {
     protected:    

@@ -2,20 +2,20 @@
 
 #include <gtest/gtest.h>
 
-#include <future>
+namespace {
 
 // States
 struct S1 {
 };
 struct S2 {
 };
+struct S3 {
+};
 
 // Events
 struct e1 {
 };
 struct e2 {
-};
-struct e3 {
 };
 
 // Guards
@@ -25,14 +25,14 @@ const auto g1 = [](auto) { return true; };
 const auto a1 = [](auto event) {};
 
 using namespace ::testing;
-using namespace boost::hana;
 
 struct SubState {
     constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S1 {})
+            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}),
+            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, S3 {})
         );
         // clang-format on
     }
@@ -48,10 +48,9 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            //              Source     , Event                    , Target
-            hsm::transition(S1 {}, hsm::event<e3> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, S2 {}),
-            hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {})
+            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, hsm::Entry {SubState{}, S3{}}),
+            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, SubState{}),                        
+            hsm::transition(hsm::Exit { SubState {}, S2 {} }, hsm::none {}, g1, a1, S1 {})
         );
         // clang-format on
     }
@@ -62,16 +61,23 @@ struct MainState {
     }
 };
 
-class FailingTests : public Test {
+}
+
+class EntryExitPseudoStatesTests : public Test {
     protected:    
         hsm::Sm<MainState> sm;
 };
 
-TEST_F(FailingTests, fails1)
+TEST_F(EntryExitPseudoStatesTests, should_entry_substate_on_pseudo_entry)
 {
-    ASSERT_TRUE(sm.is(S1 {}));
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(SubState {}, S3 {}));
+}
+
+TEST_F(EntryExitPseudoStatesTests, should_exit_subsubstate_from_pseudo_exit)
+{
     sm.process_event(e2 {});
-    ASSERT_TRUE(sm.is(S2 {}));
-    sm.process_event(e2 {});
+    ASSERT_TRUE(sm.is(SubState {}, S1 {}));
+    sm.process_event(e1 {});
     ASSERT_TRUE(sm.is(S1 {}));
 }
