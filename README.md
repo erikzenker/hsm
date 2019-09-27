@@ -7,7 +7,7 @@ The hana state machine (hsm) is a [finite state machine](https://en.wikipedia.or
 Currently the following features are supported:
 * Initial pseudo state
 * External transitions with guards and actions
-* Anonymous transitions
+* [Anonymous transitions](test/integration/anonymous_transition.cpp)
 * Submachines
 * [Pseudo entry/exit states](test/integration/entry_exit_pseudo_states.cpp)
 * [Entry/exit state behavior](test/integration/entry_exit_actions.cpp)

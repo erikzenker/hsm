@@ -15,6 +15,7 @@ add_executable(hsmIntegrationTests
         direct_transition.cpp
         entry_exit_actions.cpp
         entry_exit_pseudo_states.cpp
+        anonymous_transition.cpp
 )
 
 gtest_add_tests(

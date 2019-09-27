@@ -99,8 +99,8 @@ struct SubState {
             hsm::transition(S4 {}, hsm::event<e5> {}, g1, a1, S3 {}),
             hsm::transition(S4 {}, hsm::event<e6> {}, g1, a2, S4 {}),
             hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, SubSubState {}),
-            hsm::transition(SubSubState {}, hsm::event<e2> {}, g1, a1, S4 {}),
-            hsm::transition(hsm::Exit { SubSubState {}, S2 {} }, hsm::none {}, g1, a1, S4 {}));
+            hsm::transition(SubSubState {}, hsm::event<e2> {}, g1, a1, S4 {})
+        );
         // clang-format on
     }
 
@@ -123,7 +123,6 @@ struct MainState {
             hsm::transition(S1 {}, hsm::event<e6> {}, g1, a2, S1 {}),
             hsm::transition(S1 {}, hsm::event<e7> {}, g2, a1, S2 {}),
             hsm::transition(S1 {}, hsm::event<e8> {}, g3, a1, S2 {}),
-            hsm::transition(S1 {}, hsm::event<e9> {}, g1, a1, hsm::Entry {SubState{}, S2{}}),
             hsm::transition(S1 {}, hsm::event<e10> {}, g1, a1, SubState {}),
             hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {}),
@@ -202,12 +201,6 @@ TEST_F(HsmTests, should_exit_substate_on_event_in_parentstate)
     ASSERT_TRUE(sm.is(MainState {}, S1 {}));
 }
 
-TEST_F(HsmTests, should_entry_substate_on_pseudo_entry)
-{
-    sm.process_event(e9 {});
-    ASSERT_TRUE(sm.is(SubState {}, S2 {}));
-}
-
 TEST_F(HsmTests, should_exit_subsubstate_on_event_in_parentstate)
 {
     sm.process_event(e4 {});
@@ -216,16 +209,6 @@ TEST_F(HsmTests, should_exit_subsubstate_on_event_in_parentstate)
     ASSERT_TRUE(sm.is(SubSubState {}, S1 {}));
 
     sm.process_event(e2 {});
-    ASSERT_TRUE(sm.is(SubState {}, S4 {}));
-}
-
-TEST_F(HsmTests, should_exit_subsubstate_from_pseudo_exit)
-{
-    sm.process_event(e4 {});
-    sm.process_event(e1 {});
-    sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(SubSubState {}, S1 {}));
-    sm.process_event(e1 {});
     ASSERT_TRUE(sm.is(SubState {}, S4 {}));
 }
 
