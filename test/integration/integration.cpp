@@ -16,14 +16,6 @@ struct S3 {
 struct S4 {
 };
 struct S5 {
-    constexpr auto on_entry()
-    {
-        return [](auto event) { event.called->set_value(); };
-    }
-    constexpr auto on_exit()
-    {
-        return [](auto event) { event.called->set_value(); };
-    }
 };
 
 // Events
@@ -110,11 +102,6 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto on_entry()
-    {
-        return [](auto event) { event.called->set_value(); };
-    }
-
     constexpr auto initial_state()
     {
         return S4 {};
@@ -136,12 +123,10 @@ struct MainState {
             hsm::transition(S1 {}, hsm::event<e8> {}, g3, a1, S2 {}),
             hsm::transition(S1 {}, hsm::event<e9> {}, g1, a1, hsm::Entry {SubState{}, S2{}}),
             hsm::transition(S1 {}, hsm::event<e10> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e11> {}, g1, a1, S5 {}),
             hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e3> {}, g1, a1, S3 {}),
             hsm::transition(S3 {}, hsm::none {}, g1, a1, S1 {}),
-            hsm::transition(S5 {}, hsm::event<e11> {}, g1, a1, S1 {}),
             hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}));
         // clang-format on
     }
@@ -185,30 +170,6 @@ TEST_F(HsmTests, should_transit_into_SubState)
     sm.process_event(e4 {});
 
     ASSERT_TRUE(sm.is(SubState {}, S4 {}));
-}
-
-TEST_F(HsmTests, should_call_entry_action)
-{
-    auto entryActionCalled = std::make_shared<std::promise<void>>();
-    sm.process_event(e10 { entryActionCalled });
-
-    ASSERT_EQ(
-        std::future_status::ready,
-        entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
-}
-
-TEST_F(HsmTests, should_call_entry_and_exit_action)
-{
-    auto entryActionCalled = std::make_shared<std::promise<void>>();
-    auto exitActionCalled = std::make_shared<std::promise<void>>();
-
-    sm.process_event(e11 { entryActionCalled });
-    ASSERT_TRUE(sm.is(S5 {}));
-    sm.process_event(e11 { exitActionCalled });
-
-    ASSERT_EQ(
-        std::future_status::ready,
-        exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(HsmTests, should_transit_into_SubSubState)

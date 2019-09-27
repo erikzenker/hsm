@@ -9,22 +9,6 @@
 // States
 struct S1 {
 };
-struct S2 {
-};
-struct S3 {
-};
-struct S4 {
-};
-struct S5 {
-    constexpr auto on_entry()
-    {
-        return [](auto event) { event.called->set_value(); };
-    }
-    constexpr auto on_exit()
-    {
-        return [](auto event) { event.called->set_value(); };
-    }
-};
 
 // Events
 struct e1 {
@@ -33,58 +17,14 @@ struct e2 {
 };
 struct e3 {
 };
-struct e4 {
-    e4()
-        : called(std::make_shared<std::promise<void>>())
-    {
-    }
-    std::shared_ptr<std::promise<void>> called;
-};
-struct e5 {
-};
-struct e6 {
-    e6(const std::shared_ptr<std::promise<void>>& called)
-        : called(called)
-    {
-    }
-    std::shared_ptr<std::promise<void>> called;
-};
-struct e7 {
-};
-struct e8 {
-};
-struct e9 {
-};
-struct e10 {
-    e10(const std::shared_ptr<std::promise<void>>& called)
-        : called(called)
-    {
-    }
-    std::shared_ptr<std::promise<void>> called;
-};
-struct e11 {
-    e11(const std::shared_ptr<std::promise<void>>& called)
-        : called(called)
-    {
-    }
-    std::shared_ptr<std::promise<void>> called;
-};
-struct e12 {
-};
-struct e13 {
-};
 
 // Guards
 const auto g1 = [](auto) { return true; };
-const auto g2 = [](auto) { return false; };
-const auto g3 = [](auto) { return true; };
 
 // Actions
 const auto a1 = [](auto event) {};
-const auto a2 = [](auto event) { event.called->set_value(); };
 
 using namespace ::testing;
-using namespace boost::hana;
 
 struct SubState {
     constexpr auto make_transition_table()
@@ -107,7 +47,7 @@ struct SubState2 {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {})
+            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S1 {})
         );
         // clang-format on
     }

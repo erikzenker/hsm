@@ -13,6 +13,8 @@ add_executable(hsmIntegrationTests
         main.cpp 
         integration.cpp
         direct_transition.cpp
+        entry_exit_actions.cpp
+        failing_test.cpp
 )
 
 gtest_add_tests(
