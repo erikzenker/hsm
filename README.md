@@ -5,10 +5,10 @@
 The hana state machine (hsm) is a [finite state machine](https://en.wikipedia.org/wiki/Finite-state_machine) library based on the [boost hana](https://www.boost.org/doc/libs/1_61_0/libs/hana/doc/html/index.html) meta programming library. It follows the principles of the [boost msm](https://www.boost.org/doc/libs/1_64_0/libs/msm/doc/HTML/index.html) and [boost sml](https://boost-experimental.github.io/sml/index.html) libraries, but tries to reduce own complex meta programming code to a minimum. The library is in an very early developement phase.
 
 Currently the following features are supported:
-* Initial pseudo state
-* External transitions with guards and actions
+* [Initial pseudo state](test/integrations/basic_transitions.cpp)
+* [External transitions with guards and actions](test/integration/guards_actions.cpp)
 * [Anonymous transitions](test/integration/anonymous_transition.cpp)
-* Submachines
+* [Submachines](test/integration/basic_transitions.cpp)
 * [Pseudo entry/exit states](test/integration/entry_exit_pseudo_states.cpp)
 * [Entry/exit state behavior](test/integration/entry_exit_actions.cpp)
 * [Direct transitions](test/integration/direct_transitions.cpp)
