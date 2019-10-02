@@ -56,7 +56,7 @@ struct player {
   }
 
   auto constexpr initial_state(){
-    return Empty{};  
+    return initial(Empty{});  
   }
 
 };

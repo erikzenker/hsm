@@ -49,7 +49,7 @@ struct SubSubState {
 
     constexpr auto initial_state()
     {
-        return S1 {};
+        return hsm::initial(S1 {});
     }
 };
 
@@ -68,7 +68,7 @@ struct SubState {
 
     constexpr auto initial_state()
     {
-        return S1 {};
+        return hsm::initial(S1 {});
     }
 };
 
@@ -92,28 +92,28 @@ struct MainState {
 
     constexpr auto initial_state()
     {
-        return S1 {};
+        return hsm::initial(S1 {});
     }
 };
 
 }
 
-class HsmTests : public Test {
+class BasicTransitionTests : public Test {
     protected:    
         hsm::Sm<MainState> sm;
 };
 
-TEST_F(HsmTests, should_start_in_initial_state)
+TEST_F(BasicTransitionTests, should_start_in_initial_state)
 {
     ASSERT_TRUE(sm.is(S1 {}));
 }
 
-TEST_F(HsmTests, should_start_in_root_state)
+TEST_F(BasicTransitionTests, should_start_in_root_state)
 {
     ASSERT_TRUE(sm.is(MainState {}, S1 {}));
 }
 
-TEST_F(HsmTests, should_process_event)
+TEST_F(BasicTransitionTests, should_process_event)
 {
     ASSERT_TRUE(sm.is(S1 {}));
 
@@ -121,19 +121,19 @@ TEST_F(HsmTests, should_process_event)
     ASSERT_TRUE(sm.is(S2 {}));
 }
 
-TEST_F(HsmTests, should_throw_on_unexpected_event)
+TEST_F(BasicTransitionTests, should_throw_on_unexpected_event)
 {
     EXPECT_THROW(sm.process_event(e3 {}), std::exception);
 }
 
-TEST_F(HsmTests, should_transit_into_SubState)
+TEST_F(BasicTransitionTests, should_transit_into_SubState)
 {
     sm.process_event(e4 {});
 
     ASSERT_TRUE(sm.is(SubState {}, S1 {}));
 }
 
-TEST_F(HsmTests, should_transit_into_SubSubState)
+TEST_F(BasicTransitionTests, should_transit_into_SubSubState)
 {
     sm.process_event(e4 {});
     sm.process_event(e1 {});
@@ -142,7 +142,7 @@ TEST_F(HsmTests, should_transit_into_SubSubState)
     ASSERT_TRUE(sm.is(SubSubState {}, S1 {}));
 }
 
-TEST_F(HsmTests, should_transit_in_SubState_with_unique_event)
+TEST_F(BasicTransitionTests, should_transit_in_SubState_with_unique_event)
 {
     sm.process_event(e4 {});
     sm.process_event(e5 {});
@@ -150,7 +150,7 @@ TEST_F(HsmTests, should_transit_in_SubState_with_unique_event)
     ASSERT_TRUE(sm.is(SubState {}, S3 {}));
 }
 
-TEST_F(HsmTests, should_exit_substate_on_event_in_parentstate)
+TEST_F(BasicTransitionTests, should_exit_substate_on_event_in_parentstate)
 {
     sm.process_event(e4 {});
     ASSERT_TRUE(sm.is(SubState {}, S1 {}));
@@ -159,7 +159,7 @@ TEST_F(HsmTests, should_exit_substate_on_event_in_parentstate)
     ASSERT_TRUE(sm.is(MainState {}, S1 {}));
 }
 
-TEST_F(HsmTests, should_exit_subsubstate_on_event_in_parentstate)
+TEST_F(BasicTransitionTests, should_exit_subsubstate_on_event_in_parentstate)
 {
     sm.process_event(e4 {});
     sm.process_event(e1 {});
@@ -170,7 +170,7 @@ TEST_F(HsmTests, should_exit_subsubstate_on_event_in_parentstate)
     ASSERT_TRUE(sm.is(SubState {}, S1 {}));
 }
 
-TEST_F(HsmTests, should_process_alot_event)
+TEST_F(BasicTransitionTests, should_process_alot_event)
 {
 
     ASSERT_TRUE(sm.is(S1 {}));

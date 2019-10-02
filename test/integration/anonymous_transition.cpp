@@ -41,7 +41,7 @@ struct MainState {
 
     constexpr auto initial_state()
     {
-        return S1 {};
+        return hsm::initial(S1 {});
     }
 };
 

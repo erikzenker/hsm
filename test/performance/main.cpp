@@ -55,7 +55,7 @@ struct SubSubState {
 
     constexpr auto initial_state()
     {
-        return S1 {};
+        return hsm::initial(S1 {});
     }
 };
 
@@ -78,7 +78,7 @@ struct SubState {
 
     constexpr auto initial_state()
     {
-        return S1 {};
+        return hsm::initial(S1 {});
     }
 };
 
@@ -103,7 +103,7 @@ struct MainState {
 
     constexpr auto initial_state()
     {
-        return S1 {};
+        return hsm::initial(S1 {});
     }
 };
 

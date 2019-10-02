@@ -37,7 +37,7 @@ struct Turnstile {
 
     constexpr auto initial_state()
     {
-        return Locked {};
+        return hsm::initial(Locked {});
     }
 };
 
