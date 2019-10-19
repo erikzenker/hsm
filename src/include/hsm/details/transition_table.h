@@ -18,6 +18,7 @@ using EventIdx = Idx;
 using ActionIdx = Idx;
 using GuardIdx = Idx;
 
+// TODO: replace these free standing functions by type alias
 template <typename... Args> constexpr auto transition_table(Args... args)
 {
     return boost::hana::make_tuple(args...);
@@ -29,6 +30,11 @@ template <typename... Args> constexpr auto row(Args... args)
 }
 
 template <typename... Args> constexpr auto transition(Args... args)
+{
+    return boost::hana::make_tuple(args...);
+}
+
+template <typename... Args> constexpr auto initial(Args... args)
 {
     return boost::hana::make_tuple(args...);
 }

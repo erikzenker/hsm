@@ -71,7 +71,7 @@ struct Playing {
 
     constexpr auto initial_state()
     {
-        return Song1 {};
+        return hsm::initial(Song1 {});
     }
 };
 
@@ -105,7 +105,7 @@ struct CdPlayer {
 
     constexpr auto initial_state()
     {
-        return Empty {};
+        return hsm::initial(Empty {});
     }
 };
 

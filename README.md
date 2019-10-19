@@ -12,13 +12,13 @@ Currently the following features are supported:
 * [Pseudo entry/exit states](test/integration/entry_exit_pseudo_states.cpp)
 * [Entry/exit state behavior](test/integration/entry_exit_actions.cpp)
 * [Direct transitions](test/integration/direct_transition.cpp)
+* [Orthogonal regions](test/integration/orthogonal_regions.cpp)
 
 What is missing:
-* Orthogonal regions
 * Explixit terminate state
 * Internal transitions
-* Fork Entry
-* History
+* Fork pseudo state
+* History pseudo state
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
 ![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
@@ -61,7 +61,7 @@ struct Turnstile {
 
     constexpr auto initial_state()
     {
-        return Locked {};
+        return hsm::initial(Locked {});
     }
 };
 
@@ -161,7 +161,7 @@ struct Playing {
 
     constexpr auto initial_state()
     {
-        return Song1 {};
+        return hsm::initial(Song1 {});
     }
 };
 
@@ -195,7 +195,7 @@ struct CdPlayer {
 
     constexpr auto initial_state()
     {
-        return Empty {};
+        return hsm::initial(Empty {});
     }
 };
 

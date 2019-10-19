@@ -11,6 +11,7 @@ namespace hsm {
     };
 
     auto has_transition_table = bh::is_valid([](auto&& state) -> decltype(state.make_transition_table()) { });
+    auto has_initial_state = bh::is_valid([](auto&& state) -> decltype(state.initial_state()) { });
     auto has_entry_action = bh::is_valid([](auto&& state) -> decltype(state.on_entry()) { });
     auto has_exit_action = bh::is_valid([](auto&& state) -> decltype(state.on_exit()) { });
 

@@ -22,6 +22,67 @@ constexpr auto nStates
 constexpr auto nEvents
     = [](const auto& rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
 
+constexpr auto regions = [](const auto& parentStateTypeids) {
+    return bh::transform(parentStateTypeids, [](auto parentStateTypeid) {
+        using ParentState = typename decltype(parentStateTypeid)::type;
+        return bh::size(ParentState {}.initial_state());
+    });
+};
+
+constexpr auto regions2 = [](const auto& rootState, const auto& parentStateTypeids) {
+    return bh::transform(parentStateTypeids, [rootState](auto parentStateTypeid) {
+        using ParentState = typename decltype(parentStateTypeid)::type;
+
+        auto initialStates = ParentState {}.initial_state();
+        auto t = bh::transform(initialStates, [rootState](auto initialState){
+            return getStateIdx(rootState, initialState);
+        });
+
+        return t;
+    });
+};
+
+constexpr auto to_pairs = [](const auto& tuples) {
+    return bh::transform(tuples, [](auto tuple) {
+        return bh::make_pair(bh::at_c<0>(tuple), bh::at_c<1>(tuple));
+    });
+};
+
+constexpr auto maxRegions = [](const auto& rootState) {
+    auto parentStateTypeids = collect_parent_states(rootState);
+
+    auto maxRegions = bh::fold(
+        regions(parentStateTypeids), bh::size_c<0>, [](auto currentMax, auto nInitialStates) {
+            return bh::max(currentMax, nInitialStates);
+        });
+
+    return maxRegions;
+};
+
+constexpr auto region_map = [](const auto& rootState) {
+    auto parentStateTypeids = collect_parent_states(rootState);
+    auto r = regions2(rootState, parentStateTypeids);
+    return bh::to<bh::map_tag>(to_pairs(bh::zip(parentStateTypeids, r)));
+};
+
+constexpr auto make_region_map = [](const auto& rootState, auto& r) {
+    auto parentStateTypeids = collect_parent_states(rootState);    
+    std::size_t i = 0;
+    bh::for_each(parentStateTypeids, [rootState, &r, &i](auto parentStateTypeid){
+        auto regionTuple = bh::find(region_map(rootState), parentStateTypeid).value();
+        auto rv = std::vector<std::size_t>(static_cast<std::size_t>(bh::size(regionTuple)));
+
+        std::size_t j = 0;
+        bh::for_each(regionTuple, [&rv, &j](auto stateIdx){
+            rv[j] = stateIdx;
+            j++;
+        });
+
+        r.at(i) = rv;
+        i++;
+    });
+};
+
 template <class Event> struct NextState {
     StateIdx parentState;
     StateIdx state;
@@ -42,7 +103,11 @@ DispatchArray<RootState, Event> DispatchTable<RootState, Event>::table {};
 
 constexpr auto resolveDst = [](const auto& transition) {
     return switch_(
-        case_(has_transition_table, [](auto submachine) { return submachine.initial_state(); }),
+        case_(
+            has_transition_table,
+            [](auto submachine) { // TODO: make multi region capable
+                return bh::at_c<0>(submachine.initial_state());
+            }), 
         case_(is_entry_state, [](auto entry) { return entry.get_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_state(); }),
         case_(otherwise, [](auto state) { return state; }))(getDst(transition));
@@ -81,7 +146,7 @@ constexpr auto resolveAction = [](const auto& transition) {
         case_(has_entry_action, [](auto dst) { return dst.on_entry(); }),
         case_(otherwise, [transition](auto) { return [](auto) {}; }))(getDst(transition));
     return [exitAction, action, entryAction](const auto& event) {
-        exitAction(event);    
+        exitAction(event);
         action(event);
         entryAction(event);
     };

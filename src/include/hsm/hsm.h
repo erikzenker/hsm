@@ -28,61 +28,87 @@ using namespace boost::hana;
 };
 
 template <class RootState> class Sm {
-    StateIdx m_currentState;
+    using Region = std::uint8_t;    
+    std::array<StateIdx, maxRegions(RootState{})> m_currentState;
     StateIdx m_currentParentState;
+    std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_regions;
+
   public:
     Sm()
-        : m_currentState(getStateIdx(rootState(), inititalState()))
-        , m_currentParentState(getParentStateIdx(rootState(), rootState()))
+        : m_currentParentState(getParentStateIdx(rootState(), rootState()))
     {
+        m_currentState[0] = getStateIdx(rootState(), initialState());
         fill_dispatch_table(rootState());
+        make_region_map(rootState(), m_regions);
+
+        for(int region = 0; region < m_regions[m_currentParentState].size(); region++){
+            m_currentState[region] = m_regions[m_currentParentState][region];
+        }
     }
 
     template <class Event> auto process_event(Event event)
     {
-        auto& result = DispatchTable<RootState, Event>::table[m_currentParentState][m_currentState];   
+        for(int region = 0; region < m_regions[m_currentParentState].size(); region++){
 
-        if (!result.guard(event)) {
-            return;
+            auto& result = DispatchTable<RootState, Event>::table[m_currentParentState][m_currentState[region]];   
+
+            if (!result.guard(event)) {
+                // TODO: just return if all guards fail    
+                return;
+            }
+
+            m_currentParentState = result.parentState;
+            m_currentState[region] = result.state;
+
+            result.action(event);
         }
 
-        m_currentParentState = result.parentState;
-        m_currentState = result.state;
 
-        result.action(event);
         apply_anonymous_transitions();
     }
 
     template <class State> auto is(State state) -> bool
     {
-        return m_currentState == getStateIdx(rootState(), state);
+        return m_currentState[0] == getStateIdx(rootState(), state);
     };
 
     template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
     {
         return m_currentParentState == getParentStateIdx(rootState(), parentState)
-            && m_currentState == getStateIdx(rootState(), state);
+            && m_currentState[0] == getStateIdx(rootState(), state);
+    };
+
+    template <class ParentState, class State> auto is(Region region, ParentState parentState, State state) -> bool
+    {
+        return m_currentParentState == getParentStateIdx(rootState(), parentState)
+            && m_currentState[region] == getStateIdx(rootState(), state);
+        
     };
 
   private:
     auto apply_anonymous_transitions()
     {
         while (true) {
-            auto event = noneEvent{};
-            auto& result = DispatchTable<RootState, noneEvent>::table[m_currentParentState][m_currentState];
 
-            if (!result.guard) {
-                break;
+            for(int region = 0; region < m_regions[m_currentParentState].size(); region++){
+
+                auto event = noneEvent{};
+                auto& result = DispatchTable<RootState, noneEvent>::table[m_currentParentState][m_currentState[region]];
+
+                if (!result.guard) {
+                    return;
+                }
+
+                if (!result.guard(event)) {
+                    // TODO: just return if all guards fail        
+                    return;
+                }
+
+                m_currentParentState = result.parentState;
+                m_currentState[region] = result.state;
+
+                result.action(event);
             }
-
-            if (!result.guard(event)) {
-                return;
-            }
-
-            m_currentParentState = result.parentState;
-            m_currentState = result.state;
-
-            result.action(event);
         }
     }
 
@@ -91,10 +117,14 @@ template <class RootState> class Sm {
         return RootState {};
     }
 
-    auto inititalState()
+    auto initialState()
     {
-        return rootState().initial_state();
+        return bh::at_c<0>(rootState().initial_state()); // TODO: make multi region capable
     }
 
+    // auto initialState(Region region)
+    // {
+    //     return bh::at_c<0>(rootState().initial_state()); // TODO: make multi region capable
+    // }
 };
 }
