@@ -84,34 +84,6 @@ class OrthogonalRegionsTests : public Test {
         hsm::Sm<MainState> sm;
 };
 
-// TODO: move to unit tests
-TEST_F(OrthogonalRegionsTests, should_count_max_regions)
-{
-    ASSERT_EQ(boost::hana::size_c<2>, hsm::maxRegions(MainState{}));
-}
-
-// TODO: move to unit tests
-TEST_F(OrthogonalRegionsTests, should_make_region_map)
-{
-    auto map = hsm::region_map(MainState{});
-    ASSERT_EQ(boost::hana::size_c<2>, boost::hana::size(boost::hana::find(map, boost::hana::typeid_(MainState{})).value()));
-    ASSERT_EQ(boost::hana::size_c<1>, boost::hana::size(boost::hana::find(map, boost::hana::typeid_(SubState{})).value()));
-}
-
-// TODO: move to unit tests
-TEST_F(OrthogonalRegionsTests, should_count_regions)
-{
-    std::array<std::vector<std::size_t>, hsm::maxRegions(MainState{})> regions;
-    hsm::make_region_map(MainState{}, regions);
-    ASSERT_EQ(2, regions[0].size());
-    ASSERT_EQ(1, regions[1].size());
-
-    ASSERT_EQ(0, regions[0][0]);
-    ASSERT_EQ(4, regions[0][1]);
-
-    ASSERT_EQ(0, regions[1][0]);
-}
-
 TEST_F(OrthogonalRegionsTests, should_start_in_region_initial_states)
 {
     ASSERT_TRUE(sm.is(0, MainState{}, S1 {}));
