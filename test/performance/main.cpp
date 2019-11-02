@@ -112,5 +112,5 @@ class HsmTests : public Test {
 
 TEST_F(HsmTests, should_not_compile_with_a_lot_of_memory_consumption)
 {
-    hsm::collect_states_recursive(MainState {});
+    hsm::collect_state_typeids_recursive(MainState {});
 }

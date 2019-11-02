@@ -20,9 +20,9 @@ constexpr auto flatten_transition_table = [](auto state) {
     const auto transitionTable = state.make_transition_table();
     const auto collectedTransitions = bh::fold_left(
         transitionTable, bh::make_tuple(), [state](auto transitions, auto transition) {
+            auto extendedTransition = bh::append(transitions, bh::prepend(transition, state));
             return bh::concat(
-                bh::append(transitions, bh::prepend(transition, state)),
-                flatten_sub_transition_table(bh::back(transition)));
+                extendedTransition, flatten_sub_transition_table(bh::back(transition)));
         });
     return collectedTransitions;
 };

@@ -18,6 +18,7 @@ add_executable(hsmIntegrationTests
         anonymous_transition.cpp
         guards_actions.cpp
         orthogonal_regions.cpp
+        internal_transition.cpp
 )
 
 gtest_add_tests(

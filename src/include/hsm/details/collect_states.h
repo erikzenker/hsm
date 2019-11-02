@@ -13,9 +13,12 @@ namespace hsm {
     };
 
     namespace {
-    const auto extractExtendedStates = [](auto transition) {
+    const auto extractExtendedStateTypeids = [](auto transition) {
         return bh::make_tuple(
             bh::typeid_(bh::at_c<1>(transition)), bh::typeid_(bh::at_c<5>(transition)));
+    };
+    const auto extractExtendedStates = [](auto transition) {
+        return bh::make_tuple(bh::at_c<1>(transition), bh::at_c<5>(transition));
     };
     const auto extractStates = [](auto transition) {
         return bh::make_tuple(
@@ -23,17 +26,29 @@ namespace hsm {
     };    
     }
 
-    constexpr auto collect_child_states_recursive = [](auto parentState) {
+    constexpr auto collect_child_state_typeids_recursive = [](auto parentState) {
         auto transitions = flatten_transition_table(parentState);
-        auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStates));
+        auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStateTypeids));
 
         return remove_duplicate_typeids(collectedStates);
     };
 
-    constexpr auto collect_states_recursive = [](auto&& parentState) {
-        auto collectedStates
-            = bh::append(collect_child_states_recursive(parentState), bh::typeid_(parentState));
+    constexpr auto collect_child_states_recursive = [](auto parentState) {
+        auto transitions = flatten_transition_table(parentState);
+        auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStates));
+
+        return remove_duplicate_types(collectedStates);
+    };
+
+    constexpr auto collect_state_typeids_recursive = [](auto&& parentState) {
+        auto collectedStates = bh::append(
+            collect_child_state_typeids_recursive(parentState), bh::typeid_(parentState));
         return remove_duplicate_typeids(collectedStates);
+    };
+
+    constexpr auto collect_states_recursive = [](auto&& parentState) {
+        auto collectedStates = bh::append(collect_child_states_recursive(parentState), parentState);
+        return remove_duplicate_types(collectedStates);
     };
 
     const auto collect_child_states = [](auto&& state) {

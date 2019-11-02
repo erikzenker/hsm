@@ -1,5 +1,6 @@
 #pragma once
 
+#include "flatten_internal_transition_table.h"
 #include "switch.h"
 #include "transition_table.h"
 
@@ -18,7 +19,7 @@ using namespace boost::hana;
 constexpr auto nParentStates
     = [](const auto& rootState) { return bh::length(collect_parent_states(rootState)); };
 constexpr auto nStates
-    = [](const auto& rootState) { return bh::length(collect_states_recursive(rootState)); };
+    = [](const auto& rootState) { return bh::length(collect_state_typeids_recursive(rootState)); };
 constexpr auto nEvents
     = [](const auto& rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
 
@@ -198,6 +199,25 @@ template <class RootState> constexpr auto fill_dispatch_table(const RootState& r
 {
     const auto eventTypeids = collect_event_typeids_recursive(rootState);
     const auto transitions = flatten_transition_table(rootState);
+
+    bh::for_each(eventTypeids, [&](auto eventTypeid) {
+        const auto filteredTransitions = filter_transitions(transitions, eventTypeid);
+
+        using Event = typename decltype(eventTypeid)::type;
+
+        auto& dispatchTable = DispatchTable<RootState, Event>::table;
+
+        bh::for_each(filteredTransitions, [&rootState, &dispatchTable](const auto& transition) {
+            addDispatchTableEntry(rootState, transition, dispatchTable);
+            addDispatchTableEntryOfSubMachineExits(rootState, transition, dispatchTable);
+        });
+    });
+}
+
+template <class RootState> constexpr auto fill_dispatch_table2(const RootState& rootState)
+{
+    const auto eventTypeids = collect_event_typeids_recursive(rootState);
+    const auto transitions = flatten_internal_transition_table(rootState);
 
     bh::for_each(eventTypeids, [&](auto eventTypeid) {
         const auto filteredTransitions = filter_transitions(transitions, eventTypeid);
