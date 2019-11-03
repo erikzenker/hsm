@@ -41,13 +41,13 @@ TEST_F(CollectStatesTests, should_collect_empty_child_state_recursive)
         }
     };
 
-    auto collectedStates = hsm::collect_child_states_recursive(S {});
+    auto collectedStates = hsm::collect_child_state_typeids_recursive(S {});
     auto expectedStates = boost::hana::make_tuple();
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
 
-TEST_F(CollectStatesTests, should_collect_child_states_recursive_on_top_level)
+TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive_on_top_level)
 {
     struct S {
         auto make_transition_table()
@@ -58,14 +58,14 @@ TEST_F(CollectStatesTests, should_collect_child_states_recursive_on_top_level)
         }
     };
 
-    auto collectedStates = hsm::collect_child_states_recursive(S {});
+    auto collectedStates = hsm::collect_child_state_typeids_recursive(S {});
     auto expectedStates
         = boost::hana::make_tuple(boost::hana::typeid_(S1 {}), boost::hana::typeid_(S2 {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
 
-TEST_F(CollectStatesTests, should_collect_child_states_recursive)
+TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive)
 {
     struct P {
         auto make_transition_table()
@@ -81,7 +81,7 @@ TEST_F(CollectStatesTests, should_collect_child_states_recursive)
         }
     };
 
-    auto collectedStates = hsm::collect_child_states_recursive(S {});
+    auto collectedStates = hsm::collect_child_state_typeids_recursive(S {});
     auto expectedStates = boost::hana::make_tuple(
         boost::hana::typeid_(S1 {}), boost::hana::typeid_(P {}), boost::hana::typeid_(S2 {}));
 
@@ -97,8 +97,34 @@ TEST_F(CollectStatesTests, should_collect_at_least_parent_state)
         }
     };
 
-    auto collectedStates = hsm::collect_states_recursive(S {});
+    auto collectedStates = hsm::collect_state_typeids_recursive(S {});
     auto expectedStates = boost::hana::make_tuple(boost::hana::typeid_(S {}));
+
+    ASSERT_EQ(expectedStates, collectedStates);
+}
+
+TEST_F(CollectStatesTests, should_collect_state_typeids_recursive)
+{
+    struct P {
+        auto make_transition_table()
+        {
+            return boost::hana::make_tuple(boost::hana::make_tuple(S2 {}, 0, 0, 0, S2 {}));
+        }
+    };
+
+    struct S {
+        auto make_transition_table()
+        {
+            return boost::hana::make_tuple(boost::hana::make_tuple(S1 {}, 0, 0, 0, P {}));
+        }
+    };
+
+    auto collectedStates = hsm::collect_state_typeids_recursive(S {});
+    auto expectedStates = boost::hana::make_tuple(
+        boost::hana::typeid_(S1 {}),
+        boost::hana::typeid_(P {}),
+        boost::hana::typeid_(S2 {}),
+        boost::hana::typeid_(S {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -120,11 +146,6 @@ TEST_F(CollectStatesTests, should_collect_states_recursive)
     };
 
     auto collectedStates = hsm::collect_states_recursive(S {});
-    auto expectedStates = boost::hana::make_tuple(
-        boost::hana::typeid_(S1 {}),
-        boost::hana::typeid_(P {}),
-        boost::hana::typeid_(S2 {}),
-        boost::hana::typeid_(S {}));
 
-    ASSERT_EQ(expectedStates, collectedStates);
+    ASSERT_EQ(boost::hana::size_c<4>, boost::hana::size(collectedStates));
 }

@@ -58,7 +58,7 @@ constexpr auto getParentStateIdx = [](auto rootState, auto parentState) {
 };
 
 constexpr auto getStateIdx = [](auto rootState, auto state) {
-    return getIdx(make_index_map(collect_states_recursive(rootState)), bh::typeid_(state));
+    return getIdx(make_index_map(collect_state_typeids_recursive(rootState)), bh::typeid_(state));
 };
 
 constexpr auto getEventIdx = [](auto rootState, auto event) {

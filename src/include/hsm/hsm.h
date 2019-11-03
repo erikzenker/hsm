@@ -7,6 +7,7 @@
 #include "details/collect_states.h"
 #include "details/dispatch_table.h"
 #include "details/event.h"
+#include "details/flatten_internal_transition_table.h"
 #include "details/flatten_transition_table.h"
 #include "details/index_map.h"
 #include "details/pseudo_states.h"
@@ -39,6 +40,7 @@ template <class RootState> class Sm {
     {
         m_currentState[0] = getStateIdx(rootState(), initialState());
         fill_dispatch_table(rootState());
+        fill_dispatch_table2(rootState());
         make_region_map(rootState(), m_regions);
 
         for(int region = 0; region < m_regions[m_currentParentState].size(); region++){

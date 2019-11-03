@@ -17,7 +17,11 @@ struct S1 {
     }
 
     constexpr auto make_transition_table(){
-    }    
+    }
+
+    constexpr auto make_internal_transition_table()
+    {
+    }
 };
 
 struct S2 {
@@ -79,6 +83,14 @@ TEST_F(TraitsTests, should_recognize_transition_table)
     ASSERT_TRUE(result);
 }
 
+TEST_F(TraitsTests, should_recognize_internal_transition_table)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(
+        hsm::has_internal_transition_table(S1 {}), []() { return true; }, []() { return false; })();
+    ASSERT_TRUE(result);
+}
 
 TEST_F(TraitsTests, should_recognize_on_entry_function)
 {
