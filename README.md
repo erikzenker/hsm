@@ -20,7 +20,7 @@ What is missing:
 * Fork pseudo state
 * History pseudo state
 * No transition handler
-* Dependency indejection
+* Dependency injection
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
 ![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
