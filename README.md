@@ -19,6 +19,8 @@ What is missing:
 * Explixit terminate state
 * Fork pseudo state
 * History pseudo state
+* No transition handler
+* Dependency indejection
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
 ![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
