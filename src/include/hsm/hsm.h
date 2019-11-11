@@ -46,21 +46,26 @@ template <class RootState> class Sm {
 
     template <class Event> auto process_event(Event event)
     {
+        bool allGuardsFailed = true;
+
         for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
 
             auto& result = DispatchTable<RootState, Event>::table[m_currentParentState][m_currentState[region]];   
 
             if (!result.guard(event)) {
-                // TODO: just return if all guards fail    
-                return;
+                continue;
             }
 
+            allGuardsFailed = false;
             m_currentParentState = result.parentState;
             m_currentState[region] = result.state;
 
             result.action(event);
         }
 
+        if (allGuardsFailed) {
+            return;
+        }
 
         apply_anonymous_transitions();
     }
@@ -93,13 +98,13 @@ template <class RootState> class Sm {
                 auto event = noneEvent{};
                 auto& result = DispatchTable<RootState, noneEvent>::table[m_currentParentState][m_currentState[region]];
 
+                // Check if anonymous transition exists
                 if (!result.guard) {
                     return;
                 }
 
                 if (!result.guard(event)) {
-                    // TODO: just return if all guards fail        
-                    return;
+                    continue;
                 }
 
                 m_currentParentState = result.parentState;
