@@ -2,6 +2,7 @@
 
 #include "flatten_internal_transition_table.h"
 #include "switch.h"
+#include "for_each_idx.h"
 #include "transition_table.h"
 
 #include <boost/hana.hpp>
@@ -17,29 +18,45 @@ using namespace boost::hana;
 }
 
 constexpr auto nParentStates
-    = [](const auto& rootState) { return bh::length(collect_parent_states(rootState)); };
+    = [](const auto& rootState) { return bh::length(collect_parent_state_typeids(rootState)); };
 constexpr auto nStates
     = [](const auto& rootState) { return bh::length(collect_state_typeids_recursive(rootState)); };
 constexpr auto nEvents
     = [](const auto& rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
 
-constexpr auto regions = [](const auto& parentStateTypeids) {
-    return bh::transform(parentStateTypeids, [](auto parentStateTypeid) {
-        using ParentState = typename decltype(parentStateTypeid)::type;
-        return bh::size(ParentState {}.initial_state());
-    });
-};
 
-constexpr auto regions2 = [](const auto& rootState, const auto& parentStateTypeids) {
+/**
+ * Collect the initial states for the parent states
+ * and returns it as tuple of state idx.
+ * 
+ * Returns: [[StateIdx]]
+ * 
+ * Example: [[0,1], [0], [1], [1,2]]
+  */
+constexpr auto collect_initial_state_typeids = [](const auto& rootState, const auto& parentStateTypeids) {
     return bh::transform(parentStateTypeids, [rootState](auto parentStateTypeid) {
         using ParentState = typename decltype(parentStateTypeid)::type;
 
         auto initialStates = ParentState {}.initial_state();
-        auto t = bh::transform(initialStates, [rootState](auto initialState){
+        auto initialStatesTypeIds = bh::transform(initialStates, [rootState](auto initialState){
             return getStateIdx(rootState, initialState);
         });
 
-        return t;
+        return initialStatesTypeIds;
+    });
+};
+
+/**
+ * Returns a tuple of initial state sizes
+ * 
+ * Returns: [std::size_t]
+ * 
+ * Example: [3, 1, 2]
+ */
+constexpr auto initialStateSizes = [](const auto& parentStateTypeids) {
+    return bh::transform(parentStateTypeids, [](auto parentStateTypeid) {
+        using ParentState = typename decltype(parentStateTypeid)::type;
+        return bh::size(ParentState {}.initial_state());
     });
 };
 
@@ -49,38 +66,47 @@ constexpr auto to_pairs = [](const auto& tuples) {
     });
 };
 
-constexpr auto maxRegions = [](const auto& rootState) {
-    auto parentStateTypeids = collect_parent_states(rootState);
+/**
+ * Returns the maximal number of initial states 
+ */
+constexpr auto maxInitialStates = [](const auto& rootState) -> std::size_t {
+    auto parentStateTypeids = collect_parent_state_typeids(rootState);
 
-    auto maxRegions = bh::fold(
-        regions(parentStateTypeids), bh::size_c<0>, [](auto currentMax, auto nInitialStates) {
+    auto maxInitialStates = bh::fold(
+        initialStateSizes(parentStateTypeids), bh::size_c<0>, [](auto currentMax, auto nInitialStates) {
             return bh::max(currentMax, nInitialStates);
         });
 
-    return maxRegions;
+    return maxInitialStates;
 };
 
-constexpr auto region_map = [](const auto& rootState) {
-    auto parentStateTypeids = collect_parent_states(rootState);
-    auto r = regions2(rootState, parentStateTypeids);
-    return bh::to<bh::map_tag>(to_pairs(bh::zip(parentStateTypeids, r)));
+/**
+ * Return a map from parent state id to inital state ids
+ * 
+ * Returns: (ParentStateIdx -> [StateIdx])
+ * 
+ * Example:
+ * [[0 -> [0, 1]], 
+ *  [1 -> [3, 1]],
+ *  [2 -> [0, 2]]]
+ */
+constexpr auto make_initial_state_map = [](const auto& rootState) {
+    auto parentStateTypeids = collect_parent_state_typeids(rootState);
+    auto initialStates = collect_initial_state_typeids(rootState, parentStateTypeids);
+    return bh::to<bh::map_tag>(to_pairs(bh::zip(parentStateTypeids, initialStates)));
 };
 
-constexpr auto make_region_map = [](const auto& rootState, auto& r) {
-    auto parentStateTypeids = collect_parent_states(rootState);    
-    std::size_t i = 0;
-    bh::for_each(parentStateTypeids, [rootState, &r, &i](auto parentStateTypeid){
-        auto regionTuple = bh::find(region_map(rootState), parentStateTypeid).value();
-        auto rv = std::vector<std::size_t>(static_cast<std::size_t>(bh::size(regionTuple)));
+constexpr auto fill_inital_state_table = [](const auto& rootState, auto& initialStateTable) {
+    auto parentStateTypeids = collect_parent_state_typeids(rootState);    
+    for_each_idx(parentStateTypeids, [rootState, &initialStateTable](auto parentStateTypeid, auto parentStateId){
+        auto initialStates = bh::find(make_initial_state_map(rootState), parentStateTypeid).value();
+        auto initialStatesStateIdx = std::vector<std::size_t>(bh::size(initialStates));
 
-        std::size_t j = 0;
-        bh::for_each(regionTuple, [&rv, &j](auto stateIdx){
-            rv[j] = stateIdx;
-            j++;
+        for_each_idx(initialStates, [&initialStatesStateIdx](auto stateIdx, auto regionId){
+            initialStatesStateIdx[regionId] = stateIdx;
         });
 
-        r.at(i) = rv;
-        i++;
+        initialStateTable.at(parentStateId) = initialStatesStateIdx;
     });
 };
 
@@ -195,10 +221,10 @@ constexpr auto filter_transitions = [](const auto& transitions, const auto& even
     return bh::filter(transitions, isEvent);
 };
 
-template <class RootState> constexpr auto fill_dispatch_table(const RootState& rootState)
+template <class RootState, class Transitions>
+constexpr auto fill_dispatch_table_with_transitions(const RootState& rootState, const Transitions& transitions)
 {
     const auto eventTypeids = collect_event_typeids_recursive(rootState);
-    const auto transitions = flatten_transition_table(rootState);
 
     bh::for_each(eventTypeids, [&](auto eventTypeid) {
         const auto filteredTransitions = filter_transitions(transitions, eventTypeid);
@@ -214,22 +240,13 @@ template <class RootState> constexpr auto fill_dispatch_table(const RootState& r
     });
 }
 
-template <class RootState> constexpr auto fill_dispatch_table2(const RootState& rootState)
+template <class RootState> constexpr auto fill_dispatch_table_with_external_transitions(const RootState& rootState)
 {
-    const auto eventTypeids = collect_event_typeids_recursive(rootState);
-    const auto transitions = flatten_internal_transition_table(rootState);
+    fill_dispatch_table_with_transitions(rootState, flatten_transition_table(rootState));
+}
 
-    bh::for_each(eventTypeids, [&](auto eventTypeid) {
-        const auto filteredTransitions = filter_transitions(transitions, eventTypeid);
-
-        using Event = typename decltype(eventTypeid)::type;
-
-        auto& dispatchTable = DispatchTable<RootState, Event>::table;
-
-        bh::for_each(filteredTransitions, [&rootState, &dispatchTable](const auto& transition) {
-            addDispatchTableEntry(rootState, transition, dispatchTable);
-            addDispatchTableEntryOfSubMachineExits(rootState, transition, dispatchTable);
-        });
-    });
+template <class RootState> constexpr auto fill_dispatch_table_with_internal_transitions(const RootState& rootState)
+{
+    fill_dispatch_table_with_transitions(rootState, flatten_internal_transition_table(rootState));
 }
 }
