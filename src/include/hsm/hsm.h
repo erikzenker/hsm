@@ -30,27 +30,23 @@ using namespace boost::hana;
 
 template <class RootState> class Sm {
     using Region = std::uint8_t;    
-    std::array<StateIdx, maxRegions(RootState{})> m_currentState;
+    std::array<StateIdx, maxInitialStates(RootState{})> m_currentState;
     StateIdx m_currentParentState;
-    std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_regions;
+    std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_initial_states;
 
   public:
     Sm()
         : m_currentParentState(getParentStateIdx(rootState(), rootState()))
     {
-        m_currentState[0] = getStateIdx(rootState(), initialState());
-        fill_dispatch_table(rootState());
-        fill_dispatch_table2(rootState());
-        make_region_map(rootState(), m_regions);
-
-        for(int region = 0; region < m_regions[m_currentParentState].size(); region++){
-            m_currentState[region] = m_regions[m_currentParentState][region];
-        }
+        fill_dispatch_table_with_external_transitions(rootState());
+        fill_dispatch_table_with_internal_transitions(rootState());
+        fill_inital_state_table(rootState(), m_initial_states);
+        initCurrentState();
     }
 
     template <class Event> auto process_event(Event event)
     {
-        for(int region = 0; region < m_regions[m_currentParentState].size(); region++){
+        for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
 
             auto& result = DispatchTable<RootState, Event>::table[m_currentParentState][m_currentState[region]];   
 
@@ -92,7 +88,7 @@ template <class RootState> class Sm {
     {
         while (true) {
 
-            for(int region = 0; region < m_regions[m_currentParentState].size(); region++){
+            for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
 
                 auto event = noneEvent{};
                 auto& result = DispatchTable<RootState, noneEvent>::table[m_currentParentState][m_currentState[region]];
@@ -119,14 +115,13 @@ template <class RootState> class Sm {
         return RootState {};
     }
 
-    auto initialState()
+    void initCurrentState()
     {
-        return bh::at_c<0>(rootState().initial_state()); // TODO: make multi region capable
-    }
+        for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
+            m_currentState[region] = m_initial_states[m_currentParentState][region];
+        }
 
-    // auto initialState(Region region)
-    // {
-    //     return bh::at_c<0>(rootState().initial_state()); // TODO: make multi region capable
-    // }
+    }    
+
 };
 }

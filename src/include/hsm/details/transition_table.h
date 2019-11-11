@@ -54,7 +54,7 @@ constexpr auto getAction = [](auto transition) { return bh::at_c<4>(transition);
 constexpr auto getDst = [](auto transition) { return bh::at_c<5>(transition); };
 
 constexpr auto getParentStateIdx = [](auto rootState, auto parentState) {
-    return getIdx(make_index_map(collect_parent_states(rootState)), bh::typeid_(parentState));
+    return getIdx(make_index_map(collect_parent_state_typeids(rootState)), bh::typeid_(parentState));
 };
 
 constexpr auto getStateIdx = [](auto rootState, auto state) {
