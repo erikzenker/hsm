@@ -121,11 +121,6 @@ TEST_F(BasicTransitionTests, should_process_event)
     ASSERT_TRUE(sm.is(S2 {}));
 }
 
-TEST_F(BasicTransitionTests, should_throw_on_unexpected_event)
-{
-    EXPECT_THROW(sm.process_event(e3 {}), std::exception);
-}
-
 TEST_F(BasicTransitionTests, should_transit_into_SubState)
 {
     sm.process_event(e4 {});

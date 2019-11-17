@@ -16,6 +16,8 @@ namespace hsm {
     auto has_initial_state = bh::is_valid([](auto&& state) -> decltype(state.initial_state()) { });
     auto has_entry_action = bh::is_valid([](auto&& state) -> decltype(state.on_entry()) { });
     auto has_exit_action = bh::is_valid([](auto&& state) -> decltype(state.on_exit()) { });
+    auto has_unexpected_event_handler
+        = bh::is_valid([](auto&& state) -> decltype(state.on_unexpected_event()) {});
 
     auto is_exit_state = bh::is_valid([](auto&& state) -> decltype(state.isExitState) {});
     auto is_entry_state = bh::is_valid([](auto&& state) -> decltype(state.isEntryState) {});

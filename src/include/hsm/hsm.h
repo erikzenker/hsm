@@ -46,6 +46,34 @@ template <class RootState> class Sm {
 
     template <class Event> auto process_event(Event event)
     {
+        try {
+            process_event_internal(event);
+        } catch (std::exception e) {
+            call_unexpected_event_handler(event);
+        }
+    }
+
+    template <class State> auto is(State state) -> bool
+    {
+        return m_currentState[0] == getStateIdx(rootState(), state);
+    };
+
+    template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
+    {
+        return m_currentParentState == getParentStateIdx(rootState(), parentState)
+            && m_currentState[0] == getStateIdx(rootState(), state);
+    };
+
+    template <class ParentState, class State>
+    auto is(Region region, ParentState parentState, State state) -> bool
+    {
+        return m_currentParentState == getParentStateIdx(rootState(), parentState)
+            && m_currentState[region] == getStateIdx(rootState(), state);
+    };
+
+  private:
+    template <class Event> auto process_event_internal(Event event)
+    {
         bool allGuardsFailed = true;
 
         for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
@@ -70,25 +98,6 @@ template <class RootState> class Sm {
         apply_anonymous_transitions();
     }
 
-    template <class State> auto is(State state) -> bool
-    {
-        return m_currentState[0] == getStateIdx(rootState(), state);
-    };
-
-    template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
-    {
-        return m_currentParentState == getParentStateIdx(rootState(), parentState)
-            && m_currentState[0] == getStateIdx(rootState(), state);
-    };
-
-    template <class ParentState, class State> auto is(Region region, ParentState parentState, State state) -> bool
-    {
-        return m_currentParentState == getParentStateIdx(rootState(), parentState)
-            && m_currentState[region] == getStateIdx(rootState(), state);
-        
-    };
-
-  private:
     auto apply_anonymous_transitions()
     {
         while (true) {
@@ -113,6 +122,12 @@ template <class RootState> class Sm {
                 result.action(event);
             }
         }
+    }
+
+    template <class Event> auto call_unexpected_event_handler(Event event)
+    {
+        const auto handler = get_unexpected_event_handler(rootState());
+        handler(event);
     }
 
     auto rootState()
