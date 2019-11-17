@@ -14,12 +14,12 @@ Currently the following features are supported:
 * [Direct transitions](test/integration/direct_transition.cpp)
 * [Orthogonal regions](test/integration/orthogonal_regions.cpp)
 * [Internal transitions](test/integration/internal_transition.cpp)
+* [Unexpected event handler](test/integration/unexpected_transition_handler.cpp)
 
 What is missing:
 * Explixit terminate state
 * Fork pseudo state
 * History pseudo state
-* No transition handler
 * Dependency injection
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))

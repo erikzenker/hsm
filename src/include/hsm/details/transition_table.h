@@ -80,4 +80,10 @@ constexpr auto getGuardIdx = [](auto rootState, auto guard) {
 const auto is_anonymous_transition
     = [](auto transition) { return bh::typeid_(getEvent(transition)) == bh::typeid_(none {}); };
 
+const auto get_unexpected_event_handler = [](auto rootState) {
+    return bh::if_(
+        has_unexpected_event_handler(rootState),
+        [](auto rootState) { return rootState.on_unexpected_event(); },
+        [](auto) { return [](auto event) {}; })(rootState);
+};
 }
