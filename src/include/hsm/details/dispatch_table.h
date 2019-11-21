@@ -115,6 +115,7 @@ template <class Event> struct NextState {
     StateIdx state;
     std::function<bool(Event)> guard;
     std::function<void(Event)> action;
+    bool history;
 };
 
 template <class RootState, class Event>
@@ -134,9 +135,14 @@ constexpr auto resolveDst = [](const auto& transition) {
             has_transition_table,
             [](auto submachine) { // TODO: make multi region capable
                 return bh::at_c<0>(submachine.initial_state());
-            }), 
+            }),
         case_(is_entry_state, [](auto entry) { return entry.get_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_state(); }),
+        case_(
+            is_history_state,
+            [](auto history) { // TODO: make multi region capable
+                return bh::at_c<0>(history.get_parent_state().initial_state());
+            }),
         case_(otherwise, [](auto state) { return state; }))(getDst(transition));
 };
 
@@ -145,6 +151,7 @@ constexpr auto resolveDstParent = [](const auto& transition) {
         case_(has_transition_table, [](auto submachine) { return submachine; }),
         case_(is_entry_state, [](auto entry) { return entry.get_parent_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_parent_state(); }),
+        case_(is_history_state, [](auto history) { return history.get_parent_state(); }),
         case_(otherwise, [&transition](auto) { return getSrcParent(transition); }))(
         getDst(transition));
 };
@@ -179,6 +186,12 @@ constexpr auto resolveAction = [](const auto& transition) {
     };
 };
 
+constexpr auto resolveHistory = [](const auto& transition) {
+    return switch_(case_(is_history_state, [](auto) { return true; }), case_(otherwise, [](auto) {
+                       return false;
+                   }))(getDst(transition));
+};
+
 const auto addDispatchTableEntry
     = [](const auto& rootState, const auto& transition, auto& dispatchTable) {
           const auto fromParent = getParentStateIdx(rootState, resolveSrcParent(transition));
@@ -187,8 +200,9 @@ const auto addDispatchTableEntry
           const auto action = resolveAction(transition);
           const auto toParent = getParentStateIdx(rootState, resolveDstParent(transition));
           const auto to = getStateIdx(rootState, resolveDst(transition));
+          const auto history = resolveHistory(transition);
 
-          dispatchTable[fromParent][from] = { toParent, to, guard, action };
+          dispatchTable[fromParent][from] = { toParent, to, guard, action, history };
       };
 
 const auto addDispatchTableEntryOfSubMachineExits
@@ -207,8 +221,10 @@ const auto addDispatchTableEntryOfSubMachineExits
                           const auto toParent
                               = getParentStateIdx(rootState, resolveDstParent(transition));
                           const auto to = getStateIdx(rootState, resolveDst(transition));
+                          const auto history = resolveHistory(transition);
 
-                          dispatchTable[fromParent][from] = { toParent, to, guard, action };
+                          dispatchTable[fromParent][from]
+                              = { toParent, to, guard, action, history };
                       });
               },
               [](auto) {})(getSrc(transition));

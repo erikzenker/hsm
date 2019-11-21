@@ -85,7 +85,8 @@ struct MainState {
             hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {}),
             hsm::transition(S2 {}, hsm::event<e3> {}, g1, a1, S3 {}),
-            hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {})
+            hsm::transition(SubState {}, hsm::event<e2> {}, g1, a1, S1 {}),
+            hsm::transition(SubState {}, hsm::event<e4> {}, g1, a1, SubState {})
         );
         // clang-format on
     }
@@ -162,6 +163,15 @@ TEST_F(BasicTransitionTests, should_exit_subsubstate_on_event_in_parentstate)
     ASSERT_TRUE(sm.is(SubSubState {}, S1 {}));
 
     sm.process_event(e2 {});
+    ASSERT_TRUE(sm.is(SubState {}, S1 {}));
+}
+
+TEST_F(BasicTransitionTests, should_reentry_substate_on_initial_state)
+{
+    sm.process_event(e4 {});
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(SubState {}, S2 {}));
+    sm.process_event(e4 {});
     ASSERT_TRUE(sm.is(SubState {}, S1 {}));
 }
 

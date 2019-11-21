@@ -111,3 +111,14 @@ TEST_F(TraitsTests, should_recognize_on_exit_function)
                     [](){ return false;})();
     ASSERT_TRUE(result);
 }
+
+TEST_F(TraitsTests, should_recognize_history_state)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(
+        hsm::is_history_state(hsm::History { S1 {} }),
+        []() { return true; },
+        []() { return false; })();
+    ASSERT_TRUE(result);
+}

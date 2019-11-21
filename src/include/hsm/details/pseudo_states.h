@@ -77,4 +77,21 @@ template <class ParentState, class State> class Direct {
     State state;
 };
 
+template <class ParentState> class History {
+  public:
+    bool isHistoryState = true;
+
+    constexpr History(ParentState parentState)
+        : parentState(parentState)
+    {
+    }
+
+    constexpr auto get_parent_state()
+    {
+        return parentState;
+    }
+
+  private:
+    ParentState parentState;
+};
 }
