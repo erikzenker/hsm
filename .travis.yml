@@ -26,6 +26,9 @@ script:
   - cd $TRAVIS_BUILD_DIR
   - mkdir build && cd build
   - mkdir install
-  - cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install
+  - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
   - cmake --build . --target install
   - ctest -VV
+  - ./benchmark/simple/simple_sc
+  - ./benchmark/simple/simple_euml
+  - ./benchmark/simple/simple_hsm
