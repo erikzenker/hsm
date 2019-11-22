@@ -10,6 +10,7 @@ Currently the following features are supported:
 * [Anonymous transitions](test/integration/anonymous_transition.cpp)
 * [Submachines](test/integration/basic_transitions.cpp)
 * [Entry/exit pseudo states](test/integration/entry_exit_pseudo_states.cpp)
+* [History pseudo state](test/integration/history_pseudo_state.cpp)
 * [Entry/exit actions](test/integration/entry_exit_actions.cpp)
 * [Direct transitions](test/integration/direct_transition.cpp)
 * [Orthogonal regions](test/integration/orthogonal_regions.cpp)
@@ -19,7 +20,6 @@ Currently the following features are supported:
 What is missing:
 * Explixit terminate state
 * Fork pseudo state
-* History pseudo state
 * Dependency injection
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))

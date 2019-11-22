@@ -125,3 +125,12 @@ TEST_F(DispatchTableTests, should_count_regions)
 
     ASSERT_EQ(0, regions[1][0]);
 }
+
+TEST_F(DispatchTableTests, should_resolve_history_state)
+{
+    auto historyTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::History { S {} });
+    auto noHistoryTransition = bh::make_tuple(0, 1, 2, 3, 4, S {});
+
+    ASSERT_TRUE(hsm::resolveHistory(historyTransition));
+    ASSERT_FALSE(hsm::resolveHistory(noHistoryTransition));
+}

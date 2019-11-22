@@ -20,6 +20,7 @@ add_executable(hsmIntegrationTests
         orthogonal_regions.cpp
         internal_transition.cpp
         unexpected_transition_handler.cpp
+        history_pseudo_state.cpp
 )
 
 gtest_add_tests(

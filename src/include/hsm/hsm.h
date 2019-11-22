@@ -33,6 +33,7 @@ template <class RootState> class Sm {
     std::array<StateIdx, maxInitialStates(RootState{})> m_currentState;
     StateIdx m_currentParentState;
     std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_initial_states;
+    std::array<std::vector<std::size_t>, nParentStates(RootState {})> m_history;
 
   public:
     Sm()
@@ -41,6 +42,7 @@ template <class RootState> class Sm {
         fill_dispatch_table_with_external_transitions(rootState());
         fill_dispatch_table_with_internal_transitions(rootState());
         fill_inital_state_table(rootState(), m_initial_states);
+        fill_inital_state_table(rootState(), m_history);
         initCurrentState();
     }
 
@@ -76,7 +78,8 @@ template <class RootState> class Sm {
     {
         bool allGuardsFailed = true;
 
-        for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
+        for (std::size_t region = 0; region < m_initial_states[m_currentParentState].size();
+             region++) {
 
             auto& result = DispatchTable<RootState, Event>::table[m_currentParentState][m_currentState[region]];   
 
@@ -85,8 +88,7 @@ template <class RootState> class Sm {
             }
 
             allGuardsFailed = false;
-            m_currentParentState = result.parentState;
-            m_currentState[region] = result.state;
+            update_current_state(region, result);
 
             result.action(event);
         }
@@ -102,7 +104,8 @@ template <class RootState> class Sm {
     {
         while (true) {
 
-            for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
+            for (std::size_t region = 0; region < m_initial_states[m_currentParentState].size();
+                 region++) {
 
                 auto event = noneEvent{};
                 auto& result = DispatchTable<RootState, noneEvent>::table[m_currentParentState][m_currentState[region]];
@@ -116,11 +119,23 @@ template <class RootState> class Sm {
                     continue;
                 }
 
-                m_currentParentState = result.parentState;
-                m_currentState[region] = result.state;
+                update_current_state(region, result);
 
                 result.action(event);
             }
+        }
+    }
+
+    template <class DispatchTableEntry>
+    void update_current_state(std::size_t region, const DispatchTableEntry& dispatchTableEntry)
+    {
+        m_history[m_currentParentState][region] = m_currentState[region];
+        m_currentParentState = dispatchTableEntry.parentState;
+
+        if (dispatchTableEntry.history) {
+            m_currentState[region] = m_history[m_currentParentState][region];
+        } else {
+            m_currentState[region] = dispatchTableEntry.state;
         }
     }
 
