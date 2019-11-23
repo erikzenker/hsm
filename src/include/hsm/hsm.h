@@ -28,19 +28,21 @@ namespace bh {
 using namespace boost::hana;
 };
 
-template <class RootState> class Sm {
+template <class RootState, class... OptionalParameters> class Sm {
     using Region = std::uint8_t;    
     std::array<StateIdx, maxInitialStates(RootState{})> m_currentState;
     StateIdx m_currentParentState;
     std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(RootState {})> m_history;
+    bh::tuple<OptionalParameters...> m_optionalParameters;
 
   public:
-    Sm()
+    Sm(OptionalParameters... optionalParameters)
         : m_currentParentState(getParentStateIdx(rootState(), rootState()))
     {
-        fill_dispatch_table_with_external_transitions(rootState());
-        fill_dispatch_table_with_internal_transitions(rootState());
+        m_optionalParameters = bh::make_tuple(optionalParameters...);
+        fill_dispatch_table_with_external_transitions(rootState(), optionalParameters...);
+        fill_dispatch_table_with_internal_transitions(rootState(), optionalParameters...);
         fill_inital_state_table(rootState(), m_initial_states);
         fill_inital_state_table(rootState(), m_history);
         initCurrentState();
@@ -81,16 +83,16 @@ template <class RootState> class Sm {
         for (std::size_t region = 0; region < m_initial_states[m_currentParentState].size();
              region++) {
 
-            auto& result = DispatchTable<RootState, Event>::table[m_currentParentState][m_currentState[region]];   
+            auto& result = DispatchTable<RootState, Event, OptionalParameters...>::table
+                [m_currentParentState][m_currentState[region]];
 
-            if (!result.guard(event)) {
+            if (!call_guard(result.guard, event)) {
                 continue;
             }
 
             allGuardsFailed = false;
             update_current_state(region, result);
-
-            result.action(event);
+            call_action(result.action, event);
         }
 
         if (allGuardsFailed) {
@@ -108,20 +110,20 @@ template <class RootState> class Sm {
                  region++) {
 
                 auto event = noneEvent{};
-                auto& result = DispatchTable<RootState, noneEvent>::table[m_currentParentState][m_currentState[region]];
+                auto& result = DispatchTable<RootState, noneEvent, OptionalParameters...>::table
+                    [m_currentParentState][m_currentState[region]];
 
                 // Check if anonymous transition exists
                 if (!result.guard) {
                     return;
                 }
 
-                if (!result.guard(event)) {
+                if (!call_guard(result.guard, event)) {
                     continue;
                 }
 
                 update_current_state(region, result);
-
-                result.action(event);
+                call_action(result.action, event);
             }
         }
     }
@@ -137,6 +139,28 @@ template <class RootState> class Sm {
         } else {
             m_currentState[region] = dispatchTableEntry.state;
         }
+    }
+
+    template <class Action, class Event> void call_action(const Action& action, const Event& event)
+    {
+        bh::if_(
+            contains_dependency(m_optionalParameters),
+            [](const auto& action, const auto& event, const auto& parameters) {
+                action(event, bh::at_c<0>(parameters));
+            },
+            [](const auto& action, const auto& event, const auto&) { action(event); })(
+            action, event, m_optionalParameters);
+    }
+
+    template <class Guard, class Event> bool call_guard(const Guard& guard, const Event& event)
+    {
+        return bh::if_(
+            contains_dependency(m_optionalParameters),
+            [](const auto& guard, const auto& event, const auto& parameters) {
+                return guard(event, bh::at_c<0>(parameters));
+            },
+            [](const auto& guard, const auto& event, const auto&) { return guard(event); })(
+            guard, event, m_optionalParameters);
     }
 
     template <class Event> auto call_unexpected_event_handler(Event event)
@@ -156,7 +180,6 @@ template <class RootState> class Sm {
             m_currentState[region] = m_initial_states[m_currentParentState][region];
         }
 
-    }    
-
+    }
 };
 }

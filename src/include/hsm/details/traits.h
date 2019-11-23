@@ -34,4 +34,5 @@ namespace hsm {
         );
     };
 
+    auto const contains_dependency = [](const auto& parameters) { return bh::size(parameters); };
 }
