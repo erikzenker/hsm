@@ -21,6 +21,7 @@ add_executable(hsmIntegrationTests
         internal_transition.cpp
         unexpected_transition_handler.cpp
         history_pseudo_state.cpp
+        dependency_injection.cpp
 )
 
 gtest_add_tests(

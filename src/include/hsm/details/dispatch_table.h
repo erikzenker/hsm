@@ -110,24 +110,24 @@ constexpr auto fill_inital_state_table = [](const auto& rootState, auto& initial
     });
 };
 
-template <class Event> struct NextState {
+template <class... Parameters> struct NextState {
     StateIdx parentState;
     StateIdx state;
-    std::function<bool(Event)> guard;
-    std::function<void(Event)> action;
+    std::function<bool(Parameters...)> guard;
+    std::function<void(Parameters...)> action;
     bool history;
 };
 
-template <class RootState, class Event>
-using DispatchArray
-    = std::array<std::array<NextState<Event>, nStates(RootState {})>, nParentStates(RootState {})>;
+template <class RootState, class... Parameters>
+using DispatchArray = std::
+    array<std::array<NextState<Parameters...>, nStates(RootState {})>, nParentStates(RootState {})>;
 
-template <class RootState, class Event> struct DispatchTable {
-    static DispatchArray<RootState, Event> table;
+template <class RootState, class... Parameters> struct DispatchTable {
+    static DispatchArray<RootState, Parameters...> table;
 };
 
-template <class RootState, class Event>
-DispatchArray<RootState, Event> DispatchTable<RootState, Event>::table {};
+template <class RootState, class... Parameters>
+DispatchArray<RootState, Parameters...> DispatchTable<RootState, Parameters...>::table {};
 
 constexpr auto resolveDst = [](const auto& transition) {
     return switch_(
@@ -174,15 +174,15 @@ constexpr auto resolveSrcParent = [](const auto& transition) {
 constexpr auto resolveAction = [](const auto& transition) {
     const auto exitAction = switch_(
         case_(has_exit_action, [](auto src) { return src.on_exit(); }),
-        case_(otherwise, [transition](auto) { return [](auto) {}; }))(getSrc(transition));
+        case_(otherwise, [transition](auto) { return [](auto...) {}; }))(getSrc(transition));
     const auto action = getAction(transition);
     const auto entryAction = switch_(
         case_(has_entry_action, [](auto dst) { return dst.on_entry(); }),
-        case_(otherwise, [transition](auto) { return [](auto) {}; }))(getDst(transition));
-    return [exitAction, action, entryAction](const auto& event) {
-        exitAction(event);
-        action(event);
-        entryAction(event);
+        case_(otherwise, [transition](auto) { return [](auto...) {}; }))(getDst(transition));
+    return [exitAction, action, entryAction](const auto&... params) {
+        exitAction(params...);
+        action(params...);
+        entryAction(params...);
     };
 };
 
@@ -237,8 +237,9 @@ constexpr auto filter_transitions = [](const auto& transitions, const auto& even
     return bh::filter(transitions, isEvent);
 };
 
-template <class RootState, class Transitions>
-constexpr auto fill_dispatch_table_with_transitions(const RootState& rootState, const Transitions& transitions)
+template <class RootState, class Transitions, class... Parameters>
+constexpr auto fill_dispatch_table_with_transitions(
+    const RootState& rootState, const Transitions& transitions, Parameters... parameters)
 {
     const auto eventTypeids = collect_event_typeids_recursive(rootState);
 
@@ -247,7 +248,7 @@ constexpr auto fill_dispatch_table_with_transitions(const RootState& rootState, 
 
         using Event = typename decltype(eventTypeid)::type;
 
-        auto& dispatchTable = DispatchTable<RootState, Event>::table;
+        auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
 
         bh::for_each(filteredTransitions, [&rootState, &dispatchTable](const auto& transition) {
             addDispatchTableEntry(rootState, transition, dispatchTable);
@@ -256,13 +257,19 @@ constexpr auto fill_dispatch_table_with_transitions(const RootState& rootState, 
     });
 }
 
-template <class RootState> constexpr auto fill_dispatch_table_with_external_transitions(const RootState& rootState)
+template <class RootState, class... Parameters>
+constexpr auto fill_dispatch_table_with_external_transitions(
+    const RootState& rootState, const Parameters&... parameters)
 {
-    fill_dispatch_table_with_transitions(rootState, flatten_transition_table(rootState));
+    fill_dispatch_table_with_transitions(
+        rootState, flatten_transition_table(rootState), parameters...);
 }
 
-template <class RootState> constexpr auto fill_dispatch_table_with_internal_transitions(const RootState& rootState)
+template <class RootState, class... Parameters>
+constexpr auto fill_dispatch_table_with_internal_transitions(
+    const RootState& rootState, const Parameters&... parameters)
 {
-    fill_dispatch_table_with_transitions(rootState, flatten_internal_transition_table(rootState));
+    fill_dispatch_table_with_transitions(
+        rootState, flatten_internal_transition_table(rootState), parameters...);
 }
 }

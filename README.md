@@ -16,11 +16,11 @@ Currently the following features are supported:
 * [Orthogonal regions](test/integration/orthogonal_regions.cpp)
 * [Internal transitions](test/integration/internal_transition.cpp)
 * [Unexpected event handler](test/integration/unexpected_transition_handler.cpp)
+* [Dependency injection](test/integration/dependency_injection.cpp)
 
 What is missing:
 * Explixit terminate state
 * Fork pseudo state
-* Dependency injection
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
 ![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
