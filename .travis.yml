@@ -23,12 +23,14 @@ install:
 script:
   - export CXX=g++-7
   - export CC=gcc-7
+  - export CODECOV_TOKEN="d3d577f7-24ba-43c6-aa89-efb6e47f07db"
   - cd $TRAVIS_BUILD_DIR
   - mkdir build && cd build
   - mkdir install
-  - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+  - cmake .. -DHSM_GCC_COVERAGE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
   - cmake --build . --target install
   - ctest -VV
   - ./benchmark/simple/simple_sc
   - ./benchmark/simple/simple_euml
   - ./benchmark/simple/simple_hsm
+  - bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
