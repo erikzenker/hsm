@@ -116,6 +116,7 @@ template <class... Parameters> struct NextState {
     std::function<bool(Parameters...)> guard;
     std::function<void(Parameters...)> action;
     bool history;
+    bool defer;
 };
 
 template <class RootState, class... Parameters>
@@ -187,9 +188,12 @@ constexpr auto resolveAction = [](const auto& transition) {
 };
 
 constexpr auto resolveHistory = [](const auto& transition) {
-    return switch_(case_(is_history_state, [](auto) { return true; }), case_(otherwise, [](auto) {
-                       return false;
-                   }))(getDst(transition));
+    // clang-format off        
+    return switch_(
+            case_(is_history_state, [](auto) { return true; }), 
+            case_(otherwise,        [](auto) {return false;}))
+            (getDst(transition));
+    // clang-format on                   
 };
 
 const auto addDispatchTableEntry
@@ -201,8 +205,9 @@ const auto addDispatchTableEntry
           const auto toParent = getParentStateIdx(rootState, resolveDstParent(transition));
           const auto to = getStateIdx(rootState, resolveDst(transition));
           const auto history = resolveHistory(transition);
+          const auto defer = false;
 
-          dispatchTable[fromParent][from] = { toParent, to, guard, action, history };
+          dispatchTable[fromParent][from] = { toParent, to, guard, action, history, defer };
       };
 
 const auto addDispatchTableEntryOfSubMachineExits
@@ -222,17 +227,19 @@ const auto addDispatchTableEntryOfSubMachineExits
                               = getParentStateIdx(rootState, resolveDstParent(transition));
                           const auto to = getStateIdx(rootState, resolveDst(transition));
                           const auto history = resolveHistory(transition);
+                          const auto defer = false;
 
                           dispatchTable[fromParent][from]
-                              = { toParent, to, guard, action, history };
+                              = { toParent, to, guard, action, history, defer };
                       });
               },
               [](auto) {})(getSrc(transition));
       };
 
 constexpr auto filter_transitions = [](const auto& transitions, const auto& eventTypeid) {
-    auto isEvent
-        = [&eventTypeid](auto elem) { return bh::equal(bh::at_c<2>(elem).typeid_, eventTypeid); };
+    auto isEvent = [&eventTypeid](auto transition) {
+        return bh::equal(getEvent(transition).typeid_, eventTypeid);
+    };
 
     return bh::filter(transitions, isEvent);
 };
@@ -244,16 +251,42 @@ constexpr auto fill_dispatch_table_with_transitions(
     const auto eventTypeids = collect_event_typeids_recursive(rootState);
 
     bh::for_each(eventTypeids, [&](auto eventTypeid) {
-        const auto filteredTransitions = filter_transitions(transitions, eventTypeid);
-
         using Event = typename decltype(eventTypeid)::type;
 
+        const auto filteredTransitions = filter_transitions(transitions, eventTypeid);
         auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
 
         bh::for_each(filteredTransitions, [&rootState, &dispatchTable](const auto& transition) {
             addDispatchTableEntry(rootState, transition, dispatchTable);
             addDispatchTableEntryOfSubMachineExits(rootState, transition, dispatchTable);
         });
+    });
+}
+
+template <class RootState, class... Parameters>
+constexpr auto
+fill_dispatch_table_with_deferred_events(const RootState& rootState, Parameters... /*parameters*/)
+{
+    const auto transitions = flatten_transition_table(rootState);
+
+    bh::for_each(transitions, [&](auto transition) {
+        bh::if_(
+            has_deferred_events(getSrc(transition), 0),
+            [&](auto&& state) {
+                auto deferredEvents = state.defer_events();
+                bh::for_each(deferredEvents, [&](auto event) {
+                    using Event = decltype(event);
+
+                    auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
+
+                    const auto fromParent
+                        = getParentStateIdx(rootState, resolveSrcParent(transition));
+                    const auto from = getStateIdx(rootState, resolveSrc(transition));
+
+                    dispatchTable[fromParent][from].defer = true;
+                });
+            },
+            [](auto) {})(getSrc(transition));
     });
 }
 

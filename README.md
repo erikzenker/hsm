@@ -17,6 +17,7 @@ Currently the following features are supported:
 * [Internal transitions](test/integration/internal_transition.cpp)
 * [Unexpected event handler](test/integration/unexpected_transition_handler.cpp)
 * [Dependency injection](test/integration/dependency_injection.cpp)
+* [Defer events](test/integration/defer_events.cpp)
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
 ![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")

@@ -39,6 +39,12 @@ template <typename... Args> constexpr auto initial(Args... args)
     return boost::hana::make_tuple(args...);
 }
 
+template <typename... Args> constexpr auto defer(Args... args)
+{
+    return boost::hana::make_tuple(args...);
+}
+
+
 constexpr auto getIdx = [](auto map, auto type) -> Idx { return bh::find(map, type).value(); };
 
 constexpr auto getSrcParent = [](auto transition) { return bh::at_c<0>(transition); };

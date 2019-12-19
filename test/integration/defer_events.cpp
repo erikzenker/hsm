@@ -8,32 +8,33 @@
 
 namespace {
 
+// Events
+struct e1 {
+    static const int name = 1;
+};
+struct e2 {
+    static const int name = 2;
+};
+
 // States
 struct S1 {
+    constexpr auto defer_events()
+    {
+        return hsm::defer(e2 {});
+    }
 };
 struct S2 {
 };
 
-// Events
-struct e1 {
-};
-struct e2 {
-    e2(const std::shared_ptr<std::promise<void>>& called)
-        : called(called)
-    {
-    }
-
-    std::shared_ptr<std::promise<void>> called;
-};
-
 // Guards
-const auto g1 = [](auto /*event*/) { return true; };
+const auto g1 = [](auto) { return true; };
 
 // Actions
-const auto a1 = [](auto /*event*/) {};
+const auto a1 = [](auto event) {};
 
 using namespace ::testing;
 using namespace boost::hana;
+
 
 struct MainState {
     constexpr auto make_transition_table()
@@ -43,7 +44,6 @@ struct MainState {
             //              Source     , Event                    , Target
             hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}),
             hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {})
-
         );
         // clang-format on
     }
@@ -55,21 +55,25 @@ struct MainState {
 
     constexpr auto on_unexpected_event()
     {
-        return [](auto event) { event.called->set_value(); };
+        return [](auto) {
+            assert(false);
+            std::cout << "UNEXPECTED" << std::endl;
+        };
     }
 };
 
 }
 
-class NoTransitionHandlerTests : public Test {
+class DeferEventsTests : public Test {
   protected:
     hsm::Sm<MainState> sm;
 };
 
-TEST_F(NoTransitionHandlerTests, should_call_no_transition_handler)
+TEST_F(DeferEventsTests, should_defer_event)
 {
-    auto called = std::make_shared<std::promise<void>>();
-    sm.process_event(e2 { called });
-
-    ASSERT_EQ(std::future_status::ready, called->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(sm.is(S1 {}));
+    sm.process_event(e2{});
+    ASSERT_TRUE(sm.is(S1 {}));
+    sm.process_event(e1{});
+    ASSERT_TRUE(sm.is(S1 {}));
 }

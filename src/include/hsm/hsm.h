@@ -14,6 +14,7 @@
 #include "details/switch.h"
 #include "details/traits.h"
 #include "details/transition_table.h"
+#include "details/variant_queue.h"
 
 #include <boost/hana.hpp>
 
@@ -29,20 +30,24 @@ using namespace boost::hana;
 }
 
 template <class RootState, class... OptionalParameters> class Sm {
-    using Region = std::uint8_t;    
+    using Region = std::uint8_t;
+    using Events = decltype(collect_events_recursive(RootState {}));
     std::array<StateIdx, maxInitialStates(RootState{})> m_currentState;
     StateIdx m_currentParentState;
     std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(RootState {})> m_history;
     bh::tuple<OptionalParameters...> m_optionalParameters;
+    variant_queue<Events> m_defer_queue;
 
   public:
     Sm(OptionalParameters... optionalParameters)
         : m_currentParentState(getParentStateIdx(rootState(), rootState()))
+        , m_defer_queue(collect_events_recursive(RootState {}))
     {
         m_optionalParameters = bh::make_tuple(optionalParameters...);
         fill_dispatch_table_with_external_transitions(rootState(), optionalParameters...);
         fill_dispatch_table_with_internal_transitions(rootState(), optionalParameters...);
+        fill_dispatch_table_with_deferred_events(rootState(), optionalParameters...);
         fill_inital_state_table(rootState(), m_initial_states);
         fill_inital_state_table(rootState(), m_history);
         initCurrentState();
@@ -53,6 +58,8 @@ template <class RootState, class... OptionalParameters> class Sm {
         if (!process_event_internal(event)) {
             call_unexpected_event_handler(event);
         }
+
+        process_deferred_events(event);
     }
 
     template <class State> auto is(State state) -> bool
@@ -74,7 +81,7 @@ template <class RootState, class... OptionalParameters> class Sm {
     }
 
   private:
-    template <class Event> bool process_event_internal(Event event)
+    template <class Event> auto process_event_internal(Event event) -> bool
     {
         bool allGuardsFailed = true;
 
@@ -83,6 +90,11 @@ template <class RootState, class... OptionalParameters> class Sm {
 
             auto& result = DispatchTable<RootState, Event, OptionalParameters...>::table
                 [m_currentParentState][m_currentState[region]];
+
+            if(result.defer){
+                m_defer_queue.push(event);
+                return true;
+            }
 
             if (!result.guard) {
                 return false;
@@ -103,6 +115,13 @@ template <class RootState, class... OptionalParameters> class Sm {
 
         apply_anonymous_transitions();
         return true;
+    }
+
+    template <class Event> auto process_deferred_events(Event event)
+    {
+        if (!m_defer_queue.empty()) {
+            m_defer_queue.visit([this](auto event) { process_event_internal(event); });
+        }
     }
 
     auto apply_anonymous_transitions()
@@ -144,7 +163,7 @@ template <class RootState, class... OptionalParameters> class Sm {
         }
     }
 
-    template <class Action, class Event> void call_action(const Action& action, const Event& event)
+    template <class Action, class Event> auto call_action(const Action& action, const Event& event)
     {
         bh::if_(
             contains_dependency(m_optionalParameters),
@@ -155,7 +174,8 @@ template <class RootState, class... OptionalParameters> class Sm {
             action, event, m_optionalParameters);
     }
 
-    template <class Guard, class Event> bool call_guard(const Guard& guard, const Event& event)
+    template <class Guard, class Event>
+    auto call_guard(const Guard& guard, const Event& event) -> bool
     {
         return bh::if_(
             contains_dependency(m_optionalParameters),

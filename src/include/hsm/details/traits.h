@@ -18,11 +18,13 @@ namespace hsm {
     auto has_exit_action = bh::is_valid([](auto&& state) -> decltype(state.on_exit()) { });
     auto has_unexpected_event_handler
         = bh::is_valid([](auto&& state) -> decltype(state.on_unexpected_event()) {});
+    auto has_deferred_events = bh::is_valid([](auto&& state, auto&& /*event*/) -> decltype(state.defer_events()) {});
 
     auto is_exit_state = bh::is_valid([](auto&& state) -> decltype(state.isExitState) {});
     auto is_entry_state = bh::is_valid([](auto&& state) -> decltype(state.isEntryState) {});
     auto is_direct_state = bh::is_valid([](auto&& state) -> decltype(state.isDirectState) {});
     auto is_history_state = bh::is_valid([](auto&& state) -> decltype(state.isHistoryState) {});
+
 
     auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});    
 
