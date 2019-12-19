@@ -10,7 +10,7 @@ namespace hsm {
 
 namespace bh {
 using namespace boost::hana;
-};
+}
 
 constexpr auto collect_parent_state_typeids = [](auto state) {
     auto toParentState = [](auto transition) { return bh::typeid_(bh::front(transition)); };

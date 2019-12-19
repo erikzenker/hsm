@@ -10,7 +10,7 @@ namespace hsm {
 
 namespace bh {
 using namespace boost::hana;
-};
+}
 
 namespace {
 constexpr auto collectEventTypeids = [](auto transition) { return bh::at_c<2>(transition).typeid_; };

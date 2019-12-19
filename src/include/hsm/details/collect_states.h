@@ -10,7 +10,7 @@ namespace hsm {
 
     namespace bh{
         using namespace boost::hana; 
-    };
+    }
 
     namespace {
     const auto extractExtendedStateTypeids = [](auto transition) {

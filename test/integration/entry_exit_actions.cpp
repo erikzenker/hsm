@@ -39,10 +39,10 @@ struct e2 {
 };
 
 // Guards
-const auto g1 = [](auto) { return true; };
+const auto g1 = [](auto /*event*/) { return true; };
 
 // Actions
-const auto a1 = [](auto event) {};
+const auto a1 = [](auto /*event*/) {};
 
 struct SubState {
     constexpr auto make_transition_table()

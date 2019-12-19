@@ -36,6 +36,6 @@ template <class State> constexpr auto flatten_sub_transition_table(State&& state
             return flatten_transition_table(stateWithTransitionTable);
         },
         [](auto&) { return bh::make_tuple(); })(state);
-};
 }
-} // namespace hsm
+}
+}

@@ -23,7 +23,7 @@ const auto g1 = [](auto, const auto& dependency) {
 };
 
 // Actions
-const auto a1 = [](auto event, const auto& dependency) { (*dependency.callCount)++; };
+const auto a1 = [](auto /*event*/, const auto& dependency) { (*dependency.callCount)++; };
 
 using namespace ::testing;
 

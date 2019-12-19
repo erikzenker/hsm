@@ -84,6 +84,6 @@ const auto get_unexpected_event_handler = [](auto rootState) {
     return bh::if_(
         has_unexpected_event_handler(rootState),
         [](auto rootState) { return rootState.on_unexpected_event(); },
-        [](auto) { return [](auto event) {}; })(rootState);
+        [](auto) { return [](auto /*event*/) {}; })(rootState);
 };
 }

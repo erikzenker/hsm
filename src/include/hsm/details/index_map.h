@@ -6,7 +6,7 @@ namespace hsm {
 
 namespace bh {
 using namespace boost::hana;
-};
+}
 
 const auto make_index_map = [](auto tuple) {
     return bh::to<bh::map_tag>(bh::second(bh::fold_left(

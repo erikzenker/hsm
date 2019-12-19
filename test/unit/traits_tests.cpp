@@ -33,7 +33,7 @@ TEST_F(TraitsTests, should_recognize_exit_state)
 
     boost::hana::if_(
         hsm::is_exit_state(exit),
-        [](auto exit) { ASSERT_TRUE(true); },
+        [](auto /*exit*/) { ASSERT_TRUE(true); },
         [&](auto) { ASSERT_TRUE(false); })(exit);
 }
 
@@ -60,7 +60,7 @@ TEST_F(TraitsTests, should_not_call_callable)
     struct Arg {
     };
 
-    auto callable = [](Arg arg){return 42; };
+    auto callable = [](Arg /*arg*/){return 42; };
     auto not_callable = [] (){throw 42; };
     Arg arg;
     auto args = bh::make_tuple(arg);
@@ -70,7 +70,7 @@ TEST_F(TraitsTests, should_not_call_callable)
                     [](auto callable){ return 1; })(callable);                    
     bh::if_(hsm::is_callable(not_callable, args),
                     [arg](auto callable){ return callable(arg);},
-                    [](auto callable){ return 1; })(not_callable);
+                    [](auto /*callable*/){ return 1; })(not_callable);
 }
 
 TEST_F(TraitsTests, should_recognize_transition_table)

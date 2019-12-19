@@ -33,4 +33,8 @@ script:
   - ./benchmark/simple/simple_sc
   - ./benchmark/simple/simple_euml
   - ./benchmark/simple/simple_hsm
+  - ./benchmark/complex/complex_switch
+  - ./benchmark/complex/complex_sc  
+  - ./benchmark/complex/complex_euml
+  - ./benchmark/complex/complex_hsm
   - bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
