@@ -6,4 +6,5 @@ include_directories(AFTER
     header)
 
 add_subdirectory(simple)
+add_subdirectory(complex)
 

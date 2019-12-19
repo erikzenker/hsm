@@ -50,9 +50,7 @@ template <class RootState, class... OptionalParameters> class Sm {
 
     template <class Event> auto process_event(Event event)
     {
-        try {
-            process_event_internal(event);
-        } catch (const std::exception& e) {
+        if (!process_event_internal(event)) {
             call_unexpected_event_handler(event);
         }
     }
@@ -76,7 +74,7 @@ template <class RootState, class... OptionalParameters> class Sm {
     }
 
   private:
-    template <class Event> auto process_event_internal(Event event)
+    template <class Event> bool process_event_internal(Event event)
     {
         bool allGuardsFailed = true;
 
@@ -85,6 +83,10 @@ template <class RootState, class... OptionalParameters> class Sm {
 
             auto& result = DispatchTable<RootState, Event, OptionalParameters...>::table
                 [m_currentParentState][m_currentState[region]];
+
+            if (!result.guard) {
+                return false;
+            }
 
             if (!call_guard(result.guard, event)) {
                 continue;
@@ -96,10 +98,11 @@ template <class RootState, class... OptionalParameters> class Sm {
         }
 
         if (allGuardsFailed) {
-            return;
+            return true;
         }
 
         apply_anonymous_transitions();
+        return true;
     }
 
     auto apply_anonymous_transitions()
