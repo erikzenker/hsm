@@ -26,7 +26,7 @@ namespace hsm {
 
 namespace bh {
 using namespace boost::hana;
-};
+}
 
 template <class RootState, class... OptionalParameters> class Sm {
     using Region = std::uint8_t;    
@@ -52,7 +52,7 @@ template <class RootState, class... OptionalParameters> class Sm {
     {
         try {
             process_event_internal(event);
-        } catch (std::exception e) {
+        } catch (const std::exception& e) {
             call_unexpected_event_handler(event);
         }
     }
@@ -60,20 +60,20 @@ template <class RootState, class... OptionalParameters> class Sm {
     template <class State> auto is(State state) -> bool
     {
         return m_currentState[0] == getStateIdx(rootState(), state);
-    };
+    }
 
     template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
     {
         return m_currentParentState == getParentStateIdx(rootState(), parentState)
             && m_currentState[0] == getStateIdx(rootState(), state);
-    };
+    }
 
     template <class ParentState, class State>
     auto is(Region region, ParentState parentState, State state) -> bool
     {
         return m_currentParentState == getParentStateIdx(rootState(), parentState)
             && m_currentState[region] == getStateIdx(rootState(), state);
-    };
+    }
 
   private:
     template <class Event> auto process_event_internal(Event event)
@@ -176,7 +176,7 @@ template <class RootState, class... OptionalParameters> class Sm {
 
     void initCurrentState()
     {
-        for(int region = 0; region < m_initial_states[m_currentParentState].size(); region++){
+        for(std::size_t region = 0; region < m_initial_states[m_currentParentState].size(); region++){
             m_currentState[region] = m_initial_states[m_currentParentState][region];
         }
 

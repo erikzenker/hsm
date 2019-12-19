@@ -41,11 +41,11 @@ struct e6 {
 };
 
 // Guards
-const auto trueGuard = [](auto) { return true; };
-const auto falseGuard = [](auto) { return false; };
+const auto trueGuard = [](auto /*event*/) { return true; };
+const auto falseGuard = [](auto /*event*/) { return false; };
 
 // Actions
-const auto a1 = [](auto event) {};
+const auto a1 = [](auto /*event*/) {};
 
 using namespace ::testing;
 

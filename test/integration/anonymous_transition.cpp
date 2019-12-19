@@ -21,10 +21,10 @@ struct e1 {
 };
 
 // Guards
-const auto g1 = [](auto) { return true; };
+const auto g1 = [](auto /*event*/) { return true; };
 
 // Actions
-const auto a1 = [](auto event) {};
+const auto a1 = [](auto /*event*/) {};
 
 using namespace ::testing;
 

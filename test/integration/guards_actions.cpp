@@ -35,7 +35,7 @@ const auto g2 = [](auto) { return false; };
 const auto g3 = [](auto) { return true; };
 
 // Actions
-const auto a1 = [](auto event) {};
+const auto a1 = [](auto /*event*/) {};
 const auto a2 = [](auto event) { event.called->set_value(); };
 
 using namespace ::testing;

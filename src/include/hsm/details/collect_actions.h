@@ -11,7 +11,7 @@ namespace hsm {
 
 namespace bh {
 using namespace boost::hana;
-};
+}
 
 namespace {
 const auto collectAction = [](auto transition) { return bh::at_c<4>(transition); };

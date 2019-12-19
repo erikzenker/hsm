@@ -8,7 +8,7 @@ namespace hsm {
     }
 
 
-constexpr auto otherwise = boost::hana::is_valid([](auto... arg) { });
+constexpr auto otherwise = boost::hana::is_valid([](auto... /*arg*/) { });
 
 template <class Pred, class Func>
 auto case_(Pred pred, Func func){

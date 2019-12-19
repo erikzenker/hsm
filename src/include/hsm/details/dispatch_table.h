@@ -239,7 +239,7 @@ constexpr auto filter_transitions = [](const auto& transitions, const auto& even
 
 template <class RootState, class Transitions, class... Parameters>
 constexpr auto fill_dispatch_table_with_transitions(
-    const RootState& rootState, const Transitions& transitions, Parameters... parameters)
+    const RootState& rootState, const Transitions& transitions, Parameters... /*parameters*/)
 {
     const auto eventTypeids = collect_event_typeids_recursive(rootState);
 
