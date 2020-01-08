@@ -35,6 +35,13 @@ const auto g1 = [](auto) { return true; };
 // Actions
 const auto a1 = [](auto event) {};
 
+struct Defer {
+    constexpr auto defer_events()
+    {
+        return hsm::defer(e1{});
+    }    
+};
+
 struct S {
 
     constexpr auto on_entry()
@@ -86,20 +93,8 @@ struct MainState {
 
 }
 
-TEST_F(DispatchTableTests, should_resolve_action)
-{
-    auto counter = std::make_shared<int>(0);
 
-    auto action = [](auto counter) { (*counter)++; };
 
-    auto transition = bh::make_tuple(0, S {}, 2, 3, action, S {});
-
-    auto resolvedAction = hsm::resolveAction(transition);
-
-    resolvedAction(counter);
-
-    ASSERT_EQ(3, *counter);
-}
 
 TEST_F(DispatchTableTests, should_count_max_regions)
 {
