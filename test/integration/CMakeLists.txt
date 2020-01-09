@@ -23,6 +23,7 @@ add_executable(hsmIntegrationTests
         history_pseudo_state.cpp
         dependency_injection.cpp
         defer_events.cpp
+        transition_dsl.cpp
 )
 
 gtest_add_tests(

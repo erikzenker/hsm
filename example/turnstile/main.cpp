@@ -1,4 +1,3 @@
-
 #include "hsm/hsm.h"
 
 #include <cassert>
@@ -15,23 +14,27 @@ struct Push {
 struct Coin {
 };
 
-// No events nor guards in this example
-const auto none = [](auto event) {};
-const auto g = [](auto event) { return true; };
+// Guards
+const auto noError = [](auto /*event*/){return true;};
+
+// Actions
+const auto beep = [](auto /*event*/){ std::cout << "beep!" << std::endl;};
+const auto blink = [](auto /*event*/){ std::cout << "blink, blink, blink!" << std::endl;};
 
 struct Turnstile {
     constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
-            //              Start      , Event              , Guard   , Action , Target
-            //             +-----------+--------------------+---------+--------+---------------+
-            hsm::transition(Locked {}  , hsm::event<Push> {}, g       , none   , Locked {}    ),
-            hsm::transition(Locked {}  , hsm::event<Coin> {}, g       , none   , Unlocked {}  ),
-            //            +------------+--------------------+---------+--------+---------------+
-            hsm::transition(Unlocked {}, hsm::event<Push> {}, g       , none   , Locked {}    ),
-            hsm::transition(Unlocked {}, hsm::event<Coin> {}, g       , none   , Unlocked {} ));
-            //            +------------+--------------------+-------+----------+---------------+
+            // Start                + Event               [Guard]   / Action = Target
+            // +--------------------+---------------------+---------+--------+------------------------+
+            hsm::state<Locked> {}   + hsm::event<Push> {} [noError] / beep   = hsm::state<Locked> {}  ,
+            hsm::state<Locked> {}   + hsm::event<Coin> {} [noError] / blink  = hsm::state<Unlocked> {},
+            // +--------------------+---------------------+---------+------------------------+
+            hsm::state<Unlocked> {} + hsm::event<Push> {} [noError]          = hsm::state<Locked> {}  ,
+            hsm::state<Unlocked> {} + hsm::event<Coin> {} [noError] / blink  = hsm::state<Unlocked> {}
+            // +--------------------+---------------------+---------+------------------------+                        
+            );
         // clang-format on
     }
 

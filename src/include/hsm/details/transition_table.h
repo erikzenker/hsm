@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../front/transition.h"
 #include "collect_guards.h"
-#include "event.h"
 #include "index_map.h"
 
 #include <boost/hana.hpp>

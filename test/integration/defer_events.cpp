@@ -30,7 +30,7 @@ struct S2 {
 const auto g1 = [](auto) { return true; };
 
 // Actions
-const auto a1 = [](auto event) {};
+const auto a1 = [](auto) {};
 
 using namespace ::testing;
 using namespace boost::hana;

@@ -6,7 +6,6 @@
 #include "details/collect_parent_states.h"
 #include "details/collect_states.h"
 #include "details/dispatch_table.h"
-#include "details/event.h"
 #include "details/flatten_internal_transition_table.h"
 #include "details/flatten_transition_table.h"
 #include "details/index_map.h"
@@ -15,6 +14,8 @@
 #include "details/traits.h"
 #include "details/transition_table.h"
 #include "details/variant_queue.h"
+
+#include "front/transition.h"
 
 #include <boost/hana.hpp>
 
@@ -57,9 +58,10 @@ template <class RootState, class... OptionalParameters> class Sm {
     {
         if (!process_event_internal(event)) {
             call_unexpected_event_handler(event);
+            return;
         }
 
-        process_deferred_events(event);
+        process_deferred_events();
     }
 
     template <class State> auto is(State state) -> bool
@@ -117,7 +119,7 @@ template <class RootState, class... OptionalParameters> class Sm {
         return true;
     }
 
-    template <class Event> auto process_deferred_events(Event event)
+    auto process_deferred_events()
     {
         if (!m_defer_queue.empty()) {
             m_defer_queue.visit([this](auto event) { process_event_internal(event); });

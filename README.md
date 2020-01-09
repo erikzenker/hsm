@@ -18,6 +18,7 @@ Currently the following features are supported:
 * [Unexpected event handler](test/integration/unexpected_transition_handler.cpp)
 * [Dependency injection](test/integration/dependency_injection.cpp)
 * [Defer events](test/integration/defer_events.cpp)
+* [eUML frontend](test/integration/transition_dsl.cpp)
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
 ![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
@@ -39,22 +40,27 @@ struct Push {
 struct Coin {
 };
 
-// No events nor guards in this example
-const auto none = []() {};
+// Guards
+const auto noError = [](auto /*event*/){return true;};
+
+// Actions
+const auto beep = [](auto /*event*/){ std::cout << "beep!" << std::endl;};
+const auto blink = [](auto /*event*/){ std::cout << "blink, blink, blink!" << std::endl;};
 
 struct Turnstile {
     constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
-            //              Start      , Event              , Guard   , Action , Target
-            //             +-----------+--------------------+---------+--------+---------------+
-            hsm::transition(Locked {}  , hsm::event<Push> {}, none    , none   , Locked {}    ),
-            hsm::transition(Locked {}  , hsm::event<Coin> {}, none    , none   , Unlocked {}  ),
-            //            +------------+--------------------+---------+--------+---------------+
-            hsm::transition(Unlocked {}, hsm::event<Push> {}, none    , none   , Locked {}    ),
-            hsm::transition(Unlocked {}, hsm::event<Coin> {}, none    , none   , Unlocked {} ));
-            //            +------------+--------------------+-------+----------+---------------+
+            // Start                + Event               [Guard]   / Action = Target
+            // +--------------------+---------------------+---------+--------+------------------------+
+            hsm::state<Locked> {}   + hsm::event<Push> {} [noError] / beep   = hsm::state<Locked> {}  ,
+            hsm::state<Locked> {}   + hsm::event<Coin> {} [noError] / blink  = hsm::state<Unlocked> {},
+            // +--------------------+---------------------+---------+------------------------+
+            hsm::state<Unlocked> {} + hsm::event<Push> {} [noError]          = hsm::state<Locked> {}  ,
+            hsm::state<Unlocked> {} + hsm::event<Coin> {} [noError] / blink  = hsm::state<Unlocked> {}
+            // +--------------------+---------------------+---------+------------------------+                        
+            );
         // clang-format on
     }
 
