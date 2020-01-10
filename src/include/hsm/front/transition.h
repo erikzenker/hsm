@@ -21,8 +21,8 @@ template <class Event, class Guard, class Action> class TransitionEGA {
     }
 
   public:
-    Guard guard;
-    Action action;
+    const Guard guard;
+    const Action action;
 };
 
 template <class Event, class Guard> class TransitionEG {
@@ -38,13 +38,21 @@ template <class Event, class Guard> class TransitionEG {
     }
 
   public:
-    Guard guard;
+    const Guard guard;
+};
+
+template <class Event, class Action> class TransitionEA {
+  public:
+    constexpr TransitionEA(const Action& action)
+        : action(action)
+    {
+    }
+
+  public:
+    const Action action;
 };
 
 template <class Source, class Event, class Guard, class Action> class TransitionSEGA {
-    const Guard guard;
-    const Action action;
-
   public:
     constexpr TransitionSEGA(const Guard& guard, const Action& action)
         : guard(guard)
@@ -56,11 +64,13 @@ template <class Source, class Event, class Guard, class Action> class Transition
     {
         return boost::hana::make_tuple(Source {}, Event {}, guard, action, Target {});
     }
+
+  private:
+    const Guard guard;
+    const Action action;
 };
 
 template <class Source, class Event, class Guard> class TransitionSEG {
-    const Guard guard;
-
   public:
     constexpr TransitionSEG(const Guard& guard)
         : guard(guard)
@@ -71,6 +81,25 @@ template <class Source, class Event, class Guard> class TransitionSEG {
     {
         return boost::hana::make_tuple(Source {}, Event {}, guard, defaultAction, Target {});
     }
+
+  private:
+    const Guard guard;
+};
+
+template <class Source, class Event, class Action> class TransitionSEA {
+  public:
+    constexpr TransitionSEA(const Action& action)
+        : action(action)
+    {
+    }
+
+    template <class Target> constexpr auto operator=(const state<Target>&)
+    {
+        return boost::hana::make_tuple(Source {}, Event {}, defaultGuard, action, Target {});
+    }
+
+  private:
+    const Action action;
 };
 
 template <class Source, class Event> class TransitionSE {
@@ -94,6 +123,12 @@ template <class Source> class state {
         return TransitionSEG<Source, Event, Guard> { transition.guard };
     }
 
+    template <class Event, class Action>
+    constexpr auto operator+(const TransitionEA<Event, Action>& transition)
+    {
+        return TransitionSEA<Source, Event, Action> { transition.action };
+    }
+
     template <class Event, class Guard, class Action>
     constexpr auto operator+(const TransitionEGA<Event, Guard, Action>& transition)
     {
@@ -107,6 +142,11 @@ template <class Event> struct event {
     template <class Guard> constexpr auto operator[](const Guard& guard)
     {
         return TransitionEG<event<Event>, Guard> { guard };
+    }
+
+    template <class Action> constexpr auto operator/(const Action& guard)
+    {
+        return TransitionEA<event<Event>, Action> { guard };
     }
 };
 
