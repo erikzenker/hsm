@@ -21,6 +21,8 @@ struct e2 {
 };
 struct e3 {
 };
+struct e4 {
+};
 
 // Guards
 const auto guard = [](auto /*event*/) { return true; };
@@ -41,7 +43,9 @@ struct MainState {
             //   Source      +      Event       [Guard] = Target
             hsm::state<S1>{} + hsm::event<e2>{} [guard] = hsm::state<S2>{},
             //   Source      +      Event       [Guard] / Action = Target
-            hsm::state<S1>{} + hsm::event<e3>{} [guard] / action = hsm::state<S2>{}
+            hsm::state<S1>{} + hsm::event<e3>{} [guard] / action = hsm::state<S2>{},
+            //   Source      +      Event       / Action = Target
+            hsm::state<S1>{} + hsm::event<e3>{} / action = hsm::state<S2>{}
         );
         // clang-format on
     }
