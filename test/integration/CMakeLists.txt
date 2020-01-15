@@ -25,14 +25,12 @@ add_executable(hsmIntegrationTests
         transition_dsl.cpp
 )
 
-
-
 target_link_libraries(hsmIntegrationTests
         PRIVATE
           hsm::hsm
           gtest_main
 )
 
-#add_test(NAME hsm.IntegrationTests
-#        COMMAND hsmIntegrationTests
-#)
+add_test(NAME hsm.IntegrationTests
+        COMMAND hsmIntegrationTests
+)
