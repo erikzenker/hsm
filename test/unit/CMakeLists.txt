@@ -28,3 +28,8 @@ target_link_libraries(hsmUnitTests
         PRIVATE
           hsm::hsm
           gtest_main)
+
+add_test(NAME hsm.UnitTests
+        COMMAND hsmUnitTests
+)
+
