@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(hsm)
 
+# dependencies
+find_package(Boost 1.65 REQUIRED)
 
+add_subdirectory(vendor/googletest)
 
 # add project code
 add_subdirectory(src)
