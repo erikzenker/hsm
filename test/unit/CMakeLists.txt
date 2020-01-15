@@ -3,7 +3,6 @@ project(hsmTests)
 
 # dependencies
 enable_testing()
-find_package(GTest MODULE REQUIRED)
 if(NOT TARGET hsm::hsm)
     find_package(hsm CONFIG REQUIRED)
 endif()
@@ -24,13 +23,8 @@ add_executable(
           switch_tests.cpp
           variant_queue_tests.cpp)
 
-gtest_add_tests(
-        TARGET
-          hsmUnitTests
-        TEST_SUFFIX .noArgs
-        TEST_LIST   noArgsTests)
 
 target_link_libraries(hsmUnitTests
         PRIVATE
           hsm::hsm
-          GTest::Main)
+          gtest_main)

@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(hsm VERSION 0.0.1)
 
-# dependencies
-find_package(Boost 1.65 REQUIRED)
-
 # library definition
-add_library(hsm include/hsm/hsm.h)
+add_library(hsm INTERFACE)
 
 install(TARGETS hsm EXPORT hsmTargets
         LIBRARY DESTINATION lib
@@ -25,11 +22,11 @@ write_basic_package_version_file(hsmConfigVersion.cmake
 install(FILES hsmConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/hsmConfigVersion.cmake
         DESTINATION lib/cmake/hsm)
 
-set_target_properties(hsm PROPERTIES LINKER_LANGUAGE CXX)
-target_compile_features(hsm PUBLIC cxx_std_17)
-target_include_directories(hsm PUBLIC
+#set_target_properties(hsm PROPERTIES LINKER_LANGUAGE CXX)
+target_compile_features(hsm INTERFACE cxx_std_17)
+target_include_directories(hsm INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 target_link_libraries(hsm
-        PRIVATE Boost::boost)
+        INTERFACE Boost::boost)
 add_library(hsm::hsm ALIAS hsm)

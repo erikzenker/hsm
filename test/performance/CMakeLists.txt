@@ -3,7 +3,6 @@ project(hsmPerformanceTests)
 
 # dependencies
 enable_testing()
-find_package(GTest MODULE REQUIRED)
 if(NOT TARGET hsm::hsm)
     find_package(hsm CONFIG REQUIRED)
 endif()
@@ -13,7 +12,7 @@ add_executable(hsmPerformanceTests main.cpp)
 target_link_libraries(hsmPerformanceTests
         PRIVATE
           hsm::hsm
-          GTest::Main
+          gtest_main
 )
 add_test(NAME hsm.PerformanceTests
         COMMAND hsmPerformanceTests
