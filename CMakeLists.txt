@@ -4,7 +4,7 @@ project(hsm)
 # dependencies
 find_package(Boost 1.65 REQUIRED)
 
-add_subdirectory(googletest)
+add_subdirectory(vendor/googletest)
 
 # add project code
 add_subdirectory(src)
