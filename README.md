@@ -88,7 +88,18 @@ int main()
     return 0;
 }
 ```
+## Runtime Benchmark Results
+### [Simple Benchmark](benchmark/simple/)
+| Events | States | Transitions | Process Events |
+|--------|--------|-------------|----------------|
+|  6     |   5    |      12     |        1000000 |
+![Simple benchmark results](doc/benchmark/simple_benchmark_results.svg "simple benchmark results")
 
+### [Complex Benchmark](benchmark/complex/)
+| Events | States | Transitions | Process Events |
+|--------|--------|-------------|----------------|
+|  50    |   50   |      50     |        1000000 |
+![Complex benchmark results](doc/benchmark/complex_benchmark_results.svg "Complex benchmark results")
 
 ## Create and Install the Package
 ``` bash
