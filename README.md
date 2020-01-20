@@ -93,13 +93,20 @@ int main()
 | Events | States | Transitions | Process Events |
 |--------|--------|-------------|----------------|
 |  6     |   5    |      12     |        1000000 |
-![Simple benchmark results](doc/benchmark/simple_benchmark_results.svg "simple benchmark results")
+
+| Runtime | Compile Time |
+|--|--|
+|![Simple benchmark results](doc/benchmark/simple_benchmark_results.svg "simple benchmark results")|![Simple benchmark compile timeresults](doc/benchmark/simple_benchmark_compiletime_results.svg "simple benchmark compile time results")|
+
 
 ### [Complex Benchmark](benchmark/complex/)
 | Events | States | Transitions | Process Events |
 |--------|--------|-------------|----------------|
 |  50    |   50   |      50     |        1000000 |
-![Complex benchmark results](doc/benchmark/complex_benchmark_results.svg "Complex benchmark results")
+
+| Runtime | Compile Time |
+|--|--|
+|![Complex benchmark results](doc/benchmark/complex_benchmark_results.svg "Complex benchmark results")|![Complex benchmark compile time results](doc/benchmark/complex_benchmark_compiletime_results.svg "Complex benchmark compile time results")|
 
 ## Create and Install the Package
 ``` bash
