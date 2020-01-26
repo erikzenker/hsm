@@ -1,8 +1,10 @@
 #pragma once
 
 #include "../front/transition.h"
-#include "collect_guards.h"
 #include "index_map.h"
+#include "collect_states.h"
+#include "collect_guards.h"
+#include "collect_parent_states.h"
 
 #include <boost/hana.hpp>
 
@@ -21,29 +23,28 @@ using GuardIdx = Idx;
 // TODO: replace these free standing functions by type alias
 template <typename... Args> constexpr auto transition_table(Args... args)
 {
-    return boost::hana::make_tuple(args...);
+    return bh::make_tuple(args...);
 }
 
 template <typename... Args> constexpr auto row(Args... args)
 {
-    return boost::hana::make_tuple(args...);
+    return bh::make_tuple(args...);
 }
 
 template <typename... Args> constexpr auto transition(Args... args)
 {
-    return boost::hana::make_tuple(args...);
+    return bh::make_tuple(args...);
 }
 
 template <typename... Args> constexpr auto initial(Args... args)
 {
-    return boost::hana::make_tuple(args...);
+    return bh::make_tuple(args...);
 }
 
 template <typename... Args> constexpr auto defer(Args... args)
 {
-    return boost::hana::make_tuple(args...);
+    return bh::make_tuple(args...);
 }
-
 
 constexpr auto getIdx = [](auto map, auto type) -> Idx { return bh::find(map, type).value(); };
 
@@ -66,6 +67,26 @@ constexpr auto getParentStateIdx = [](auto rootState, auto parentState) {
 constexpr auto getStateIdx = [](auto rootState, auto state) {
     return getIdx(make_index_map(collect_state_typeids_recursive(rootState)), bh::typeid_(state));
 };
+
+constexpr auto getCombinedStateIdx = [](auto rootState, auto parentState, auto state) {
+    auto stateTypeids = collect_parent_state_typeids(rootState);
+    auto parentStateTypeids = collect_state_typeids_recursive(rootState);
+    auto stateCartesianProduct = bh::cartesian_product(bh::make_tuple(stateTypeids, parentStateTypeids));
+    auto combinedTypeids = bh::transform(stateCartesianProduct, bh::typeid_);
+    auto combinedStateTypeid = bh::typeid_(bh::make_tuple(bh::typeid_(parentState), bh::typeid_(state)));
+
+    return getIdx(make_index_map(combinedTypeids), combinedStateTypeid);
+};
+
+auto calcCombinedStateIdx = [](std::size_t nStates, Idx parentStateIdx, Idx stateIdx) -> Idx {
+    return (parentStateIdx * nStates) + stateIdx;
+};
+
+auto calcParentStateIdx
+    = [](std::size_t nStates, Idx combinedState) -> Idx { return combinedState / nStates; };
+
+auto calcStateIdx
+    = [](std::size_t nStates, Idx combinedState) -> Idx { return combinedState % nStates; };
 
 constexpr auto getEventIdx = [](auto rootState, auto event) {
     auto takeWrappedEvent = [](auto event) { return event.typeid_; };

@@ -14,6 +14,7 @@ add_executable(
           collect_states_tests.cpp 
           collect_events_tests.cpp
           collect_actions_tests.cpp
+          stateidx_tests.cpp
           index_map_tests.cpp
           traits_tests.cpp
           remove_duplicates_tests.cpp
@@ -23,7 +24,6 @@ add_executable(
           switch_tests.cpp
           variant_queue_tests.cpp)
 
-
 target_link_libraries(hsmUnitTests
         PRIVATE
           hsm::hsm
@@ -32,4 +32,3 @@ target_link_libraries(hsmUnitTests
 add_test(NAME hsm.UnitTests
         COMMAND hsmUnitTests
 )
-

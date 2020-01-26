@@ -1,4 +1,6 @@
-#include "hsm/hsm.h"
+#include "hsm/details/collect_states.h"
+#include "hsm/details/collect_parent_states.h"
+#include "hsm/details/transition_table.h"
 
 #include <gtest/gtest.h>
 

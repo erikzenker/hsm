@@ -111,7 +111,7 @@ struct CdPlayer {
 
 int main()
 {
-    hsm::Sm<CdPlayer> CdPlayerSm;
+    hsm::sm<CdPlayer> CdPlayerSm;
 
     // Cd player is empty
     assert(CdPlayerSm.is(Empty {}));

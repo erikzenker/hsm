@@ -63,7 +63,7 @@ struct MainState {
 
 class NoTransitionHandlerTests : public Test {
   protected:
-    hsm::Sm<MainState> sm;
+    hsm::sm<MainState> sm;
 };
 
 TEST_F(NoTransitionHandlerTests, should_call_no_transition_handler)

@@ -1,4 +1,5 @@
 #include "hsm/hsm.h"
+#include "hsm/details/transition_table.h"
 
 #include <boost/hana.hpp>
 #include <gtest/gtest.h>
@@ -101,7 +102,7 @@ struct MainState {
 
 class BasicTransitionTests : public Test {
     protected:    
-        hsm::Sm<MainState> sm;
+        hsm::sm<MainState> sm;
 };
 
 TEST_F(BasicTransitionTests, should_start_in_initial_state)

@@ -1,5 +1,5 @@
 
-#include "hsm/hsm.h"
+#include "hsm/details/variant_queue.h"
 
 #include <gtest/gtest.h>
 

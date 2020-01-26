@@ -92,7 +92,7 @@ struct MainState {
 
 class EntryExitActionsTests : public Test {
     protected:    
-        hsm::Sm<MainState> sm;
+        hsm::sm<MainState> sm;
 };
 
 TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action)

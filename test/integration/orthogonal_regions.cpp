@@ -108,7 +108,7 @@ struct MainState {
 
 class OrthogonalRegionsTests : public Test {
     protected:    
-        hsm::Sm<MainState> sm;
+        hsm::sm<MainState> sm;
 };
 
 TEST_F(OrthogonalRegionsTests, should_start_in_region_initial_states)

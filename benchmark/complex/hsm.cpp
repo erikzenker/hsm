@@ -272,7 +272,7 @@ int main()
         }
     };
 
-    hsm::Sm<c> sm;
+    hsm::sm<c> sm;
 
     benchmark_execution_speed([&] {
         for (auto i = 0; i < 1'000'000; ++i) {

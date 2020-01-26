@@ -49,7 +49,7 @@ struct MainState {
 
 class AnonymousTransitionTests : public Test {
   protected:
-    hsm::Sm<MainState> sm;
+    hsm::sm<MainState> sm;
 };
 
 TEST_F(AnonymousTransitionTests, should_transit_with_anonymous_transition)

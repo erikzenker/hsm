@@ -1,7 +1,7 @@
 #pragma once
 
 #include <boost/hana.hpp>
-#include <exception>
+#include <stdexcept>
 #include <queue>
 #include <variant>
 

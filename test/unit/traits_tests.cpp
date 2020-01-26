@@ -1,4 +1,4 @@
-#include "hsm/hsm.h"
+#include "hsm/details/traits.h"
 
 #include <gtest/gtest.h>
 

@@ -1,5 +1,5 @@
 
-#include <hsm/hsm.h>
+#include "hsm/details/switch.h"
 
 #include <gtest/gtest.h>
 

@@ -46,7 +46,7 @@ struct Turnstile {
 
 int main()
 {
-    hsm::Sm<Turnstile> turnstileSm;
+    hsm::sm<Turnstile> turnstileSm;
 
     // The turnstile is initially locked
     assert(turnstileSm.is(Locked {}));
