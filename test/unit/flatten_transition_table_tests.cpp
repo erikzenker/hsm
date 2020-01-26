@@ -1,5 +1,6 @@
 
-#include "hsm/hsm.h"
+#include "hsm/details/flatten_transition_table.h"
+#include "hsm/details/transition_table.h"
 
 #include <gtest/gtest.h>
 

@@ -1,28 +1,15 @@
 #pragma once
 
-#include "details/collect_actions.h"
 #include "details/collect_events.h"
-#include "details/collect_guards.h"
-#include "details/collect_parent_states.h"
-#include "details/collect_states.h"
 #include "details/dispatch_table.h"
-#include "details/flatten_internal_transition_table.h"
-#include "details/flatten_transition_table.h"
-#include "details/index_map.h"
-#include "details/pseudo_states.h"
-#include "details/switch.h"
-#include "details/traits.h"
 #include "details/transition_table.h"
 #include "details/variant_queue.h"
-
-#include "front/transition.h"
 
 #include <boost/hana.hpp>
 
 #include <array>
+#include <vector>
 #include <cstdint>
-#include <iostream>
-#include <map>
 
 namespace hsm {
 
@@ -30,20 +17,19 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class RootState, class... OptionalParameters> class Sm {
+template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
     using Events = decltype(collect_events_recursive(RootState {}));
-    std::array<StateIdx, maxInitialStates(RootState{})> m_currentState;
-    StateIdx m_currentParentState;
+    std::array<StateIdx, maxInitialStates(RootState{})> m_currentCombinedState;
     std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(RootState {})> m_history;
     bh::tuple<OptionalParameters...> m_optionalParameters;
     variant_queue<Events> m_defer_queue;
+    std::size_t m_currentRegions;
 
   public:
-    Sm(OptionalParameters... optionalParameters)
-        : m_currentParentState(getParentStateIdx(rootState(), rootState()))
-        , m_defer_queue(collect_events_recursive(RootState {}))
+    sm(OptionalParameters... optionalParameters)
+        : m_defer_queue(collect_events_recursive(RootState {}))
     {
         m_optionalParameters = bh::make_tuple(optionalParameters...);
         fill_dispatch_table_with_external_transitions(rootState(), optionalParameters...);
@@ -51,7 +37,8 @@ template <class RootState, class... OptionalParameters> class Sm {
         fill_dispatch_table_with_deferred_events(rootState(), optionalParameters...);
         fill_inital_state_table(rootState(), m_initial_states);
         fill_inital_state_table(rootState(), m_history);
-        initCurrentState();
+        init_current_state();
+        update_current_regions();
     }
 
     template <class Event> auto process_event(Event event)
@@ -66,20 +53,20 @@ template <class RootState, class... OptionalParameters> class Sm {
 
     template <class State> auto is(State state) -> bool
     {
-        return m_currentState[0] == getStateIdx(rootState(), state);
+        return currentState(0) == getStateIdx(rootState(), state);
     }
 
     template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
     {
-        return m_currentParentState == getParentStateIdx(rootState(), parentState)
-            && m_currentState[0] == getStateIdx(rootState(), state);
+        return currentParentState() == getParentStateIdx(rootState(), parentState)
+            && currentState(0) == getStateIdx(rootState(), state);
     }
 
     template <class ParentState, class State>
     auto is(Region region, ParentState parentState, State state) -> bool
     {
-        return m_currentParentState == getParentStateIdx(rootState(), parentState)
-            && m_currentState[region] == getStateIdx(rootState(), state);
+        return currentParentState() == getParentStateIdx(rootState(), parentState)
+            && currentState(region) == getStateIdx(rootState(), state);
     }
 
   private:
@@ -87,11 +74,10 @@ template <class RootState, class... OptionalParameters> class Sm {
     {
         bool allGuardsFailed = true;
 
-        for (std::size_t region = 0; region < m_initial_states[m_currentParentState].size();
-             region++) {
+        for (std::size_t region = 0; region < m_currentRegions; region++) {
 
             auto& result = DispatchTable<RootState, Event, OptionalParameters...>::table
-                [m_currentParentState][m_currentState[region]];
+                [m_currentCombinedState[region]];
 
             if(result.defer){
                 m_defer_queue.push(event);
@@ -130,12 +116,11 @@ template <class RootState, class... OptionalParameters> class Sm {
     {
         while (true) {
 
-            for (std::size_t region = 0; region < m_initial_states[m_currentParentState].size();
-                 region++) {
+            for (std::size_t region = 0; region < m_currentRegions; region++) {
 
                 auto event = noneEvent{};
                 auto& result = DispatchTable<RootState, noneEvent, OptionalParameters...>::table
-                    [m_currentParentState][m_currentState[region]];
+                    [m_currentCombinedState[region]];
 
                 // Check if anonymous transition exists
                 if (!result.guard) {
@@ -155,14 +140,19 @@ template <class RootState, class... OptionalParameters> class Sm {
     template <class DispatchTableEntry>
     void update_current_state(std::size_t region, const DispatchTableEntry& dispatchTableEntry)
     {
-        m_history[m_currentParentState][region] = m_currentState[region];
-        m_currentParentState = dispatchTableEntry.parentState;
+        m_history[currentParentState()][region] = m_currentCombinedState[region];
 
         if (dispatchTableEntry.history) {
-            m_currentState[region] = m_history[m_currentParentState][region];
+            m_currentCombinedState[region] = m_history[currentParentState()][region];
         } else {
-            m_currentState[region] = dispatchTableEntry.state;
+            m_currentCombinedState[region] = dispatchTableEntry.combinedState;
         }
+        update_current_regions();
+    }
+
+    void update_current_regions()
+    {
+        m_currentRegions = m_initial_states[currentParentState()].size();
     }
 
     template <class Action, class Event> auto call_action(const Action& action, const Event& event)
@@ -199,12 +189,27 @@ template <class RootState, class... OptionalParameters> class Sm {
         return RootState {};
     }
 
-    void initCurrentState()
+    auto currentState(std::size_t region)
     {
-        for(std::size_t region = 0; region < m_initial_states[m_currentParentState].size(); region++){
-            m_currentState[region] = m_initial_states[m_currentParentState][region];
-        }
+        return calcStateIdx(nStates(rootState()), m_currentCombinedState[region]);
+    }
 
+    auto currentParentState()
+    {
+        return calcParentStateIdx(nStates(rootState()), m_currentCombinedState[0]);
+    }
+
+    void init_current_state()
+    {
+        auto initialParentState = getParentStateIdx(rootState(), rootState());
+
+        for (std::size_t region = 0; region < m_initial_states[initialParentState].size();
+             region++) {
+            m_currentCombinedState[region] = calcCombinedStateIdx(
+                nStates(RootState {}),
+                initialParentState,
+                m_initial_states[initialParentState][region]);
+        }
     }
 };
 }

@@ -58,7 +58,7 @@ class DependencyInjectionTests : public Test {
     }
 
     Dependency dependency;
-    hsm::Sm<MainState, Dependency> sm;
+    hsm::sm<MainState, Dependency> sm;
 };
 
 TEST_F(DependencyInjectionTests, should_inject_dependency_with_shared_ptr)

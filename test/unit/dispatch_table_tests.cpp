@@ -1,4 +1,5 @@
-#include "hsm/hsm.h"
+#include "hsm/details/dispatch_table.h"
+#include "hsm/details/transition_table.h"
 
 #include <gtest/gtest.h>
 

@@ -1,4 +1,4 @@
-#include "hsm/hsm.h"
+#include "hsm/details/remove_duplicates.h"
 
 #include <gtest/gtest.h>
 

@@ -80,7 +80,7 @@ struct MainState {
 
 class GuardsActionsTests : public Test {
     protected:    
-        hsm::Sm<MainState> sm;
+        hsm::sm<MainState> sm;
 };
 
 

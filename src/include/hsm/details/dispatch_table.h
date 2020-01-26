@@ -111,8 +111,7 @@ constexpr auto fill_inital_state_table = [](const auto& rootState, auto& initial
 };
 
 template <class... Parameters> struct NextState {
-    StateIdx parentState;
-    StateIdx state;
+    StateIdx combinedState;
     std::function<bool(Parameters...)> guard;
     std::function<void(Parameters...)> action;
     bool history;
@@ -120,8 +119,8 @@ template <class... Parameters> struct NextState {
 };
 
 template <class RootState, class... Parameters>
-using DispatchArray = std::
-    array<std::array<NextState<Parameters...>, nStates(RootState {})>, nParentStates(RootState {})>;
+using DispatchArray
+    = std::array<NextState<Parameters...>, nStates(RootState {}) * nParentStates(RootState {})>;
 
 template <class RootState, class... Parameters> struct DispatchTable {
     static DispatchArray<RootState, Parameters...> table;
@@ -198,16 +197,15 @@ constexpr auto resolveHistory = [](const auto& transition) {
 
 const auto addDispatchTableEntry
     = [](const auto& rootState, const auto& transition, auto& dispatchTable) {
-          const auto fromParent = getParentStateIdx(rootState, resolveSrcParent(transition));
-          const auto from = getStateIdx(rootState, resolveSrc(transition));
+          const auto from = getCombinedStateIdx(rootState, resolveSrcParent(transition), resolveSrc(transition));
           const auto guard = getGuard(transition);
           const auto action = resolveAction(transition);
-          const auto toParent = getParentStateIdx(rootState, resolveDstParent(transition));
-          const auto to = getStateIdx(rootState, resolveDst(transition));
+          const auto to = getCombinedStateIdx(
+              rootState, resolveDstParent(transition), resolveDst(transition));
           const auto history = resolveHistory(transition);
           const auto defer = false;
 
-          dispatchTable[fromParent][from] = { toParent, to, guard, action, history, defer };
+          dispatchTable[from] = { to, guard, action, history, defer };
       };
 
 const auto addDispatchTableEntryOfSubMachineExits
@@ -219,18 +217,15 @@ const auto addDispatchTableEntryOfSubMachineExits
 
                   bh::for_each(
                       states, [&rootState, &parentState, &dispatchTable, &transition](auto state) {
-                          const auto fromParent = getParentStateIdx(rootState, parentState);
-                          const auto from = getStateIdx(rootState, state);
+                          const auto from = getCombinedStateIdx(rootState, parentState, state);
                           const auto guard = getGuard(transition);
                           const auto action = getAction(transition);
-                          const auto toParent
-                              = getParentStateIdx(rootState, resolveDstParent(transition));
-                          const auto to = getStateIdx(rootState, resolveDst(transition));
+                          const auto to = getCombinedStateIdx(
+                              rootState, resolveDstParent(transition), resolveDst(transition));
                           const auto history = resolveHistory(transition);
                           const auto defer = false;
 
-                          dispatchTable[fromParent][from]
-                              = { toParent, to, guard, action, history, defer };
+                          dispatchTable[from] = { to, guard, action, history, defer };
                       });
               },
               [](auto) {})(getSrc(transition));
@@ -278,12 +273,9 @@ fill_dispatch_table_with_deferred_events(const RootState& rootState, Parameters.
                     using Event = decltype(event);
 
                     auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
-
-                    const auto fromParent
-                        = getParentStateIdx(rootState, resolveSrcParent(transition));
-                    const auto from = getStateIdx(rootState, resolveSrc(transition));
-
-                    dispatchTable[fromParent][from].defer = true;
+                    const auto from = getCombinedStateIdx(
+                        rootState, resolveSrcParent(transition), resolveSrc(transition));
+                    dispatchTable[from].defer = true;
                 });
             },
             [](auto) {})(getSrc(transition));

@@ -95,7 +95,7 @@ struct MainState {
 
 class InternalTransitionTests : public Test {
   protected:
-    hsm::Sm<MainState> sm;
+    hsm::sm<MainState> sm;
 };
 
 TEST_F(InternalTransitionTests, should_overwrite_external_by_internal_transition)

@@ -1,8 +1,9 @@
-#include "hsm/hsm.h"
+#include "hsm/details/collect_actions.h"
+#include "hsm/details/transition_table.h"
 
 #include <gtest/gtest.h>
-
 #include <boost/hana.hpp>   
+
 #include <functional>
 #include <future>
 

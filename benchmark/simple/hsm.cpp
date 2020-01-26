@@ -62,7 +62,7 @@ struct player {
 };
 
 int main() {
-  hsm::Sm<player> sm;
+  hsm::sm<player> sm;
 
   auto a = open_close{};  
   auto b = cd_detected{};

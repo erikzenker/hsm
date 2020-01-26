@@ -66,7 +66,7 @@ struct MainState {
 
 class DeferEventsTests : public Test {
   protected:
-    hsm::Sm<MainState> sm;
+    hsm::sm<MainState> sm;
 };
 
 TEST_F(DeferEventsTests, should_defer_event)

@@ -72,7 +72,7 @@ struct MainState {
 
 class HistoryPseudoStateTests : public Test {
   protected:
-    hsm::Sm<MainState> sm;
+    hsm::sm<MainState> sm;
 };
 
 TEST_F(HistoryPseudoStateTests, should_reentry_substate_in_history_state)

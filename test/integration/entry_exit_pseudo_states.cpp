@@ -65,7 +65,7 @@ struct MainState {
 
 class EntryExitPseudoStatesTests : public Test {
     protected:    
-        hsm::Sm<MainState> sm;
+        hsm::sm<MainState> sm;
 };
 
 TEST_F(EntryExitPseudoStatesTests, should_entry_substate_on_pseudo_entry)

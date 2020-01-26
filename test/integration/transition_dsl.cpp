@@ -59,7 +59,7 @@ struct MainState {
 
 class TransitionDslTests : public Test {
     protected:    
-        hsm::Sm<MainState> sm;
+        hsm::sm<MainState> sm;
 };
 
 TEST_F(TransitionDslTests, should_use_transition_dsl)
