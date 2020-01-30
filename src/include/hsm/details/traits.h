@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../front/transition.h"
 #include "pseudo_states.h"
 
 #include <boost/hana.hpp>
@@ -24,7 +25,10 @@ namespace hsm {
     auto is_entry_state = bh::is_valid([](auto&& state) -> decltype(state.isEntryState) {});
     auto is_direct_state = bh::is_valid([](auto&& state) -> decltype(state.isDirectState) {});
     auto is_history_state = bh::is_valid([](auto&& state) -> decltype(state.isHistoryState) {});
-
+    auto constexpr is_no_action
+        = [](auto action) { return bh::equal(bh::typeid_(action), bh::typeid_(noAction {})); };
+    auto constexpr is_no_guard
+        = [](auto guard) { return bh::equal(bh::typeid_(guard), bh::typeid_(noGuard {})); };
 
     auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});    
 

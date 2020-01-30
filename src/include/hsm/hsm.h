@@ -84,8 +84,8 @@ template <class RootState, class... OptionalParameters> class sm {
                 return true;
             }
 
-            if (!result.guard) {
-                return false;
+            if(!result.valid){
+                return false;    
             }
 
             if (!call_guard(result.guard, event)) {
@@ -123,7 +123,7 @@ template <class RootState, class... OptionalParameters> class sm {
                     [m_currentCombinedState[region]];
 
                 // Check if anonymous transition exists
-                if (!result.guard) {
+                if (!result.valid) {
                     return;
                 }
 
@@ -157,6 +157,10 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Action, class Event> auto call_action(const Action& action, const Event& event)
     {
+        if(!action){
+            return;    
+        }
+
         bh::if_(
             contains_dependency(m_optionalParameters),
             [](const auto& action, const auto& event, const auto& parameters) {
@@ -169,6 +173,10 @@ template <class RootState, class... OptionalParameters> class sm {
     template <class Guard, class Event>
     auto call_guard(const Guard& guard, const Event& event) -> bool
     {
+        if(!guard){
+            return true;
+        }
+
         return bh::if_(
             contains_dependency(m_optionalParameters),
             [](const auto& guard, const auto& event, const auto& parameters) {

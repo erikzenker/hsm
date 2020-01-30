@@ -94,9 +94,6 @@ struct MainState {
 
 }
 
-
-
-
 TEST_F(DispatchTableTests, should_count_max_regions)
 {
     ASSERT_EQ(bh::size_c<2>, hsm::maxInitialStates(MainState{}));

@@ -116,6 +116,7 @@ template <class... Parameters> struct NextState {
     std::function<void(Parameters...)> action;
     bool history;
     bool defer;
+    bool valid = false;
 };
 
 template <class RootState, class... Parameters>
@@ -171,19 +172,47 @@ constexpr auto resolveSrcParent = [](const auto& transition) {
         getSrc(transition));
 };
 
-constexpr auto resolveAction = [](const auto& transition) {
-    const auto exitAction = switch_(
-        case_(has_exit_action, [](auto src) { return src.on_exit(); }),
-        case_(otherwise, [transition](auto) { return [](auto...) {}; }))(getSrc(transition));
-    const auto action = getAction(transition);
-    const auto entryAction = switch_(
-        case_(has_entry_action, [](auto dst) { return dst.on_entry(); }),
-        case_(otherwise, [transition](auto) { return [](auto...) {}; }))(getDst(transition));
-    return [exitAction, action, entryAction](const auto&... params) {
-        exitAction(params...);
-        action(params...);
-        entryAction(params...);
-    };
+constexpr auto makeInvalidGuard = [](const auto& dispatchTable){
+    return decltype(dispatchTable[0].guard) {};
+};
+
+constexpr auto makeInvalidAction = [](const auto& dispatchTable){
+    return decltype(dispatchTable[0].action) {};
+};
+
+constexpr auto resolveAction2 = [](const auto& transition) {
+            const auto exitAction = switch_(
+                case_(has_exit_action, [](auto src) { return src.on_exit(); }),
+                case_(otherwise, [transition](auto) { return [](auto...) {}; }))(
+                getSrc(transition));
+            const auto action = getAction(transition);
+            const auto entryAction = switch_(
+                case_(has_entry_action, [](auto dst) { return dst.on_entry(); }),
+                case_(otherwise, [transition](auto) { return [](auto...) {}; }))(
+                getDst(transition));
+            return [exitAction, action, entryAction](const auto&... params) {
+                exitAction(params...);
+                action(params...);
+                entryAction(params...);
+            };
+};    
+
+constexpr auto resolveAction = [](const auto& transition, const auto& dispatchTable) {
+    // clang-format off                
+    return bh::if_(is_no_action(getAction(transition)),
+            [](auto, auto dispatchTable) { return makeInvalidAction(dispatchTable); },
+            [](auto transition, auto) { return resolveAction2(transition);})
+            (transition, dispatchTable);
+    // clang-format on        
+};
+
+constexpr auto resolveGuard = [](const auto& transition, const auto& dispatchTable) {
+    // clang-format off            
+    return switch_(
+             case_(is_no_guard, [&dispatchTable](auto) { return makeInvalidGuard(dispatchTable);}),
+             case_(otherwise,   [](auto guard) { return guard;}))
+             (getGuard(transition));
+    // clang-format on                   
 };
 
 constexpr auto resolveHistory = [](const auto& transition) {
@@ -198,14 +227,15 @@ constexpr auto resolveHistory = [](const auto& transition) {
 const auto addDispatchTableEntry
     = [](const auto& rootState, const auto& transition, auto& dispatchTable) {
           const auto from = getCombinedStateIdx(rootState, resolveSrcParent(transition), resolveSrc(transition));
-          const auto guard = getGuard(transition);
-          const auto action = resolveAction(transition);
+          const auto guard = resolveGuard(transition, dispatchTable);
+          const auto action = resolveAction(transition, dispatchTable);
           const auto to = getCombinedStateIdx(
               rootState, resolveDstParent(transition), resolveDst(transition));
           const auto history = resolveHistory(transition);
           const auto defer = false;
+          const auto valid = true;
 
-          dispatchTable[from] = { to, guard, action, history, defer };
+          dispatchTable[from] = { to, guard, action, history, defer, valid };
       };
 
 const auto addDispatchTableEntryOfSubMachineExits
@@ -224,8 +254,9 @@ const auto addDispatchTableEntryOfSubMachineExits
                               rootState, resolveDstParent(transition), resolveDst(transition));
                           const auto history = resolveHistory(transition);
                           const auto defer = false;
+                          const auto valid = true;
 
-                          dispatchTable[from] = { to, guard, action, history, defer };
+                          dispatchTable[from] = { to, guard, action, history, defer, valid };
                       });
               },
               [](auto) {})(getSrc(transition));

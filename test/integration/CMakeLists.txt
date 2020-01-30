@@ -23,6 +23,7 @@ add_executable(hsmIntegrationTests
         dependency_injection.cpp
         defer_events.cpp
         transition_dsl.cpp
+        no_action.cpp
 )
 
 target_link_libraries(hsmIntegrationTests

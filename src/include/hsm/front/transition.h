@@ -4,10 +4,14 @@
 
 namespace hsm {
 
-namespace {
-constexpr auto defaultGuard = [](auto...) { return true; };
-constexpr auto defaultAction = [](auto...) {};
-}
+struct noneEvent {
+};
+
+struct noAction {
+};
+
+struct noGuard {
+};
 
 template <class Source> class state;
 template <class Event> struct event;
@@ -79,7 +83,7 @@ template <class Source, class Event, class Guard> class TransitionSEG {
 
     template <class Target> constexpr auto operator=(const state<Target>&)
     {
-        return boost::hana::make_tuple(Source {}, Event {}, guard, defaultAction, Target {});
+        return boost::hana::make_tuple(Source {}, Event {}, guard, noAction{}, Target {});
     }
 
   private:
@@ -95,7 +99,7 @@ template <class Source, class Event, class Action> class TransitionSEA {
 
     template <class Target> constexpr auto operator=(const state<Target>&)
     {
-        return boost::hana::make_tuple(Source {}, Event {}, defaultGuard, action, Target {});
+        return boost::hana::make_tuple(Source {}, Event {}, noGuard{}, action, Target {});
     }
 
   private:
@@ -106,7 +110,7 @@ template <class Source, class Event> class TransitionSE {
   public:
     template <class Target> constexpr auto operator=(const state<Target>&)
     {
-        return boost::hana::make_tuple(Source {}, Event {}, defaultGuard, defaultAction, Target {});
+        return boost::hana::make_tuple(Source {}, Event {}, noGuard{}, noAction{}, Target {});
     }
 };
 
@@ -150,8 +154,6 @@ template <class Event> struct event {
     }
 };
 
-struct noneEvent {
-};
-
 using none = event<noneEvent>;
+
 }

@@ -32,25 +32,24 @@ auto stopped_again = [](auto) {};
 auto store_cd_info = [](auto) {};
 auto pause_playback = [](auto) {};
 auto stop_playback = [](auto) {};
-auto noguard = [](auto){ return true;};
 
 struct player {
   constexpr auto make_transition_table(){
 
     // clang-format off
     return transition_table(
-        row( Stopped{}, event<play>{}       , noguard,  start_playback,   Playing{}),
-        row( Pause{},   event<end_pause>{}  , noguard,  resume_playback,  Playing{}),
-        row( Open{},    event<open_close>{} , noguard,  close_drawer,     Empty{}),
-        row( Empty{},   event<open_close>{} , noguard,  open_drawer,      Open{}),
-        row( Pause{},   event<open_close>{} , noguard,  stop_and_open,    Open{}),
-        row( Stopped{}, event<open_close>{} , noguard,  open_drawer,      Open{}),
-        row( Playing{}, event<open_close>{} , noguard,  stop_and_open,    Open{}),
-        row( Playing{}, event<pause>{}      , noguard,  pause_playback,   Pause{}),
-        row( Playing{}, event<stop>{}       , noguard,  stop_playback,    Stopped{}),
-        row( Pause{},   event<stop>{}       , noguard,  stop_playback,    Stopped{}),
-        row( Empty{},   event<cd_detected>{}, noguard,  store_cd_info,    Stopped{}),
-        row( Stopped{}, event<stop>{}       , noguard,  stopped_again,    Stopped{})
+        row( Stopped{}, event<play>{}       , noGuard{},  start_playback,   Playing{}),
+        row( Pause{},   event<end_pause>{}  , noGuard{},  resume_playback,  Playing{}),
+        row( Open{},    event<open_close>{} , noGuard{},  close_drawer,     Empty{}),
+        row( Empty{},   event<open_close>{} , noGuard{},  open_drawer,      Open{}),
+        row( Pause{},   event<open_close>{} , noGuard{},  stop_and_open,    Open{}),
+        row( Stopped{}, event<open_close>{} , noGuard{},  open_drawer,      Open{}),
+        row( Playing{}, event<open_close>{} , noGuard{},  stop_and_open,    Open{}),
+        row( Playing{}, event<pause>{}      , noGuard{},  pause_playback,   Pause{}),
+        row( Playing{}, event<stop>{}       , noGuard{},  stop_playback,    Stopped{}),
+        row( Pause{},   event<stop>{}       , noGuard{},  stop_playback,    Stopped{}),
+        row( Empty{},   event<cd_detected>{}, noGuard{},  store_cd_info,    Stopped{}),
+        row( Stopped{}, event<stop>{}       , noGuard{},  stopped_again,    Stopped{})
     );
     // clang-format on
   }
