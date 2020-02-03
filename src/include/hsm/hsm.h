@@ -114,27 +114,31 @@ template <class RootState, class... OptionalParameters> class sm {
 
     auto apply_anonymous_transitions()
     {
-        while (true) {
+        bh::if_(
+            has_anonymous_transition(rootState()),
+            [this]() {
+                while (true) {
 
-            for (std::size_t region = 0; region < m_currentRegions; region++) {
+                    for (std::size_t region = 0; region < m_currentRegions; region++) {
 
-                auto event = noneEvent{};
-                auto& result = DispatchTable<RootState, noneEvent, OptionalParameters...>::table
-                    [m_currentCombinedState[region]];
+                        auto event = noneEvent {};
+                        auto& result = DispatchTable<RootState, noneEvent, OptionalParameters...>::
+                            table[m_currentCombinedState[region]];
 
-                // Check if anonymous transition exists
-                if (!result.valid) {
-                    return;
+                        if (!result.valid) {
+                            return;
+                        }
+
+                        if (!call_guard(result.guard, event)) {
+                            continue;
+                        }
+
+                        update_current_state(region, result);
+                        call_action(result.action, event);
+                    }
                 }
-
-                if (!call_guard(result.guard, event)) {
-                    continue;
-                }
-
-                update_current_state(region, result);
-                call_action(result.action, event);
-            }
-        }
+            },
+            []() {})();
     }
 
     template <class DispatchTableEntry>
