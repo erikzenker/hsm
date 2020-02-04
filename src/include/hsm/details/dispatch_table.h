@@ -69,7 +69,7 @@ constexpr auto to_pairs = [](const auto& tuples) {
 /**
  * Returns the maximal number of initial states 
  */
-constexpr auto maxInitialStates = [](const auto& rootState) -> std::size_t {
+constexpr auto maxInitialStates = [](const auto& rootState) {
     auto parentStateTypeids = collect_parent_state_typeids(rootState);
 
     auto maxInitialStates = bh::fold(
