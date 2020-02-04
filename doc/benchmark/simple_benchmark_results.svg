@@ -120,12 +120,12 @@
 	<g id="gnuplot_plot_1" ><title>gnuplot_plot_1</title>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(255, 165,   0)' points = '113.8,444.0 197.8,444.0 197.8,329.9 113.8,329.9 '/>
+		<polygon fill = 'rgb(255, 165,   0)' points = '113.8,444.0 197.8,444.0 197.8,358.1 113.8,358.1 '/>
 	</g>
-	<path stroke='rgb(255, 165,   0)'  d='M113.8,444.0 L113.8,330.0 L197.7,330.0 L197.7,444.0 L113.8,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(255, 165,   0)' points = '281.5,444.0 365.5,444.0 365.5,422.5 281.5,422.5 '/>
+	<path stroke='rgb(255, 165,   0)'  d='M113.8,444.0 L113.8,358.2 L197.7,358.2 L197.7,444.0 L113.8,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
+		<polygon fill = 'rgb(255, 165,   0)' points = '281.5,444.0 365.5,444.0 365.5,423.4 281.5,423.4 '/>
 	</g>
-	<path stroke='rgb(255, 165,   0)'  d='M281.5,444.0 L281.5,422.6 L365.4,422.6 L365.4,444.0 L281.5,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
+	<path stroke='rgb(255, 165,   0)'  d='M281.5,444.0 L281.5,423.5 L365.4,423.5 L365.4,444.0 L281.5,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
 		<polygon fill = 'rgb(255, 165,   0)' points = '449.2,444.0 533.2,444.0 533.2,98.8 449.2,98.8 '/>
 	</g>
 	<path stroke='rgb(255, 165,   0)'  d='M449.2,444.0 L449.2,98.9 L533.1,98.9 L533.1,444.0 L449.2,444.0 Z  '/></g>

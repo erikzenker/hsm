@@ -74,7 +74,7 @@ template <class RootState, class... OptionalParameters> class sm {
     {
         bool allGuardsFailed = true;
 
-        for (std::size_t region = 0; region < m_currentRegions; region++) {
+        for (std::size_t region = 0; region < current_regions(); region++) {
 
             auto& result = DispatchTable<RootState, Event, OptionalParameters...>::table
                 [m_currentCombinedState[region]];
@@ -119,7 +119,7 @@ template <class RootState, class... OptionalParameters> class sm {
             [this]() {
                 while (true) {
 
-                    for (std::size_t region = 0; region < m_currentRegions; region++) {
+                    for (std::size_t region = 0; region < current_regions(); region++) {
 
                         auto event = noneEvent {};
                         auto& result = DispatchTable<RootState, noneEvent, OptionalParameters...>::
@@ -157,6 +157,14 @@ template <class RootState, class... OptionalParameters> class sm {
     void update_current_regions()
     {
         m_currentRegions = m_initial_states[currentParentState()].size();
+    }
+
+    auto current_regions() -> std::size_t
+    {
+        return bh::if_(
+            bh::equal(bh::size_c<1>, maxInitialStates(rootState())),
+            [](auto) { return 1; },
+            [](auto regions) { return regions; })(m_currentRegions);
     }
 
     template <class Action, class Event> auto call_action(const Action& action, const Event& event)
