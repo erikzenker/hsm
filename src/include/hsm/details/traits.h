@@ -30,7 +30,7 @@ namespace hsm {
     auto constexpr is_no_guard
         = [](auto guard) { return bh::equal(bh::typeid_(guard), bh::typeid_(noGuard {})); };
 
-    auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});    
+    auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});
 
     auto const is_callable = [](auto&& callable, auto&& args) {
         return bh::unpack(args,
