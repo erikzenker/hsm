@@ -144,27 +144,37 @@ template <class RootState, class... OptionalParameters> class sm {
     template <class DispatchTableEntry>
     void update_current_state(std::size_t region, const DispatchTableEntry& dispatchTableEntry)
     {
-        m_history[currentParentState()][region] = m_currentCombinedState[region];
+        bh::if_(has_history(rootState()),
+            [&, this](){
+                m_history[currentParentState()][region] = m_currentCombinedState[region];
 
-        if (dispatchTableEntry.history) {
-            m_currentCombinedState[region] = m_history[currentParentState()][region];
-        } else {
-            m_currentCombinedState[region] = dispatchTableEntry.combinedState;
-        }
+                if (dispatchTableEntry.history) {
+                    m_currentCombinedState[region] = m_history[currentParentState()][region];
+                } else {
+                    m_currentCombinedState[region] = dispatchTableEntry.combinedState;
+                }
+            },
+            [&, this](){
+                m_currentCombinedState[region] = dispatchTableEntry.combinedState;
+            }
+        )();
+
         update_current_regions();
     }
 
     void update_current_regions()
     {
-        m_currentRegions = m_initial_states[currentParentState()].size();
+        bh::if_(
+            hasRegions(rootState()),
+            []() {},
+            [this]() { m_currentRegions = m_initial_states[currentParentState()].size(); })();
     }
 
     auto current_regions() -> std::size_t
     {
         return bh::if_(
-            bh::equal(bh::size_c<1>, maxInitialStates(rootState())),
-            [](auto) { return 1; },
-            [](auto regions) { return regions; })(m_currentRegions);
+            hasRegions(rootState()), [](auto) { return 1; }, [](auto regions) { return regions; })(
+            m_currentRegions);
     }
 
     template <class Action, class Event> auto call_action(const Action& action, const Event& event)

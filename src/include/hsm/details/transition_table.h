@@ -107,10 +107,19 @@ constexpr auto getGuardIdx = [](auto rootState, auto guard) {
 const auto is_anonymous_transition
     = [](auto transition) { return bh::typeid_(getEvent(transition)) == bh::typeid_(none {}); };
 
+const auto is_history_transition
+    = [](auto transition) { return is_history_state(getDst(transition));};
+
 const auto has_anonymous_transition = [](auto rootState) {
     auto transitions = flatten_transition_table(rootState);
     auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
     return bh::size(anonymousTransition);
+};
+
+const auto has_history = [](auto rootState) {
+    auto transitions = flatten_transition_table(rootState);
+    auto historyTransitions = bh::filter(transitions, is_history_transition);
+    return bh::size(historyTransitions);
 };
 
 const auto get_unexpected_event_handler = [](auto rootState) {

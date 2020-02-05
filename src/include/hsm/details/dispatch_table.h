@@ -110,6 +110,9 @@ constexpr auto fill_inital_state_table = [](const auto& rootState, auto& initial
     });
 };
 
+constexpr auto hasRegions
+    = [](const auto& rootState) { return bh::equal(bh::size_c<1>, maxInitialStates(rootState)); };
+
 template <class... Parameters> struct NextState {
     StateIdx combinedState;
     std::function<bool(Parameters...)> guard;
@@ -131,6 +134,7 @@ template <class RootState, class... Parameters>
 DispatchArray<RootState, Parameters...> DispatchTable<RootState, Parameters...>::table {};
 
 constexpr auto resolveDst = [](const auto& transition) {
+    // clang-format off
     return switch_(
         case_(
             has_transition_table,
@@ -145,9 +149,11 @@ constexpr auto resolveDst = [](const auto& transition) {
                 return bh::at_c<0>(history.get_parent_state().initial_state());
             }),
         case_(otherwise, [](auto state) { return state; }))(getDst(transition));
+    // clang-format on
 };
 
 constexpr auto resolveDstParent = [](const auto& transition) {
+    // clang-format off
     return switch_(
         case_(has_transition_table, [](auto submachine) { return submachine; }),
         case_(is_entry_state, [](auto entry) { return entry.get_parent_state(); }),
@@ -155,21 +161,26 @@ constexpr auto resolveDstParent = [](const auto& transition) {
         case_(is_history_state, [](auto history) { return history.get_parent_state(); }),
         case_(otherwise, [&transition](auto) { return getSrcParent(transition); }))(
         getDst(transition));
+    // clang-format on
 };
 
 constexpr auto resolveSrc = [](const auto& transition) {
+    // clang-format off
     return switch_(
         case_(is_exit_state, [](auto exit) { return exit.get_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_state(); }),
         case_(otherwise, [](auto state) { return state; }))(getSrc(transition));
+    // clang-format on
 };
 
 constexpr auto resolveSrcParent = [](const auto& transition) {
+    // clang-format off
     return switch_(
         case_(is_exit_state, [](auto exit) { return exit.get_parent_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_parent_state(); }),
         case_(otherwise, [transition](auto) { return getSrcParent(transition); }))(
         getSrc(transition));
+    // clang-format on
 };
 
 constexpr auto makeInvalidGuard = [](const auto& dispatchTable){
