@@ -107,9 +107,14 @@ template <class RootState, class... OptionalParameters> class sm {
 
     auto process_deferred_events()
     {
-        if (!m_defer_queue.empty()) {
-            m_defer_queue.visit([this](auto event) { process_event_internal(event); });
-        }
+        bh::if_(
+            hasDeferedEvents(rootState()),
+            [this]() {
+                if (!m_defer_queue.empty()) {
+                    m_defer_queue.visit([this](auto event) { process_event_internal(event); });
+                }
+            },
+            []() {})();
     }
 
     auto apply_anonymous_transitions()

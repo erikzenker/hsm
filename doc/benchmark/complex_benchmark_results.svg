@@ -135,18 +135,18 @@
 	<g id="gnuplot_plot_1" ><title>gnuplot_plot_1</title>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(  0,   0, 255)' points = '111.1,444.0 173.1,444.0 173.1,427.5 111.1,427.5 '/>
+		<polygon fill = 'rgb(  0,   0, 255)' points = '111.1,444.0 173.1,444.0 173.1,436.1 111.1,436.1 '/>
 	</g>
-	<path stroke='rgb(  0,   0, 255)'  d='M111.1,444.0 L111.1,427.6 L173.0,427.6 L173.0,444.0 L111.1,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(  0,   0, 255)' points = '234.8,444.0 296.8,444.0 296.8,415.8 234.8,415.8 '/>
+	<path stroke='rgb(  0,   0, 255)'  d='M111.1,444.0 L111.1,436.2 L173.0,436.2 L173.0,444.0 L111.1,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
+		<polygon fill = 'rgb(  0,   0, 255)' points = '234.8,444.0 296.8,444.0 296.8,429.9 234.8,429.9 '/>
 	</g>
-	<path stroke='rgb(  0,   0, 255)'  d='M234.8,444.0 L234.8,415.9 L296.7,415.9 L296.7,444.0 L234.8,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(  0,   0, 255)' points = '358.5,444.0 420.5,444.0 420.5,84.4 358.5,84.4 '/>
+	<path stroke='rgb(  0,   0, 255)'  d='M234.8,444.0 L234.8,430.0 L296.7,430.0 L296.7,444.0 L234.8,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
+		<polygon fill = 'rgb(  0,   0, 255)' points = '358.5,444.0 420.5,444.0 420.5,60.2 358.5,60.2 '/>
 	</g>
-	<path stroke='rgb(  0,   0, 255)'  d='M358.5,444.0 L358.5,84.5 L420.4,84.5 L420.4,444.0 L358.5,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(  0,   0, 255)' points = '482.2,444.0 544.2,444.0 544.2,407.2 482.2,407.2 '/>
+	<path stroke='rgb(  0,   0, 255)'  d='M358.5,444.0 L358.5,60.3 L420.4,60.3 L420.4,444.0 L358.5,444.0 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
+		<polygon fill = 'rgb(  0,   0, 255)' points = '482.2,444.0 544.2,444.0 544.2,404.9 482.2,404.9 '/>
 	</g>
-	<path stroke='rgb(  0,   0, 255)'  d='M482.2,444.0 L482.2,407.3 L544.1,407.3 L544.1,444.0 L482.2,444.0 Z  '/></g>
+	<path stroke='rgb(  0,   0, 255)'  d='M482.2,444.0 L482.2,405.0 L544.1,405.0 L544.1,444.0 L482.2,444.0 Z  '/></g>
 	</g>
 <g fill="none" color="white" stroke="rgb(  0,   0, 255)" stroke-width="2.00" stroke-linecap="butt" stroke-linejoin="miter">
 </g>

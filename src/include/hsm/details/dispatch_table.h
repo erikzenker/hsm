@@ -300,27 +300,33 @@ constexpr auto fill_dispatch_table_with_transitions(
     });
 }
 
+constexpr auto getDeferingTransitions = [](const auto& rootState) {
+    constexpr auto transitionHasDeferedEvents
+        = [](auto transition) { return has_deferred_events(getSrc(transition)); };
+
+    const auto transitions = flatten_transition_table(rootState);
+    return bh::filter(transitions, transitionHasDeferedEvents);
+};
+
+constexpr auto hasDeferedEvents
+    = [](const auto& rootState) { return bh::size(getDeferingTransitions(rootState)); };
+
 template <class RootState, class... Parameters>
 constexpr auto
 fill_dispatch_table_with_deferred_events(const RootState& rootState, Parameters... /*parameters*/)
 {
-    const auto transitions = flatten_transition_table(rootState);
-
+    const auto transitions = getDeferingTransitions(rootState);
     bh::for_each(transitions, [&](auto transition) {
-        bh::if_(
-            has_deferred_events(getSrc(transition), 0),
-            [&](auto&& state) {
-                auto deferredEvents = state.defer_events();
-                bh::for_each(deferredEvents, [&](auto event) {
-                    using Event = decltype(event);
+        auto deferredEvents = getSrc(transition).defer_events();
 
-                    auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
-                    const auto from = getCombinedStateIdx(
-                        rootState, resolveSrcParent(transition), resolveSrc(transition));
-                    dispatchTable[from].defer = true;
-                });
-            },
-            [](auto) {})(getSrc(transition));
+        bh::for_each(deferredEvents, [&](auto event) {
+            using Event = decltype(event);
+
+            auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
+            const auto from = getCombinedStateIdx(
+                rootState, resolveSrcParent(transition), resolveSrc(transition));
+            dispatchTable[from].defer = true;
+        });
     });
 }
 
