@@ -114,10 +114,10 @@ TEST_F(DispatchTableTests, should_count_regions)
     ASSERT_EQ(2, regions[0].size());
     ASSERT_EQ(1, regions[1].size());
 
-    ASSERT_EQ(0, regions[0][0]);
-    ASSERT_EQ(3, regions[0][1]);
+    ASSERT_EQ(3, regions[0][0]);
+    ASSERT_EQ(1, regions[0][1]);
 
-    ASSERT_EQ(0, regions[1][0]);
+    ASSERT_EQ(3, regions[1][0]);
 }
 
 TEST_F(DispatchTableTests, should_resolve_history_state)

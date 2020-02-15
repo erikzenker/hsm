@@ -43,7 +43,7 @@ namespace hsm {
     constexpr auto collect_state_typeids_recursive = [](auto&& parentState) {
         auto collectedStates = bh::append(
             collect_child_state_typeids_recursive(parentState), bh::typeid_(parentState));
-        return remove_duplicate_typeids(collectedStates);
+        return collectedStates;
     };
 
     constexpr auto collect_states_recursive = [](auto&& parentState) {

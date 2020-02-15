@@ -8,14 +8,22 @@ namespace bh {
 using namespace boost::hana;
 }
 
-const auto make_index_map = [](auto tuple) {
-    return bh::to<bh::map_tag>(bh::second(bh::fold_left(
-        tuple, bh::make_pair(bh::int_c<0>, bh::make_tuple()), [](auto acc, auto element) {
-            auto i = bh::first(acc);
-            auto tuple = bh::second(acc);
-            auto inc = bh::plus(i, bh::int_c<1>);
+constexpr auto index_of = [](auto const& iterable, auto const& element) {
+    auto size = decltype(bh::size(iterable)){};
+    auto dropped = decltype(bh::size(
+        bh::drop_while(iterable, bh::not_equal.to(element))
+    )){};
+    return size - dropped;
+};
 
-            return bh::make_pair(inc, bh::append(tuple, bh::make_pair(element, i)));
-        })));
+constexpr auto to_pairs = [](const auto& tuples) {
+    return bh::transform(tuples, [](auto tuple) {
+        return bh::make_pair(bh::at_c<0>(tuple), bh::at_c<1>(tuple));
+    });
+};
+
+const auto make_index_map = [](auto typeids) {
+    const auto range = bh::to<bh::tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(typeids)));
+    return bh::to<bh::map_tag>(to_pairs(bh::zip(typeids, range)));
 };
 }

@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
 project(hsm)
 
+if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup(TARGETS)
+endif()
+
 # dependencies
-find_package(Boost 1.65 REQUIRED)
+find_package(Boost 1.72 REQUIRED)
 
 add_subdirectory(vendor/googletest)
 
