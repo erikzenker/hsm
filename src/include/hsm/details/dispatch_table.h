@@ -10,6 +10,7 @@
 #include <functional>
 #include <optional>
 #include <tuple>
+#include <vector>
 
 namespace hsm {
 
