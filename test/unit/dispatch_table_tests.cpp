@@ -5,6 +5,7 @@
 
 #include <boost/hana.hpp>
 
+#include <array>
 #include <future>
 #include <memory>
 
