@@ -1,25 +1,18 @@
 language: cpp
-dist: trusty
+dist: bionic
 addons:
   apt:
-    sources:
-      - sourceline: 'ppa:mhier/libboost-latest'
-      - ubuntu-toolchain-r-test
     packages:
       - cmake
       - lcov
       - g++-7
-      - boost1.67
-      - libgtest-dev
+      - python-pip
 compiler:
   - gcc
 os:
   - linux
 install:
-  - cd /usr/src/gtest
-  - sudo cmake CMakeLists.txt
-  - sudo make
-  - sudo cp *.a /usr/lib
+  - sudo pip install conan    
 script:
   - export CXX=g++-7
   - export CC=gcc-7
@@ -27,14 +20,15 @@ script:
   - cd $TRAVIS_BUILD_DIR
   - mkdir build && cd build
   - mkdir install
+  - conan install ..
   - cmake .. -DHSM_GCC_COVERAGE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
   - cmake --build . --target install
   - ctest -VV
-  - ./benchmark/simple/simple_sc
-  - ./benchmark/simple/simple_euml
-  - ./benchmark/simple/simple_hsm
-  - ./benchmark/complex/complex_switch
-  - ./benchmark/complex/complex_sc  
-  - ./benchmark/complex/complex_euml
-  - ./benchmark/complex/complex_hsm
+  - ./bin/simple_sc
+  - ./bin/simple_euml
+  - ./bin/simple_hsm
+  - ./bin/complex_switch
+  - ./bin/complex_sc
+  - ./bin/complex_euml
+  - ./bin/complex_hsm
   - bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'

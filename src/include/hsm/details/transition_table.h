@@ -61,21 +61,28 @@ constexpr auto getAction = [](auto transition) { return bh::at_c<4>(transition);
 constexpr auto getDst = [](auto transition) { return bh::at_c<5>(transition); };
 
 constexpr auto getParentStateIdx = [](auto rootState, auto parentState) {
-    return getIdx(make_index_map(collect_parent_state_typeids(rootState)), bh::typeid_(parentState));
+    return index_of(collect_parent_state_typeids(rootState), bh::typeid_(parentState));
 };
 
 constexpr auto getStateIdx = [](auto rootState, auto state) {
-    return getIdx(make_index_map(collect_state_typeids_recursive(rootState)), bh::typeid_(state));
+    return index_of(collect_state_typeids_recursive(rootState), bh::typeid_(state));
 };
 
-constexpr auto getCombinedStateIdx = [](auto rootState, auto parentState, auto state) {
+constexpr auto getCombinedStateTypeids = [](const auto& rootState){
     auto stateTypeids = collect_parent_state_typeids(rootState);
     auto parentStateTypeids = collect_state_typeids_recursive(rootState);
     auto stateCartesianProduct = bh::cartesian_product(bh::make_tuple(stateTypeids, parentStateTypeids));
-    auto combinedTypeids = bh::transform(stateCartesianProduct, bh::typeid_);
-    auto combinedStateTypeid = bh::typeid_(bh::make_tuple(bh::typeid_(parentState), bh::typeid_(state)));
+    return bh::transform(stateCartesianProduct, bh::typeid_);
+};
 
-    return getIdx(make_index_map(combinedTypeids), combinedStateTypeid);
+constexpr auto getCombinedStateTypeid = [](const auto& parentState, const auto& state){
+    return bh::typeid_(bh::make_tuple(bh::typeid_(parentState), bh::typeid_(state)));
+};
+
+constexpr auto getCombinedStateIdx = [](auto combinedStateTypids, auto parentState, auto state) {
+    auto combinedStateTypeid = getCombinedStateTypeid(parentState, state);
+
+    return index_of(combinedStateTypids, combinedStateTypeid);
 };
 
 auto calcCombinedStateIdx = [](std::size_t nStates, Idx parentStateIdx, Idx stateIdx) -> Idx {
@@ -93,15 +100,15 @@ constexpr auto getEventIdx = [](auto rootState, auto event) {
     auto takeEvent = [](auto event) { return bh::typeid_(event); };
     auto eventId = bh::if_(is_event(event), takeWrappedEvent, takeEvent)(event);
 
-    return getIdx(make_index_map(collect_event_typeids_recursive(rootState)), eventId);
+    return index_of(collect_event_typeids_recursive(rootState), eventId);
 };
 
 constexpr auto getActionIdx = [](auto rootState, auto action) {
-    return getIdx(make_index_map(collect_action_typeids_recursive(rootState)), bh::typeid_(action));
+    return index_of(collect_action_typeids_recursive(rootState), bh::typeid_(action));
 };
 
 constexpr auto getGuardIdx = [](auto rootState, auto guard) {
-    return getIdx(make_index_map(collect_guard_typeids_recursive(rootState)), bh::typeid_(guard));
+    return index_of(collect_guard_typeids_recursive(rootState), bh::typeid_(guard));
 };
 
 const auto is_anonymous_transition

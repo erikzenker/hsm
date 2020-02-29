@@ -7,14 +7,12 @@ namespace hsm {
         using namespace boost::hana;    
     }
 
-
 constexpr auto otherwise = boost::hana::is_valid([](auto... /*arg*/) { });
 
 template <class Pred, class Func>
 auto case_(Pred pred, Func func){
     return boost::hana::make_pair(pred, func);    
 }
-
 
 template <class ...Case>
 const auto switch_(Case... cases_){

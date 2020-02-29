@@ -35,7 +35,7 @@ TEST_F(CollectEventsTests, should_collect_event_typeids_recursive)
 
     auto collectedEvents = hsm::collect_event_typeids_recursive(S {});
     auto expectedEvents
-        = boost::hana::make_tuple(boost::hana::typeid_(E1 {}), boost::hana::typeid_(E2 {}));
+        = boost::hana::make_tuple(boost::hana::typeid_(E2 {}), boost::hana::typeid_(E1 {}));
 
     ASSERT_EQ(expectedEvents, collectedEvents);
 }

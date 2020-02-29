@@ -39,22 +39,22 @@ class S2 {
 
 TEST_F(StateidxTests, should_get_stateidx)
 {
-    EXPECT_EQ(3, hsm::getStateIdx(S{}, S{}));
-    EXPECT_EQ(0, hsm::getStateIdx(S{}, S1{}));
-    EXPECT_EQ(1, hsm::getStateIdx(S{}, P{}));
-    EXPECT_EQ(2, hsm::getStateIdx(S{}, S2{}));
+    EXPECT_EQ(bh::size_c<3>, hsm::getStateIdx(S{}, S{}));
+    EXPECT_EQ(bh::size_c<2>, hsm::getStateIdx(S{}, S1{}));
+    EXPECT_EQ(bh::size_c<1>, hsm::getStateIdx(S{}, P{}));
+    EXPECT_EQ(bh::size_c<0>, hsm::getStateIdx(S{}, S2{}));
 }
 
 TEST_F(StateidxTests, should_get_parent_stateidx)
 {
-    EXPECT_EQ(0, hsm::getParentStateIdx(S{}, S{}));
-    EXPECT_EQ(1, hsm::getParentStateIdx(S{}, P{}));
+    EXPECT_EQ(bh::size_c<1>, hsm::getParentStateIdx(S{}, S{}));
+    EXPECT_EQ(bh::size_c<0>, hsm::getParentStateIdx(S{}, P{}));
 }
 
 TEST_F(StateidxTests, should_get_combined_stateidx)
 {
-    EXPECT_EQ(0, hsm::getCombinedStateIdx(S{}, S{}, S1{}));
-    EXPECT_EQ(6, hsm::getCombinedStateIdx(S{}, P{}, S2{}));
+    EXPECT_EQ(bh::size_c<6>, hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), S{}, S1{}));
+    EXPECT_EQ(bh::size_c<0>, hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), P{}, S2{}));
 }
 
 TEST_F(StateidxTests, should_calculate_combined_stateidx)
@@ -67,24 +67,24 @@ TEST_F(StateidxTests, should_calculate_combined_stateidx)
     auto sParentStateIdx = hsm::getParentStateIdx(S{}, S{});
     auto pParentStateIdx = hsm::getParentStateIdx(S{}, P{});
 
-    EXPECT_EQ(hsm::calcCombinedStateIdx(hsm::nStates(S{}), sParentStateIdx, s1StateIdx), hsm::getCombinedStateIdx(S{}, S{}, S1{}));
-    EXPECT_EQ(hsm::calcCombinedStateIdx(hsm::nStates(S{}), pParentStateIdx, s2StateIdx), hsm::getCombinedStateIdx(S{}, P{}, S2{}));
+    EXPECT_EQ(hsm::calcCombinedStateIdx(hsm::nStates(S{}), sParentStateIdx, s1StateIdx), hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), S{}, S1{}));
+    EXPECT_EQ(hsm::calcCombinedStateIdx(hsm::nStates(S{}), pParentStateIdx, s2StateIdx), hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), P{}, S2{}));
 }
 
 TEST_F(StateidxTests, should_calculate_parent_stateidx)
 {
-    auto s1CombinedStateIdx = hsm::getCombinedStateIdx(S {}, S {}, S1 {});
-    auto s2CombinedStateIdx = hsm::getCombinedStateIdx(S {}, P {}, S2 {});
+    auto s1CombinedStateIdx = hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), S {}, S1 {});
+    auto s2CombinedStateIdx = hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), P {}, S2 {});
 
-    EXPECT_EQ(0, hsm::calcParentStateIdx(hsm::nStates(S {}), s1CombinedStateIdx));
-    EXPECT_EQ(1, hsm::calcParentStateIdx(hsm::nStates(S {}), s2CombinedStateIdx));
+    EXPECT_EQ(1, hsm::calcParentStateIdx(hsm::nStates(S {}), s1CombinedStateIdx));
+    EXPECT_EQ(0, hsm::calcParentStateIdx(hsm::nStates(S {}), s2CombinedStateIdx));
 }
 
 TEST_F(StateidxTests, should_calculate_stateidx)
 {
-    auto s1CombinedStateIdx = hsm::getCombinedStateIdx(S {}, S {}, S1 {});
-    auto s2CombinedStateIdx = hsm::getCombinedStateIdx(S {}, P {}, S2 {});
+    auto s1CombinedStateIdx = hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), S {}, S1 {});
+    auto s2CombinedStateIdx = hsm::getCombinedStateIdx(hsm::getCombinedStateTypeids(S{}), P {}, S2 {});
 
-    EXPECT_EQ(0, hsm::calcStateIdx(hsm::nStates(S {}), s1CombinedStateIdx));
-    EXPECT_EQ(2, hsm::calcStateIdx(hsm::nStates(S {}), s2CombinedStateIdx));
+    EXPECT_EQ(2, hsm::calcStateIdx(hsm::nStates(S {}), s1CombinedStateIdx));
+    EXPECT_EQ(0, hsm::calcStateIdx(hsm::nStates(S {}), s2CombinedStateIdx));
 }

@@ -1,0 +1,4 @@
+.vscode
+build/
+benchmark/*.dat
+benchmark/*.svg

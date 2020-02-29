@@ -108,10 +108,23 @@ int main()
 |--|--|
 |![Complex benchmark results](doc/benchmark/complex_benchmark_results.svg "Complex benchmark results")|![Complex benchmark compile time results](doc/benchmark/complex_benchmark_compiletime_results.svg "Complex benchmark compile time results")|
 
+## Dependencies
+* Boost 1.72
+* C++17
+
 ## Create and Install the Package
 ``` bash
 mkdir src/build
 cd src/build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
+cmake --build . --target install
+```
+
+## Create and Install the Package with Conan
+``` bash
+mkdir src/build
+cd src/build
+conan install ..
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
 cmake --build . --target install
 ```

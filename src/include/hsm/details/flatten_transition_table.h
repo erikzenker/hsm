@@ -13,29 +13,30 @@ namespace bh{
     }
 
 namespace {
-template <class State> constexpr auto flatten_sub_transition_table(State&& state);
+template <class State> constexpr auto flatten_sub_transition_table(State state);
 }
 
 constexpr auto flatten_transition_table = [](auto state) {
+
+    const auto flattenSubTransitionTable = [state](auto transition){
+        const auto extentedTransition = bh::prepend(transition, state);
+        return bh::prepend(flatten_sub_transition_table(bh::back(transition)), extentedTransition);
+    };
+
     const auto transitionTable = state.make_transition_table();
-    const auto collectedTransitions = bh::fold_left(
-        transitionTable, bh::make_tuple(), [state](auto transitions, auto transition) {
-            auto extendedTransition = bh::append(transitions, bh::prepend(transition, state));
-            return bh::concat(
-                extendedTransition, flatten_sub_transition_table(bh::back(transition)));
-        });
-    return collectedTransitions;
+    const auto extendedTransitionTable = bh::transform(transitionTable, flattenSubTransitionTable);
+    return bh::flatten(extendedTransitionTable);
 };
 
 namespace {
-template <class State> constexpr auto flatten_sub_transition_table(State&& state)
+template <class State> constexpr auto flatten_sub_transition_table(State state)
 {
     return bh::if_(
         has_transition_table(state),
-        [](auto& stateWithTransitionTable) {
+        [](auto stateWithTransitionTable) {
             return flatten_transition_table(stateWithTransitionTable);
         },
-        [](auto&) { return bh::make_tuple(); })(state);
+        [](auto) { return bh::make_tuple(); })(state);
 }
 }
 }
