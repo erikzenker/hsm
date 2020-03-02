@@ -21,10 +21,22 @@ namespace hsm {
         = bh::is_valid([](auto&& state) -> decltype(state.on_unexpected_event()) {});
     auto has_deferred_events = bh::is_valid([](auto&& state) -> decltype(state.defer_events()) {});
 
-    auto is_exit_state = bh::is_valid([](auto&& state) -> decltype(state.isExitState) {});
-    auto is_entry_state = bh::is_valid([](auto&& state) -> decltype(state.isEntryState) {});
-    auto is_direct_state = bh::is_valid([](auto&& state) -> decltype(state.isDirectState) {});
-    auto is_history_state = bh::is_valid([](auto&& state) -> decltype(state.isHistoryState) {});
+    auto constexpr is_exit_state = [](auto type) {
+        return bh::equal(
+            bh::bool_c<std::is_base_of<ExitPseudoState, decltype(type)>::value>, bh::true_c);
+    };
+    auto constexpr is_entry_state = [](auto type) {
+        return bh::equal(
+            bh::bool_c<std::is_base_of<EntryPseudoState, decltype(type)>::value>, bh::true_c);
+    };
+    auto constexpr is_direct_state = [](auto type) {
+        return bh::equal(
+            bh::bool_c<std::is_base_of<DirectPseudoState, decltype(type)>::value>, bh::true_c);
+    };
+    auto constexpr is_history_state = [](auto type) {
+        return bh::equal(
+            bh::bool_c<std::is_base_of<HistoryPseudoState, decltype(type)>::value>, bh::true_c);
+    };
     auto constexpr is_no_action
         = [](auto action) { return bh::equal(bh::typeid_(action), bh::typeid_(noAction {})); };
     auto constexpr is_no_guard
@@ -41,4 +53,4 @@ namespace hsm {
     };
 
     auto const contains_dependency = [](const auto& parameters) { return bh::size(parameters); };
-}
+    }

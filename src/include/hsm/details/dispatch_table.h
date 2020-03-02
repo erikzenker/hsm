@@ -137,7 +137,8 @@ constexpr auto resolveDst = [](const auto& transition) {
             [](auto history) { // TODO: make multi region capable
                 return bh::at_c<0>(history.get_parent_state().initial_state());
             }),
-        case_(otherwise, [](auto state) { return state; }))(getDst(transition));
+        case_(otherwise, [](auto state) { return state; }))
+        (getDst(transition));
     // clang-format on
 };
 
@@ -148,8 +149,8 @@ constexpr auto resolveDstParent = [](const auto& transition) {
         case_(is_entry_state, [](auto entry) { return entry.get_parent_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_parent_state(); }),
         case_(is_history_state, [](auto history) { return history.get_parent_state(); }),
-        case_(otherwise, [&transition](auto) { return getSrcParent(transition); }))(
-        getDst(transition));
+        case_(otherwise, [&transition](auto) { return getSrcParent(transition); }))
+        (getDst(transition));
     // clang-format on
 };
 
@@ -158,7 +159,8 @@ constexpr auto resolveSrc = [](const auto& transition) {
     return switch_(
         case_(is_exit_state, [](auto exit) { return exit.get_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_state(); }),
-        case_(otherwise, [](auto state) { return state; }))(getSrc(transition));
+        case_(otherwise, [](auto state) { return state; }))
+        (getSrc(transition));
     // clang-format on
 };
 
@@ -167,8 +169,8 @@ constexpr auto resolveSrcParent = [](const auto& transition) {
     return switch_(
         case_(is_exit_state, [](auto exit) { return exit.get_parent_state(); }),
         case_(is_direct_state, [](auto direct) { return direct.get_parent_state(); }),
-        case_(otherwise, [transition](auto) { return getSrcParent(transition); }))(
-        getSrc(transition));
+        case_(otherwise, [transition](auto) { return getSrcParent(transition); }))
+        (getSrc(transition));
     // clang-format on
 };
 
@@ -181,20 +183,18 @@ constexpr auto makeInvalidAction = [](const auto& dispatchTable){
 };
 
 constexpr auto resolveAction2 = [](const auto& transition) {
-            const auto exitAction = switch_(
-                case_(has_exit_action, [](auto src) { return src.on_exit(); }),
-                case_(otherwise, [transition](auto) { return [](auto...) {}; }))(
-                getSrc(transition));
-            const auto action = getAction(transition);
-            const auto entryAction = switch_(
-                case_(has_entry_action, [](auto dst) { return dst.on_entry(); }),
-                case_(otherwise, [transition](auto) { return [](auto...) {}; }))(
-                getDst(transition));
-            return [exitAction, action, entryAction](const auto&... params) {
-                exitAction(params...);
-                action(params...);
-                entryAction(params...);
-            };
+    const auto exitAction = switch_(
+        case_(has_exit_action, [](auto src) { return src.on_exit(); }),
+        case_(otherwise, [transition](auto) { return [](auto...) {}; }))(getSrc(transition));
+    const auto action = getAction(transition);
+    const auto entryAction = switch_(
+        case_(has_entry_action, [](auto dst) { return dst.on_entry(); }),
+        case_(otherwise, [transition](auto) { return [](auto...) {}; }))(getDst(transition));
+    return [exitAction, action, entryAction](const auto&... params) {
+        exitAction(params...);
+        action(params...);
+        entryAction(params...);
+    };
 };
 
 constexpr auto resolveAction = [](const auto& transition, const auto& dispatchTable) {
