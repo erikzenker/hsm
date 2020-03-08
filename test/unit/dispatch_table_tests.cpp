@@ -110,14 +110,14 @@ TEST_F(DispatchTableTests, should_make_region_map)
 TEST_F(DispatchTableTests, should_count_regions)
 {
     std::array<std::vector<std::size_t>, hsm::maxInitialStates(MainState {})> regions;
-    hsm::fill_inital_state_table(MainState{}, regions);
+    hsm::fill_initial_state_table(MainState {}, regions);
     ASSERT_EQ(2, regions[0].size());
     ASSERT_EQ(1, regions[1].size());
 
-    ASSERT_EQ(3, regions[0][0]);
-    ASSERT_EQ(1, regions[0][1]);
+    ASSERT_EQ(0, regions[0][0]);
+    ASSERT_EQ(3, regions[0][1]);
 
-    ASSERT_EQ(3, regions[1][0]);
+    ASSERT_EQ(0, regions[1][0]);
 }
 
 TEST_F(DispatchTableTests, should_resolve_history_state)

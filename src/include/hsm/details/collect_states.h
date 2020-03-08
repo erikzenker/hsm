@@ -37,7 +37,7 @@ namespace hsm {
         auto transitions = flatten_transition_table(parentState);
         auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStates));
 
-        return remove_duplicate_types(collectedStates);
+        return collectedStates;
     };
 
     constexpr auto collect_state_typeids_recursive = [](auto&& parentState) {

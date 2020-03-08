@@ -2,85 +2,67 @@
 
 namespace hsm {
 
-template <class ParentState, class State> class Exit {
+template <class ParentState, class State> class PseudoState {
   public:
-    bool isExitState = true;
+    constexpr PseudoState(ParentState parentState, State state)
+        : parentState(parentState)
+        , state(state)
+    {
+    }
 
+    constexpr auto get_parent_state()
+    {
+        return parentState;
+    }
+
+    constexpr auto get_state()
+    {
+        return state;
+    }
+
+  private:
+    ParentState parentState;
+    State state;
+};
+
+class ExitPseudoState {
+};
+class EntryPseudoState {
+};
+class DirectPseudoState {
+};
+class HistoryPseudoState {
+};
+
+template <class ParentState, class State>
+class Exit final : public PseudoState<ParentState, State>, public ExitPseudoState {
+  public:
     constexpr Exit(ParentState parentState, State state)
-        : parentState(parentState)
-        , state(state)
+        : PseudoState<ParentState, State>(parentState, state)
     {
     }
-
-    constexpr auto get_parent_state()
-    {
-        return parentState;
-    }
-
-    constexpr auto get_state()
-    {
-        return state;
-    }
-
-  private:
-    ParentState parentState;
-    State state;
 };
 
-template <class ParentState, class State> class Entry {
+template <class ParentState, class State>
+class Entry : public PseudoState<ParentState, State>, public EntryPseudoState {
   public:
-    bool isEntryState = true;
-
     constexpr Entry(ParentState parentState, State state)
-        : parentState(parentState)
-        , state(state)
+        : PseudoState<ParentState, State>(parentState, state)
     {
     }
-
-    constexpr auto get_parent_state()
-    {
-        return parentState;
-    }
-
-    constexpr auto get_state()
-    {
-        return state;
-    }
-
-  private:
-    ParentState parentState;
-    State state;
 };
 
-template <class ParentState, class State> class Direct {
+template <class ParentState, class State>
+class Direct : public PseudoState<ParentState, State>, public DirectPseudoState {
   public:
-    bool isDirectState = true;
-
     constexpr Direct(ParentState parentState, State state)
-        : parentState(parentState)
-        , state(state)
+        : PseudoState<ParentState, State>(parentState, state)
     {
     }
-
-    constexpr auto get_parent_state()
-    {
-        return parentState;
-    }
-
-    constexpr auto get_state()
-    {
-        return state;
-    }
-
-  private:
-    ParentState parentState;
-    State state;
 };
 
-template <class ParentState> class History {
+template <class ParentState> class History : public HistoryPseudoState {
   public:
-    bool isHistoryState = true;
-
     constexpr History(ParentState parentState)
         : parentState(parentState)
     {

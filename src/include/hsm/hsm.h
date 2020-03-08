@@ -35,8 +35,8 @@ template <class RootState, class... OptionalParameters> class sm {
         fill_dispatch_table_with_external_transitions(rootState(), optionalParameters...);
         fill_dispatch_table_with_internal_transitions(rootState(), optionalParameters...);
         fill_dispatch_table_with_deferred_events(rootState(), optionalParameters...);
-        fill_inital_state_table(rootState(), m_initial_states);
-        fill_inital_state_table(rootState(), m_history);
+        fill_initial_state_table(rootState(), m_initial_states);
+        fill_initial_state_table(rootState(), m_history);
         init_current_state();
         update_current_regions();
     }
@@ -76,8 +76,7 @@ template <class RootState, class... OptionalParameters> class sm {
 
         for (std::size_t region = 0; region < current_regions(); region++) {
 
-            auto& result = DispatchTable<RootState, Event, OptionalParameters...>::table
-                [m_currentCombinedState[region]];
+            auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
             if(result.defer){
                 m_defer_queue.push(event);
@@ -127,8 +126,7 @@ template <class RootState, class... OptionalParameters> class sm {
                     for (std::size_t region = 0; region < current_regions(); region++) {
 
                         auto event = noneEvent {};
-                        auto& result = DispatchTable<RootState, noneEvent, OptionalParameters...>::
-                            table[m_currentCombinedState[region]];
+                        auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
                         if (!result.valid) {
                             return;
@@ -144,6 +142,12 @@ template <class RootState, class... OptionalParameters> class sm {
                 }
             },
             []() {})();
+    }
+
+    template <class Event> constexpr auto& dispatch_table_at(StateIdx index, const Event& /*event*/)
+    {
+        constexpr auto states = nStates(RootState {}) * nParentStates(RootState {});
+        return DispatchTable<states, Event, OptionalParameters...>::table[index];
     }
 
     template <class DispatchTableEntry>
@@ -219,7 +223,7 @@ template <class RootState, class... OptionalParameters> class sm {
         handler(event);
     }
 
-    auto rootState()
+    constexpr auto rootState()
     {
         return RootState {};
     }
