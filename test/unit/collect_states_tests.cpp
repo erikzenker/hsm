@@ -108,8 +108,7 @@ TEST_F(CollectStatesTests, should_collect_child_states)
     };
 
     auto collectedStates = hsm::collect_child_states(S {});
-    auto expectedStates
-        = bh::make_tuple(bh::typeid_(S2 {}), bh::typeid_(S1 {}));
+    auto expectedStates = bh::make_tuple(bh::typeid_(S1 {}), bh::typeid_(S2 {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -141,9 +140,7 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive_on_top_l
     };
 
     auto collectedStates = hsm::collect_child_state_typeids_recursive(S {});
-    auto expectedStates
-        = bh::make_tuple(bh::typeid_(S2 {})
-        , bh::typeid_(S1 {}));
+    auto expectedStates = bh::make_tuple(bh::typeid_(S1 {}), bh::typeid_(S2 {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -165,8 +162,7 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive)
     };
 
     auto collectedStates = hsm::collect_child_state_typeids_recursive(S {});
-    auto expectedStates = bh::make_tuple(
-        bh::typeid_(S2 {}), bh::typeid_(P {}), bh::typeid_(S1 {}));
+    auto expectedStates = bh::make_tuple(bh::typeid_(S1 {}), bh::typeid_(P {}), bh::typeid_(S2 {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -204,10 +200,7 @@ TEST_F(CollectStatesTests, should_collect_state_typeids_recursive)
 
     auto collectedStates = hsm::collect_state_typeids_recursive(S {});
     auto expectedStates = bh::make_tuple(
-        bh::typeid_(S2 {}),
-        bh::typeid_(P {}),
-        bh::typeid_(S1 {}),
-        bh::typeid_(S {}));
+        bh::typeid_(S1 {}), bh::typeid_(P {}), bh::typeid_(S2 {}), bh::typeid_(S {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }

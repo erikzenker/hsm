@@ -25,6 +25,10 @@ constexpr auto collect_event_typeids_recursive
         return remove_duplicate_typeids(bh::transform(flatten_transition_table(state), collectEventTypeids));    
 };
 
+constexpr auto collect_event_typeids_recursive2 = [](auto transitions) {
+    return remove_duplicate_typeids(bh::transform(transitions, collectEventTypeids));
+};
+
 constexpr auto collect_events_recursive = [](auto state) {
     return remove_duplicate_types(
         bh::flatten(bh::transform(flatten_transition_table(state), collectEvents)));

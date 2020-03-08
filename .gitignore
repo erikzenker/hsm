@@ -1,4 +1,4 @@
 .vscode
-build/
+build*
 benchmark/*.dat
 benchmark/*.svg

@@ -9,27 +9,19 @@ namespace bh {
 using namespace boost::hana;
 }
 
-const auto remove_duplicate_typeids
-    = [](auto tuple) { return bh::unique(bh::sort(tuple, bh::not_equal)); };
+namespace {
+constexpr auto to_pair = [](auto x) { return bh::make_pair(x, x); };
 
-const auto remove_duplicate_types = [](auto tuple) {
-    auto result = bh::fold_left(
-        tuple, bh::make_pair(bh::make_tuple(), bh::make_set()), [](auto accu, auto element) {
-            auto elements = bh::first(accu);
-            auto typeids = bh::second(accu);
-            return bh::if_(
-                bh::contains(typeids, bh::typeid_(element)),
-                [](auto elements, auto typeids, auto /*element*/) {
-                    return bh::make_pair(elements, typeids);
-                },
-                [](auto elements, auto typeids, auto element) {
-                    auto newElements = bh::append(elements, element);
-                    auto newTypeids = bh::insert(typeids, bh::typeid_(element));
-                    return bh::make_pair(newElements, newTypeids);
-                })(elements, typeids, element);
-        });
+constexpr auto to_type_pair = [](auto x) { return bh::make_pair(bh::typeid_(x), x); };
+}
 
-    return bh::first(result);
+constexpr auto remove_duplicates = [](auto tuple, auto predicate) {
+    return bh::values(bh::to_map(bh::transform(tuple, predicate)));
 };
 
+constexpr auto remove_duplicate_typeids
+    = [](auto tuple) { return remove_duplicates(tuple, to_pair); };
+
+constexpr auto remove_duplicate_types
+    = [](auto tuple) { return remove_duplicates(tuple, to_type_pair); };
 }

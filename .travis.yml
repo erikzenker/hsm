@@ -2,10 +2,12 @@ language: cpp
 dist: bionic
 addons:
   apt:
+    sources: 
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
       - cmake
       - lcov
-      - g++-7
+      - g++-9
       - python-pip
 compiler:
   - gcc
@@ -14,8 +16,8 @@ os:
 install:
   - sudo pip install conan    
 script:
-  - export CXX=g++-7
-  - export CC=gcc-7
+  - export CXX=g++-9
+  - export CC=gcc-9
   - export CODECOV_TOKEN="d3d577f7-24ba-43c6-aa89-efb6e47f07db"
   - cd $TRAVIS_BUILD_DIR
   - mkdir build && cd build

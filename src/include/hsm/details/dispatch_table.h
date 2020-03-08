@@ -85,7 +85,7 @@ constexpr auto make_initial_state_map = [](const auto& rootState) {
     return bh::to<bh::map_tag>(to_pairs(bh::zip(parentStateTypeids, initialStates)));
 };
 
-constexpr auto fill_inital_state_table = [](const auto& rootState, auto& initialStateTable) {
+constexpr auto fill_initial_state_table = [](const auto& rootState, auto& initialStateTable) {
     auto parentStateTypeids = collect_parent_state_typeids(rootState);
     for_each_idx(parentStateTypeids, [rootState, &initialStateTable](auto parentStateTypeid, auto parentStateId){
         auto initialStates = bh::find(make_initial_state_map(rootState), parentStateTypeid).value();
@@ -111,16 +111,15 @@ template <class... Parameters> struct NextState {
     bool valid = false;
 };
 
-template <class RootState, class... Parameters>
-using DispatchArray
-    = std::array<NextState<Parameters...>, nStates(RootState {}) * nParentStates(RootState {})>;
+template <StateIdx NStates, class... Parameters>
+using DispatchArray = std::array<NextState<Parameters...>, NStates>;
 
-template <class RootState, class... Parameters> struct DispatchTable {
-    static DispatchArray<RootState, Parameters...> table;
+template <StateIdx NStates, class... Parameters> struct DispatchTable {
+    static DispatchArray<NStates, Parameters...> table;
 };
 
-template <class RootState, class... Parameters>
-DispatchArray<RootState, Parameters...> DispatchTable<RootState, Parameters...>::table {};
+template <StateIdx NStates, class... Parameters>
+DispatchArray<NStates, Parameters...> DispatchTable<NStates, Parameters...>::table {};
 
 constexpr auto resolveDst = [](const auto& transition) {
     // clang-format off
@@ -273,14 +272,15 @@ template <class RootState, class Transitions, class... Parameters>
 constexpr auto fill_dispatch_table_with_transitions(
     const RootState& rootState, const Transitions& transitions, Parameters... /*parameters*/)
 {
-    const auto eventTypeids = collect_event_typeids_recursive(rootState);
+    const auto eventTypeids = collect_event_typeids_recursive2(transitions);
     const auto combinedStateTypeids = getCombinedStateTypeids(rootState);
+    constexpr StateIdx states = nStates(RootState {}) * nParentStates(RootState {});
 
     bh::for_each(eventTypeids, [&](auto eventTypeid) {
         using Event = typename decltype(eventTypeid)::type;
 
         const auto filteredTransitions = filter_transitions(transitions, eventTypeid);
-        auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
+        auto& dispatchTable = DispatchTable<states, Event, Parameters...>::table;
 
         bh::for_each(filteredTransitions, [&](const auto& transition) {
             addDispatchTableEntry(combinedStateTypeids, transition, dispatchTable);
@@ -304,16 +304,17 @@ template <class RootState, class... Parameters>
 constexpr auto
 fill_dispatch_table_with_deferred_events(const RootState& rootState, Parameters... /*parameters*/)
 {
-    const auto transitions = getDeferingTransitions(rootState);
     const auto combinedStateTypeids = getCombinedStateTypeids(rootState);
+    const auto transitions = getDeferingTransitions(rootState);
+    constexpr StateIdx states = nStates(RootState {}) * nParentStates(RootState {});
 
     bh::for_each(transitions, [&](auto transition) {
-        auto deferredEvents = getSrc(transition).defer_events();
+        const auto deferredEvents = getSrc(transition).defer_events();
 
         bh::for_each(deferredEvents, [&](auto event) {
             using Event = decltype(event);
 
-            auto& dispatchTable = DispatchTable<RootState, Event, Parameters...>::table;
+            auto& dispatchTable = DispatchTable<states, Event, Parameters...>::table;
             const auto from = getCombinedStateIdx(
                 combinedStateTypeids, resolveSrcParent(transition), resolveSrc(transition));
             dispatchTable[from].defer = true;
