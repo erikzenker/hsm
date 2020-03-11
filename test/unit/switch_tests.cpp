@@ -19,36 +19,16 @@ class SwitchTests : public Test {
 
 TEST_F(SwitchTests, should_call_is_true_case)
 {
-    bool isTrueWasCalled = false;
-    bool otherwiseWasCalled = false;
+    auto result = switch_(
+        case_(is_true(), []() { return true; }), case_(otherwise(), []() { return false; }))();
 
-    switch_(
-        case_(is_true, [&](){
-            isTrueWasCalled = true;    
-        }),
-        case_(otherwise, [&](){
-            otherwiseWasCalled = true;
-        })
-    )();
-
-    ASSERT_TRUE(isTrueWasCalled);
-    ASSERT_FALSE(otherwiseWasCalled);
+    ASSERT_TRUE(result);
 }
 
 TEST_F(SwitchTests, should_call_otherwise_case)
 {
-    bool isFalseWasCalled = false;
-    bool otherwiseWasCalled = false;
+    auto result = switch_(
+        case_(is_false(), []() { return false; }), case_(otherwise(), []() { return true; }))();
 
-    switch_(
-        case_(is_false, [&](){
-            isFalseWasCalled = true;    
-        }),
-        case_(otherwise, [&](){
-            otherwiseWasCalled = true;
-        })
-    )();
-
-    ASSERT_FALSE(isFalseWasCalled);
-    ASSERT_TRUE(otherwiseWasCalled);
+    ASSERT_TRUE(result);
 }

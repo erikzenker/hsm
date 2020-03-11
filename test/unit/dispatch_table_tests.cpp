@@ -122,8 +122,8 @@ TEST_F(DispatchTableTests, should_count_regions)
 
 TEST_F(DispatchTableTests, should_resolve_history_state)
 {
-    auto historyTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::History { S {} });
-    auto noHistoryTransition = bh::make_tuple(0, 1, 2, 3, 4, S {});
+    constexpr auto historyTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::History { S {} });
+    constexpr auto noHistoryTransition = bh::make_tuple(0, 1, 2, 3, 4, S {});
 
     ASSERT_TRUE(hsm::resolveHistory(historyTransition));
     ASSERT_FALSE(hsm::resolveHistory(noHistoryTransition));
