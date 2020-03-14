@@ -58,7 +58,10 @@ constexpr auto getGuard = [](auto transition) { return bh::at_c<3>(transition); 
 
 constexpr auto getAction = [](auto transition) { return bh::at_c<4>(transition); };
 
-constexpr auto getDst = [](auto transition) { return bh::at_c<5>(transition); };
+constexpr auto getDst = [](auto&& transition) -> auto
+{
+    return bh::at_c<5>(transition);
+};
 
 constexpr auto getParentStateIdx = [](auto rootState, auto parentState) {
     return index_of(collect_parent_state_typeids(rootState), bh::typeid_(parentState));
@@ -80,8 +83,7 @@ constexpr auto getCombinedStateTypeid = [](const auto& parentState, const auto& 
 };
 
 constexpr auto getCombinedStateIdx = [](auto combinedStateTypids, auto parentState, auto state) {
-    auto combinedStateTypeid = getCombinedStateTypeid(parentState, state);
-
+    constexpr auto combinedStateTypeid = getCombinedStateTypeid(parentState, state);
     return index_of(combinedStateTypids, combinedStateTypeid);
 };
 

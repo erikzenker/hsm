@@ -23,7 +23,7 @@ constexpr auto to_pairs = [](const auto& tuples) {
 };
 
 const auto make_index_map = [](auto typeids) {
-    const auto range = bh::to<bh::tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(typeids)));
-    return bh::to<bh::map_tag>(to_pairs(bh::zip(typeids, range)));
+    const auto range = bh::to_tuple(bh::make_range(bh::int_c<0>, bh::size(typeids)));
+    return bh::to_map(to_pairs(bh::zip(typeids, range)));
 };
 }
