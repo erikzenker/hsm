@@ -127,14 +127,14 @@ DispatchArray<NStates, Parameters...> DispatchTable<NStates, Parameters...>::tab
 constexpr auto resolveDst = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& dst){
-        return switch_(
+        return lazy_switch_(
             // TODO: make multi region capable    
-            case_(has_transition_table(dst), [](auto submachine) { return bh::at_c<0>(submachine.initial_state());}),
-            case_(is_entry_state(dst),       [](auto entry) { return entry.get_state(); }),
-            case_(is_direct_state(dst),      [](auto direct) { return direct.get_state(); }),
+            case_(bh::make_lazy(has_transition_table(dst)), [](auto&& submachine) { return bh::at_c<0>(submachine.initial_state());}),
+            case_(bh::make_lazy(is_entry_state(dst)),       [](auto&& entry) { return entry.get_state(); }),
+            case_(bh::make_lazy(is_direct_state(dst)),      [](auto&& direct) { return direct.get_state(); }),
             // TODO: make multi region capable 
-            case_(is_history_state(dst),     [](auto history) { return bh::at_c<0>(history.get_parent_state().initial_state());}),
-            case_(otherwise(),               [](auto state) { return state; }))
+            case_(bh::make_lazy(is_history_state(dst)),     [](auto&& history) { return bh::at_c<0>(history.get_parent_state().initial_state());}),
+            case_(bh::make_lazy((otherwise())),             [](auto&& state) { return state; }))
             (dst);
     },
     getDst(transition));
@@ -144,12 +144,12 @@ constexpr auto resolveDst = [](auto&& transition) {
 constexpr auto resolveDstParent = [](auto transition) {
     // clang-format off
     return bh::apply([](auto&& dst, auto&& transition){
-        return switch_(
-            case_(has_transition_table(dst), [](auto submachine, auto) { return submachine; }),
-            case_(is_entry_state(dst),       [](auto entry, auto) { return entry.get_parent_state(); }),
-            case_(is_direct_state(dst),      [](auto direct, auto) { return direct.get_parent_state(); }),
-            case_(is_history_state(dst),     [](auto history, auto) { return history.get_parent_state(); }),
-            case_(otherwise(),               [](auto, auto transition) { return getSrcParent(transition); }))
+        return lazy_switch_(
+            case_(bh::make_lazy(has_transition_table(dst)), [](auto&& submachine, auto&&) { return submachine; }),
+            case_(bh::make_lazy(is_entry_state(dst)),       [](auto&& entry, auto&&) { return entry.get_parent_state(); }),
+            case_(bh::make_lazy(is_direct_state(dst)),      [](auto&& direct, auto&&) { return direct.get_parent_state(); }),
+            case_(bh::make_lazy(is_history_state(dst)),     [](auto&& history, auto&&) { return history.get_parent_state(); }),
+            case_(bh::make_lazy(otherwise()),               [](auto&&, auto&& transition) { return getSrcParent(transition); }))
             (dst, transition);
     },
     getDst(transition), transition);
@@ -159,10 +159,10 @@ constexpr auto resolveDstParent = [](auto transition) {
 constexpr auto resolveSrc = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src){
-        return switch_(
-            case_(is_exit_state(src),   [](auto exit) { return exit.get_state(); }),
-            case_(is_direct_state(src), [](auto direct) { return direct.get_state(); }),
-            case_(otherwise(),          [](auto state) { return state; }))
+        return lazy_switch_(
+            case_(bh::make_lazy(is_exit_state(src)),   [](auto&& exit) { return exit.get_state(); }),
+            case_(bh::make_lazy(is_direct_state(src)), [](auto&& direct) { return direct.get_state(); }),
+            case_(bh::make_lazy(otherwise()),          [](auto&& state) { return state; }))
             (src);    
     },
     getSrc(transition));
@@ -172,10 +172,10 @@ constexpr auto resolveSrc = [](auto&& transition) {
 constexpr auto resolveSrcParent = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src, auto&& transition){
-        return switch_(
-            case_(is_exit_state(src),   [](auto exit, auto) { return exit.get_parent_state(); }),
-            case_(is_direct_state(src), [](auto direct, auto) { return direct.get_parent_state(); }),
-            case_(otherwise(),          [](auto, auto transition) { return getSrcParent(transition); }))
+        return lazy_switch_(
+            case_(bh::make_lazy(is_exit_state(src)),   [](auto&& exit, auto&&) { return exit.get_parent_state(); }),
+            case_(bh::make_lazy(is_direct_state(src)), [](auto&& direct, auto&&) { return direct.get_parent_state(); }),
+            case_(bh::make_lazy(otherwise()),          [](auto&&, auto&& transition) { return getSrcParent(transition); }))
             (src, transition);
     },
     getSrc(transition), transition);
@@ -191,10 +191,10 @@ constexpr auto makeInvalidAction
 constexpr auto resolveEntryAction = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& dst){
-        return switch_(
-            case_(has_entry_action(dst), [](auto dst) { return dst.on_entry(); }),
-            case_(otherwise(),           [](auto) { return [](auto...) {}; }))
-            (dst);
+        return bh::if_(has_entry_action(dst)
+            , [](auto&& dst) { return dst.on_entry(); }
+            , [](auto&&) { return [](auto...) {}; })
+            (dst);    
     },
     getDst(transition));
     // clang-format on
@@ -203,9 +203,9 @@ constexpr auto resolveEntryAction = [](auto&& transition) {
 constexpr auto resolveExitAction = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src){
-        return switch_(
-            case_(has_exit_action(src), [](auto src) { return src.on_exit(); }),
-            case_(otherwise(),          [](auto) { return [](auto...) {}; }))
+        return bh::if_(has_exit_action(src)
+            , [](auto&& src) { return src.on_exit(); }
+            , [](auto&&) { return [](auto...) {}; })
             (src);
     },
     getSrc(transition));
@@ -225,8 +225,8 @@ constexpr auto resolveAction2 = [](auto&& transition) {
 constexpr auto resolveAction = [](auto&& transition, auto&& dispatchTable) {
     // clang-format off                
     return bh::if_(is_no_action(getAction(transition)),
-            [](auto, auto dispatchTable) { return makeInvalidAction(dispatchTable); },
-            [](auto transition, auto) { return resolveAction2(transition);})
+            [](auto&&, auto&& dispatchTable) { return makeInvalidAction(dispatchTable); },
+            [](auto&& transition, auto&&) { return resolveAction2(transition);})
             (transition, dispatchTable);
     // clang-format on
 };
@@ -234,22 +234,21 @@ constexpr auto resolveAction = [](auto&& transition, auto&& dispatchTable) {
 constexpr auto resolveGuard = [](auto&& transition, auto&& dispatchTable) {
     // clang-format off
     return bh::apply([](auto&& guard, auto&& dispatchTable){
-        return switch_(
-            case_(is_no_guard(guard), [](auto, auto dispatchTable) { return makeInvalidGuard(dispatchTable);}),
-            case_(otherwise(),        [](auto guard, auto) { return guard;}))
+        return bh::if_(is_no_guard(guard)
+            ,[](auto&&, auto&& dispatchTable) { return makeInvalidGuard(dispatchTable);}
+            ,[](auto&& guard, auto&&) { return guard;})
             (guard, dispatchTable);
     },
     getGuard(transition), dispatchTable);
     // clang-format on                   
 };
 
-
 constexpr auto resolveHistory = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& dst){
-        return switch_(
-            case_(is_history_state(dst), [](auto) { return true; }), 
-            case_(otherwise(),           [](auto) { return false; }))
+        return bh::if_(is_history_state(dst)
+            , [](auto&&) { return true; }
+            , [](auto&&) { return false; })
             (dst);
     }, 
     getDst(transition));
@@ -257,7 +256,7 @@ constexpr auto resolveHistory = [](auto&& transition) {
 };
 
 
-constexpr auto addDispatchTableEntry = [](auto combinedStateTypids, auto transition, auto& dispatchTable) {
+constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable) {
           const auto from = getCombinedStateIdx(combinedStateTypids, resolveSrcParent(transition), resolveSrc(transition));
           const auto guard = resolveGuard(transition, dispatchTable);
           const auto action = resolveAction(transition, dispatchTable);
@@ -270,7 +269,7 @@ constexpr auto addDispatchTableEntry = [](auto combinedStateTypids, auto transit
       };
 
 const auto addDispatchTableEntryOfSubMachineExits
-    = [](auto combinedStateTypids, auto transition, auto& dispatchTable) {
+    = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable) {
           bh::if_(
               has_transition_table(getSrc(transition)),
               [&](auto parentState) {
