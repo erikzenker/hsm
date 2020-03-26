@@ -51,5 +51,3 @@ TEST_F(IndexMapTests, should_return_index_of_tuple)
     ASSERT_EQ(boost::hana::size_c<0>, hsm::index_of(tuple, T1));
     ASSERT_EQ(boost::hana::size_c<1>, hsm::index_of(tuple, T2));
 }
-
-
