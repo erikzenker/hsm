@@ -37,15 +37,6 @@ TEST_F(SwitchTests, should_call_otherwise_case)
     ASSERT_TRUE(result);
 }
 
-TEST_F(SwitchTests, should_switch_for_two_cases)
-{
-    // clang-format off
-    auto result = switch2(bh::make_tuple(
-        case_(is_false(), []() { return false; }), case_(otherwise(), []() { return true; })))();
-    // clang-format on
-    ASSERT_TRUE(result);
-}
-
 TEST_F(SwitchTests, should_eval_lazy_true)
 {
     // clang-format off
