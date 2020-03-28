@@ -1,7 +1,7 @@
 #pragma once
 
 #include "details/collect_events.h"
-#include "details/dispatch_table.h"
+#include "details/fill_dispatch_table.h"
 #include "details/transition_table.h"
 #include "details/variant_queue.h"
 
