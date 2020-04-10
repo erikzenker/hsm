@@ -1,6 +1,10 @@
 #include "hsm/hsm.h"
 
+#include <boost/hana/experimental/printable.hpp>
 #include <gtest/gtest.h>
+
+using namespace ::testing;
+using namespace boost::hana;
 
 namespace {
 
@@ -19,27 +23,31 @@ struct e2 {
 };
 
 // Guards
-const auto g1 = [](auto /*event*/) { return true; };
+const auto g1 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
 
 // Actions
-const auto a1 = [](auto /*event*/) {};
+const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
 
-using namespace ::testing;
+const auto log = [](auto event, auto source, auto target) {
+    std::cout << experimental::print(typeid_(source)) << " + "
+              << experimental::print(typeid_(event)) << " = "
+              << experimental::print(typeid_(target)) << std::endl;
+};
 
 struct SubState {
     constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}),
-            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, S3 {})
+            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e2> {}, g1, a1, hsm::state<S3> {})
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -48,16 +56,16 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, hsm::Entry {SubState{}, S3{}}),
-            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, SubState{}),                        
-            hsm::transition(hsm::Exit { SubState {}, S2 {} }, hsm::none {}, g1, a1, S1 {})
+            hsm::transition(hsm::state<S1> {}         , hsm::event<e1> {}, g1, log, hsm::entry<SubState, S3> {}),
+            hsm::transition(hsm::state<S1> {}         , hsm::event<e2> {}, g1, a1, hsm::state<SubState> {}),                        
+            hsm::transition(hsm::exit<SubState, S2> {}, hsm::none {}     , g1, a1, hsm::state<S1> {})
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -71,13 +79,15 @@ class EntryExitPseudoStatesTests : public Test {
 TEST_F(EntryExitPseudoStatesTests, should_entry_substate_on_pseudo_entry)
 {
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(SubState {}, S3 {}));
+    ASSERT_TRUE(sm.parent_is(hsm::state<SubState> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S3> {}));
+    ASSERT_TRUE(sm.is(hsm::state<SubState> {}, hsm::state<S3> {}));
 }
 
 TEST_F(EntryExitPseudoStatesTests, should_exit_subsubstate_from_pseudo_exit)
 {
     sm.process_event(e2 {});
-    ASSERT_TRUE(sm.is(SubState {}, S1 {}));
+    ASSERT_TRUE(sm.is(hsm::state<SubState> {}, hsm::state<S1> {}));
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(S1 {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
 }

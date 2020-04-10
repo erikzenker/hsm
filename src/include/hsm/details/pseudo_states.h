@@ -2,6 +2,8 @@
 
 namespace hsm {
 
+template <class Source> class state;
+
 template <class ParentState, class State> class PseudoState {
   public:
     constexpr PseudoState(ParentState parentState, State state)
@@ -37,8 +39,8 @@ class HistoryPseudoState {
 template <class ParentState, class State>
 class Exit final : public PseudoState<ParentState, State>, public ExitPseudoState {
   public:
-    constexpr Exit(ParentState parentState, State state)
-        : PseudoState<ParentState, State>(parentState, state)
+    constexpr Exit()
+        : PseudoState<ParentState, State>(ParentState {}, State {})
     {
     }
 };
@@ -46,8 +48,8 @@ class Exit final : public PseudoState<ParentState, State>, public ExitPseudoStat
 template <class ParentState, class State>
 class Entry : public PseudoState<ParentState, State>, public EntryPseudoState {
   public:
-    constexpr Entry(ParentState parentState, State state)
-        : PseudoState<ParentState, State>(parentState, state)
+    constexpr Entry()
+        : PseudoState<ParentState, State>(ParentState {}, State {})
     {
     }
 };
@@ -55,16 +57,16 @@ class Entry : public PseudoState<ParentState, State>, public EntryPseudoState {
 template <class ParentState, class State>
 class Direct : public PseudoState<ParentState, State>, public DirectPseudoState {
   public:
-    constexpr Direct(ParentState parentState, State state)
-        : PseudoState<ParentState, State>(parentState, state)
+    constexpr Direct()
+        : PseudoState<ParentState, State>(ParentState {}, State {})
     {
     }
 };
 
 template <class ParentState> class History : public HistoryPseudoState {
   public:
-    constexpr History(ParentState parentState)
-        : parentState(parentState)
+    constexpr History()
+        : parentState(ParentState {})
     {
     }
 

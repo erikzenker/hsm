@@ -25,14 +25,14 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             //              Source     , Event                    , Target
-            hsm::transition(S1 {}, hsm::event<e1> {}, hsm::noGuard{}, hsm::noAction{}, S1 {})
+            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, hsm::noGuard{}, hsm::noAction{}, hsm::state<S1> {})
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 

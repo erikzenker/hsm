@@ -25,7 +25,6 @@ namespace hsm {
             bh::typeid_(bh::at_c<0>(transition)), bh::typeid_(bh::at_c<4>(transition)));
     };    
     }
-
     constexpr auto collect_child_state_typeids_recursive = [](auto parentState) {
         auto transitions = flatten_transition_table(parentState);
         auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStateTypeids));
@@ -52,7 +51,7 @@ namespace hsm {
     };
 
     const auto collect_child_states = [](auto&& state) {
-        auto transitions = state.make_transition_table();
+        auto transitions = unfold_typeid(state).make_transition_table();
         auto collectedStates = bh::flatten(bh::transform(transitions, extractStates));
 
         return remove_duplicate_typeids(collectedStates);

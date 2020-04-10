@@ -28,12 +28,10 @@ const auto make_index_map = [](auto typeids) {
     return bh::to_map(to_pairs(bh::zip(typeids, range)));
 };
 
-
-constexpr auto find = [](auto&& reverseIndexMap, auto index, auto&& closure){
+constexpr auto find = [](auto&& reverseIndexMap, auto index, auto&& closure) {
     boost::mp11::mp_with_index<bh::size(reverseIndexMap)>(
-        index, [reverseIndexMap, closure](auto i) {
-            closure(bh::find(reverseIndexMap, i).value());
-        });
+        index,
+        [reverseIndexMap, &closure](auto i) { closure(bh::find(reverseIndexMap, i).value()); });
 };
 
 constexpr auto make_reverse_index_map = [](auto&& tuple) {

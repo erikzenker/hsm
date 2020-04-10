@@ -26,12 +26,6 @@ struct e2 {
     std::shared_ptr<std::promise<void>> called;
 };
 
-// Guards
-const auto g1 = [](auto /*event*/) { return true; };
-
-// Actions
-const auto a1 = [](auto /*event*/) {};
-
 using namespace ::testing;
 using namespace boost::hana;
 
@@ -40,17 +34,15 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            //              Source     , Event                    , Target
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}),
-            hsm::transition(S2 {}, hsm::event<e2> {}, g1, a1, S1 {})
-
+            hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {},
+            hsm::state<S2> {} + hsm::event<e2> {} = hsm::state<S1> {}
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 
     constexpr auto on_unexpected_event()

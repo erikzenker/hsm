@@ -71,10 +71,11 @@ constexpr auto getStateIdx = [](auto rootState, auto state) {
     return index_of(collect_state_typeids_recursive(rootState), bh::typeid_(state));
 };
 
-constexpr auto getCombinedStateTypeids = [](const auto& rootState){
-    auto stateTypeids = collect_parent_state_typeids(rootState);
-    auto parentStateTypeids = collect_state_typeids_recursive(rootState);
-    auto stateCartesianProduct = bh::cartesian_product(bh::make_tuple(stateTypeids, parentStateTypeids));
+constexpr auto getCombinedStateTypeids = [](const auto& rootState) {
+    auto parentStateTypeids = collect_parent_state_typeids(rootState);
+    auto stateTypeids = collect_state_typeids_recursive(rootState);
+    auto stateCartesianProduct
+        = bh::cartesian_product(bh::make_tuple(parentStateTypeids, stateTypeids));
     return bh::transform(stateCartesianProduct, bh::typeid_);
 };
 
@@ -117,7 +118,7 @@ const auto is_anonymous_transition
     = [](auto transition) { return bh::typeid_(getEvent(transition)) == bh::typeid_(none {}); };
 
 const auto is_history_transition
-    = [](auto transition) { return is_history_state(getDst(transition));};
+    = [](auto transition) { return is_history_state(getDst(transition)); };
 
 const auto has_anonymous_transition = [](auto rootState) {
     auto transitions = flatten_transition_table(rootState);
@@ -134,7 +135,7 @@ const auto has_history = [](auto rootState) {
 const auto get_unexpected_event_handler = [](auto rootState) {
     return bh::if_(
         has_unexpected_event_handler(rootState),
-        [](auto rootState) { return rootState.on_unexpected_event(); },
+        [](auto rootState) { return unfold_typeid(rootState).on_unexpected_event(); },
         [](auto) { return [](auto /*event*/) {}; })(rootState);
 };
 }

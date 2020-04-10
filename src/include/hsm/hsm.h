@@ -8,8 +8,9 @@
 #include <boost/hana.hpp>
 
 #include <array>
-#include <vector>
 #include <cstdint>
+#include <sstream>
+#include <vector>
 
 namespace hsm {
 
@@ -19,22 +20,21 @@ using namespace boost::hana;
 
 template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
-    using Events = decltype(collect_events_recursive(RootState {}));
-    std::array<StateIdx, maxInitialStates(RootState{})> m_currentCombinedState;
-    std::array<std::vector<std::size_t>, nParentStates(RootState{})> m_initial_states;
-    std::array<std::vector<std::size_t>, nParentStates(RootState {})> m_history;
-    bh::tuple<OptionalParameters...> m_optionalParameters;
+    using Events = decltype(collect_events_recursive(state<RootState> {}));
+    std::array<StateIdx, maxInitialStates(state<RootState> {})> m_currentCombinedState;
+    std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
+    std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
     std::size_t m_currentRegions;
 
   public:
     sm(OptionalParameters... optionalParameters)
-        : m_defer_queue(collect_events_recursive(RootState {}))
+        : m_defer_queue(collect_events_recursive(state<RootState> {}))
     {
-        m_optionalParameters = bh::make_tuple(optionalParameters...);
-        fill_dispatch_table_with_external_transitions(rootState(), optionalParameters...);
-        fill_dispatch_table_with_internal_transitions(rootState(), optionalParameters...);
-        fill_dispatch_table_with_deferred_events(rootState(), optionalParameters...);
+        auto optionalDependency = bh::make_tuple(optionalParameters...);
+        fill_dispatch_table_with_external_transitions(rootState(), optionalDependency);
+        fill_dispatch_table_with_internal_transitions(rootState(), optionalDependency);
+        fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);
         fill_initial_state_table(rootState(), m_initial_states);
         fill_initial_state_table(rootState(), m_history);
         init_current_state();
@@ -53,11 +53,22 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class State> auto is(State state) -> bool
     {
+        // std::cout << "combined: " << m_currentCombinedState[0] << ", current: " <<
+        // currentState(0)
+        //           << " == " << getStateIdx(rootState(), state) << std::endl;
+
         return currentState(0) == getStateIdx(rootState(), state);
     }
 
     template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
     {
+        // std::cout << "combined: " << m_currentCombinedState[0]
+        //           << " parent: " << currentParentState()
+        //           << " == " << getParentStateIdx(rootState(), parentState)
+        //           << ", current: " << currentState(0) << " == " << getStateIdx(rootState(),
+        //           state)
+        //           << std::endl;
+
         return currentParentState() == getParentStateIdx(rootState(), parentState)
             && currentState(0) == getStateIdx(rootState(), state);
     }
@@ -67,6 +78,27 @@ template <class RootState, class... OptionalParameters> class sm {
     {
         return currentParentState() == getParentStateIdx(rootState(), parentState)
             && currentState(region) == getStateIdx(rootState(), state);
+    }
+
+    template <class ParentState> auto parent_is(ParentState parentState) -> bool
+    {
+        // std::cout << "combined: " << m_currentCombinedState[0]
+        //           << " parent: " << currentParentState()
+        //           << " == " << getParentStateIdx(rootState(), parentState) << std::endl;
+
+        return currentParentState() == getParentStateIdx(rootState(), parentState);
+    }
+
+    auto status() -> std::string
+    {
+        std::stringstream statusStream;
+        for (std::size_t region = 0; region < current_regions(); region++) {
+            statusStream << "[" << region << "] "
+                         << "combined: " << m_currentCombinedState[region] << " "
+                         << "parent: " << currentParentState() << " "
+                         << "state: " << currentState(region);
+        }
+        return statusStream.str();
     }
 
   private:
@@ -87,13 +119,14 @@ template <class RootState, class... OptionalParameters> class sm {
                 return false;    
             }
 
-            if (!call_guard(result.guard, event)) {
+            if (!result.transition->executeGuard(event)) {
                 continue;
             }
 
             allGuardsFailed = false;
             update_current_state(region, result);
-            call_action(result.action, event);
+
+            result.transition->executeAction(event);
         }
 
         if (allGuardsFailed) {
@@ -132,12 +165,12 @@ template <class RootState, class... OptionalParameters> class sm {
                             return;
                         }
 
-                        if (!call_guard(result.guard, event)) {
+                        if (!result.transition->executeGuard(event)) {
                             continue;
                         }
 
                         update_current_state(region, result);
-                        call_action(result.action, event);
+                        result.transition->executeAction(event);
                     }
                 }
             },
@@ -146,15 +179,17 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> constexpr auto& dispatch_table_at(StateIdx index, const Event& /*event*/)
     {
-        constexpr auto states = nStates(RootState {}) * nParentStates(RootState {});
-        return DispatchTable<states, Event, OptionalParameters...>::table[index];
+        constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
+        // std::cout << "access index: " << index << std::endl;
+        return DispatchTable<states, Event>::table[index];
     }
 
     template <class DispatchTableEntry>
     void update_current_state(std::size_t region, const DispatchTableEntry& dispatchTableEntry)
     {
-        bh::if_(has_history(rootState()),
-            [&, this](){
+        bh::if_(
+            has_history(rootState()),
+            [&, this]() {
                 m_history[currentParentState()][region] = m_currentCombinedState[region];
 
                 if (dispatchTableEntry.history) {
@@ -163,10 +198,7 @@ template <class RootState, class... OptionalParameters> class sm {
                     m_currentCombinedState[region] = dispatchTableEntry.combinedState;
                 }
             },
-            [&, this](){
-                m_currentCombinedState[region] = dispatchTableEntry.combinedState;
-            }
-        )();
+            [&, this]() { m_currentCombinedState[region] = dispatchTableEntry.combinedState; })();
 
         update_current_regions();
     }
@@ -186,37 +218,6 @@ template <class RootState, class... OptionalParameters> class sm {
             m_currentRegions);
     }
 
-    template <class Action, class Event> auto call_action(const Action& action, const Event& event)
-    {
-        if(!action){
-            return;    
-        }
-
-        bh::if_(
-            contains_dependency(m_optionalParameters),
-            [](const auto& action, const auto& event, const auto& parameters) {
-                action(event, bh::at_c<0>(parameters));
-            },
-            [](const auto& action, const auto& event, const auto&) { action(event); })(
-            action, event, m_optionalParameters);
-    }
-
-    template <class Guard, class Event>
-    auto call_guard(const Guard& guard, const Event& event) -> bool
-    {
-        if(!guard){
-            return true;
-        }
-
-        return bh::if_(
-            contains_dependency(m_optionalParameters),
-            [](const auto& guard, const auto& event, const auto& parameters) {
-                return guard(event, bh::at_c<0>(parameters));
-            },
-            [](const auto& guard, const auto& event, const auto&) { return guard(event); })(
-            guard, event, m_optionalParameters);
-    }
-
     template <class Event> auto call_unexpected_event_handler(Event event)
     {
         const auto handler = get_unexpected_event_handler(rootState());
@@ -225,7 +226,7 @@ template <class RootState, class... OptionalParameters> class sm {
 
     constexpr auto rootState()
     {
-        return RootState {};
+        return state<RootState> {};
     }
 
     auto currentState(std::size_t region)
@@ -245,7 +246,7 @@ template <class RootState, class... OptionalParameters> class sm {
         for (std::size_t region = 0; region < m_initial_states[initialParentState].size();
              region++) {
             m_currentCombinedState[region] = calcCombinedStateIdx(
-                nStates(RootState {}),
+                nStates(rootState()),
                 initialParentState,
                 m_initial_states[initialParentState][region]);
         }

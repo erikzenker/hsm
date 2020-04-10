@@ -62,14 +62,14 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {})
+            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -79,17 +79,17 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}),
-            hsm::transition(S2 {}, hsm::event<e1> {}, g1, a1, SubState {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
+            hsm::transition(hsm::state<S2> {}, hsm::event<e1> {}, g1, a1, hsm::state<SubState> {}),
             // Region 1
-            hsm::transition(S3 {}, hsm::event<e1> {}, g1, a1, S4 {})
+            hsm::transition(hsm::state<S3> {}, hsm::event<e1> {}, g1, a1, hsm::state<S4> {})
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {}, S3 {});
+        return hsm::initial(hsm::state<S1> {}, hsm::state<S3> {});
     }
 };
 
@@ -97,20 +97,21 @@ struct MainState {
 
 TEST_F(DispatchTableTests, should_count_max_regions)
 {
-    ASSERT_EQ(bh::size_c<2>, hsm::maxInitialStates(MainState{}));
+    ASSERT_EQ(bh::size_c<2>, hsm::maxInitialStates(hsm::state<MainState> {}));
 }
 
 TEST_F(DispatchTableTests, should_make_region_map)
 {
-    auto map = hsm::make_initial_state_map(MainState{});
-    ASSERT_EQ(bh::size_c<2>, bh::size(bh::find(map, bh::typeid_(MainState{})).value()));
-    ASSERT_EQ(bh::size_c<1>, bh::size(bh::find(map, bh::typeid_(SubState{})).value()));
+    auto map = hsm::make_initial_state_map(hsm::state<MainState> {});
+    ASSERT_EQ(
+        bh::size_c<2>, bh::size(bh::find(map, bh::typeid_(hsm::state<MainState> {})).value()));
+    ASSERT_EQ(bh::size_c<1>, bh::size(bh::find(map, bh::typeid_(hsm::state<SubState> {})).value()));
 }
 
 TEST_F(DispatchTableTests, should_count_regions)
 {
-    std::array<std::vector<std::size_t>, hsm::maxInitialStates(MainState {})> regions;
-    hsm::fill_initial_state_table(MainState {}, regions);
+    std::array<std::vector<std::size_t>, hsm::maxInitialStates(hsm::state<MainState> {})> regions;
+    hsm::fill_initial_state_table(hsm::state<MainState> {}, regions);
     ASSERT_EQ(2, regions[0].size());
     ASSERT_EQ(1, regions[1].size());
 
@@ -120,11 +121,53 @@ TEST_F(DispatchTableTests, should_count_regions)
     ASSERT_EQ(0, regions[1][0]);
 }
 
-TEST_F(DispatchTableTests, should_resolve_history_state)
+TEST(ResolveHistoryTests, should_resolve_history_state)
 {
-    constexpr auto historyTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::History { S {} });
-    constexpr auto noHistoryTransition = bh::make_tuple(0, 1, 2, 3, 4, S {});
+    constexpr auto historyTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::history<S> {});
+    constexpr auto noHistoryTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::state<S> {});
 
     ASSERT_TRUE(hsm::resolveHistory(historyTransition));
     ASSERT_FALSE(hsm::resolveHistory(noHistoryTransition));
+}
+
+TEST(ResolveDestinationTests, should_resolve_destination)
+{
+    auto dst = hsm::state<S1> {};
+    auto transition = bh::make_tuple(0, 1, 2, 3, 4, dst);
+    ASSERT_TRUE(dst == hsm::resolveDst(transition));
+}
+
+TEST(ResolveDestinationTests, should_resolve_submachine_destination)
+{
+    auto transition = bh::make_tuple(0, 1, 2, 3, 4, hsm::state<SubState> {});
+    ASSERT_TRUE(hsm::state<S1> {} == hsm::resolveDst(transition));
+}
+
+TEST(ResolveParentDestinationTests, should_resolve_destination_parent)
+{
+    auto dst = hsm::state<S1> {};
+    auto srcParent = hsm::state<S2> {};
+    auto transition = bh::make_tuple(srcParent, 1, 2, 3, 4, dst);
+    ASSERT_TRUE(srcParent == hsm::resolveDstParent(transition));
+}
+
+TEST(ResolveParentDestinationTests, should_resolve_submachine_destination_parent)
+{
+    auto dst = hsm::state<SubState> {};
+    auto transition = bh::make_tuple(0, 1, 2, 3, 4, dst);
+    ASSERT_TRUE(dst == hsm::resolveDstParent(transition));
+}
+
+TEST(ResolveSourceTests, should_resolve_source)
+{
+    auto src = hsm::state<S1> {};
+    auto transition = bh::make_tuple(0, src, 2, 3, 4, 5);
+    ASSERT_TRUE(src == hsm::resolveSrc(transition));
+}
+
+TEST(ResolveSourceParentTests, should_resolve_source)
+{
+    auto srcParent = hsm::state<S2> {};
+    auto transition = bh::make_tuple(srcParent, hsm::state<S1> {}, 2, 3, 4, 5);
+    ASSERT_TRUE(srcParent == hsm::resolveSrcParent(transition));
 }

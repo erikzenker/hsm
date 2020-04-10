@@ -7,8 +7,8 @@ using namespace hsm;
 
 int main()
 {
-    auto a = getCombinedStateTypeids(ComplexStateMachine{});
-    auto b = getCombinedStateTypeids(ComplexStateMachine{});
+    auto a = getCombinedStateTypeids(hsm::state<ComplexStateMachine> {});
+    auto b = getCombinedStateTypeids(hsm::state<ComplexStateMachine> {});
 
     std::cout << boost::hana::size(a) << boost::hana::size(b) << std::endl;
 

@@ -21,10 +21,10 @@ struct e1 {
 };
 
 // Guards
-const auto g1 = [](auto /*event*/) { return true; };
+const auto g1 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
 
 // Actions
-const auto a1 = [](auto /*event*/) {};
+const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
 
 using namespace ::testing;
 
@@ -33,18 +33,17 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S2 {}),    
-            hsm::transition(S2 {}, hsm::none {}, g1, a1, S3 {})
+            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),    
+            hsm::transition(hsm::state<S2> {}, hsm::none {}     , g1, a1, hsm::state<S3> {})
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
-
 }
 
 class AnonymousTransitionTests : public Test {
@@ -55,5 +54,5 @@ class AnonymousTransitionTests : public Test {
 TEST_F(AnonymousTransitionTests, should_transit_with_anonymous_transition)
 {
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(S3 {}));
+    ASSERT_TRUE(sm.is(hsm::state<S3> {}));
 }
