@@ -22,7 +22,8 @@ add_executable(
           flatten_internal_transition_table_tests.cpp
           dispatch_table_tests.cpp
           switch_tests.cpp
-          variant_queue_tests.cpp)
+          variant_queue_tests.cpp
+        )
 
 target_link_libraries(hsmUnitTests
         PRIVATE

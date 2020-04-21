@@ -1,4 +1,5 @@
 #include "hsm/details/traits.h"
+#include "hsm/details/transition_table.h"
 
 #include <gtest/gtest.h>
 
@@ -6,7 +7,11 @@
 
 using namespace ::testing;
 
+namespace {
 class TraitsTests : public Test {
+};
+
+struct e1 {
 };
 
 struct S1 {
@@ -21,15 +26,22 @@ struct S1 {
 
     constexpr auto make_internal_transition_table()
     {
+        return 0;
+    }
+
+    constexpr auto defer_events()
+    {
+        return hsm::defer(e1 {});
     }
 };
 
 struct S2 {
 };
+}
 
 TEST_F(TraitsTests, should_recognize_exit_state)
 {
-    auto exit = hsm::Exit(S1 {}, S2 {});
+    auto exit = hsm::state<hsm::Exit<S1, S2>> {};
 
     boost::hana::if_(
         hsm::is_exit_state(exit),
@@ -41,9 +53,21 @@ TEST_F(TraitsTests, should_recognize_transition_table)
 {
     namespace bh = boost::hana;
 
-    auto result = bh::if_(hsm::has_transition_table(S1{}),
-                    [](){ return true;},
-                    [](){ return false;})();
+    auto result = bh::if_(
+        hsm::has_transition_table(hsm::state<S1> {}),
+        []() { return true; },
+        []() { return false; })();
+    ASSERT_TRUE(result);
+}
+
+TEST_F(TraitsTests, should_recognize_transition_table2)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(
+        hsm::has_transition_table(bh::typeid_(S1 {})),
+        []() { return true; },
+        []() { return false; })();
     ASSERT_TRUE(result);
 }
 
@@ -52,7 +76,9 @@ TEST_F(TraitsTests, should_recognize_internal_transition_table)
     namespace bh = boost::hana;
 
     auto result = bh::if_(
-        hsm::has_internal_transition_table(S1 {}), []() { return true; }, []() { return false; })();
+        hsm::has_internal_transition_table(hsm::state<S1> {}),
+        []() { return true; },
+        []() { return false; })();
     ASSERT_TRUE(result);
 }
 
@@ -60,9 +86,8 @@ TEST_F(TraitsTests, should_recognize_on_entry_function)
 {
     namespace bh = boost::hana;
 
-    auto result = bh::if_(hsm::has_entry_action(S1{}),
-                    [](){ return true;},
-                    [](){ return false;})();
+    auto result = bh::if_(
+        hsm::has_entry_action(hsm::state<S1> {}), []() { return true; }, []() { return false; })();
     ASSERT_TRUE(result);
 }
 
@@ -70,9 +95,8 @@ TEST_F(TraitsTests, should_recognize_on_exit_function)
 {
     namespace bh = boost::hana;
 
-    auto result = bh::if_(hsm::has_exit_action(S1{}),
-                    [](){ return true;},
-                    [](){ return false;})();
+    auto result = bh::if_(
+        hsm::has_exit_action(hsm::state<S1> {}), []() { return true; }, []() { return false; })();
     ASSERT_TRUE(result);
 }
 
@@ -81,7 +105,18 @@ TEST_F(TraitsTests, should_recognize_history_state)
     namespace bh = boost::hana;
 
     auto result = bh::if_(
-        hsm::is_history_state(hsm::History { S1 {} }),
+        hsm::is_history_state(hsm::state<hsm::History<S1>> {}),
+        []() { return true; },
+        []() { return false; })();
+    ASSERT_TRUE(result);
+}
+
+TEST_F(TraitsTests, should_recognize_defered_events)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(
+        hsm::has_deferred_events(hsm::state<S1> {}),
         []() { return true; },
         []() { return false; })();
     ASSERT_TRUE(result);

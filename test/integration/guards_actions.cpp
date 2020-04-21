@@ -30,13 +30,11 @@ struct e4 {
 };
 
 // Guards
-const auto g1 = [](auto) { return true; };
-const auto g2 = [](auto) { return false; };
-const auto g3 = [](auto) { return true; };
+const auto g2 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return false; };
+const auto g3 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
 
 // Actions
-const auto a1 = [](auto /*event*/) {};
-const auto a2 = [](auto event) { event.called->set_value(); };
+const auto a2 = [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -46,14 +44,14 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a2, S1 {})
+            hsm::state<S1> {} + hsm::event<e1> {} / a2 = hsm::state<S1> {}
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -62,17 +60,17 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a2, S1 {}),
-            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e3> {}, g2, a1, S2 {}),
-            hsm::transition(S1 {}, hsm::event<e4> {}, g3, a1, S2 {})
+            hsm::state<S1> {} + hsm::event<e1> {} /  a2 = hsm::state<S1> {},
+            hsm::state<S1> {} + hsm::event<e2> {}       = hsm::state<SubState> {},
+            hsm::state<S1> {} + hsm::event<e3> {}  [g2] = hsm::state<S2> {},
+            hsm::state<S1> {} + hsm::event<e4> {}  [g3] = hsm::state<S2> {}
         );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -108,14 +106,14 @@ TEST_F(GuardsActionsTests, should_call_substate_action)
 
 TEST_F(GuardsActionsTests, should_block_transition_guard)
 {
-    ASSERT_TRUE(sm.is(S1 {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
     sm.process_event(e3 {});
-    ASSERT_TRUE(sm.is(S1 {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
 }
 
 TEST_F(GuardsActionsTests, should_not_block_transition_by_guard)
 {
-    ASSERT_TRUE(sm.is(S1 {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
     sm.process_event(e4 {});
-    ASSERT_TRUE(sm.is(S2 {}));
+    ASSERT_TRUE(sm.is(hsm::state<S2> {}));
 }

@@ -19,43 +19,44 @@ struct Pause{};
 struct play {};
 struct end_pause {};
 struct stop {};
-struct pause {};
+struct pause2 {
+};
 struct open_close {};
 struct cd_detected {};
 
-auto start_playback = [](auto) {};
-auto resume_playback = [](auto) {};
-auto close_drawer = [](auto) {};
-auto open_drawer = [](auto) {};
-auto stop_and_open = [](auto) {};
-auto stopped_again = [](auto) {};
-auto store_cd_info = [](auto) {};
-auto pause_playback = [](auto) {};
-auto stop_playback = [](auto) {};
+auto start_playback = [](auto, auto, auto) {};
+auto resume_playback = [](auto, auto, auto) {};
+auto close_drawer = [](auto, auto, auto) {};
+auto open_drawer = [](auto, auto, auto) {};
+auto stop_and_open = [](auto, auto, auto) {};
+auto stopped_again = [](auto, auto, auto) {};
+auto store_cd_info = [](auto, auto, auto) {};
+auto pause_playback = [](auto, auto, auto) {};
+auto stop_playback = [](auto, auto, auto) {};
 
 struct player {
   constexpr auto make_transition_table(){
 
     // clang-format off
     return transition_table(
-        row( Stopped{}, event<play>{}       , noGuard{},  start_playback,   Playing{}),
-        row( Pause{},   event<end_pause>{}  , noGuard{},  resume_playback,  Playing{}),
-        row( Open{},    event<open_close>{} , noGuard{},  close_drawer,     Empty{}),
-        row( Empty{},   event<open_close>{} , noGuard{},  open_drawer,      Open{}),
-        row( Pause{},   event<open_close>{} , noGuard{},  stop_and_open,    Open{}),
-        row( Stopped{}, event<open_close>{} , noGuard{},  open_drawer,      Open{}),
-        row( Playing{}, event<open_close>{} , noGuard{},  stop_and_open,    Open{}),
-        row( Playing{}, event<pause>{}      , noGuard{},  pause_playback,   Pause{}),
-        row( Playing{}, event<stop>{}       , noGuard{},  stop_playback,    Stopped{}),
-        row( Pause{},   event<stop>{}       , noGuard{},  stop_playback,    Stopped{}),
-        row( Empty{},   event<cd_detected>{}, noGuard{},  store_cd_info,    Stopped{}),
-        row( Stopped{}, event<stop>{}       , noGuard{},  stopped_again,    Stopped{})
+        state<Stopped> {} + event<play>{}        /  start_playback  = state<Playing> {},
+        state<Pause> {}   + event<end_pause>{}   /  resume_playback = state<Playing> {},
+        state<Open> {}    + event<open_close>{}  /  close_drawer    = state<Empty> {},
+        state<Empty> {}   + event<open_close>{}  /  open_drawer     = state<Open> {},
+        state<Pause> {}   + event<open_close>{}  /  stop_and_open   = state<Open> {},
+        state<Stopped> {} + event<open_close>{}  /  open_drawer     = state<Open> {},
+        state<Playing> {} + event<open_close>{}  /  stop_and_open   = state<Open> {},
+        state<Playing> {} + event<pause2>{}      /  pause_playback  = state<Pause> {},
+        state<Playing> {} + event<stop>{}        /  stop_playback   = state<Stopped> {},
+        state<Pause> {}   + event<stop>{}        /  stop_playback   = state<Stopped> {},
+        state<Empty> {}   + event<cd_detected>{} /  store_cd_info   = state<Stopped> {},
+        state<Stopped> {} + event<stop>{}        /  stopped_again   = state<Stopped> {}
     );
     // clang-format on
   }
 
   auto constexpr initial_state(){
-    return initial(Empty{});  
+      return initial(state<Empty> {});
   }
 
 };
@@ -66,7 +67,7 @@ int main() {
   auto a = open_close{};  
   auto b = cd_detected{};
   auto c = play{};
-  auto d = pause{};
+  auto d = pause2 {};
   auto e = stop{};
   auto f = end_pause{};
 

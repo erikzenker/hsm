@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hsm/details/pseudo_states.h"
+
 #include <boost/hana.hpp>
 
 namespace hsm {
@@ -66,7 +68,7 @@ template <class Source, class Event, class Guard, class Action> class Transition
 
     template <class Target> constexpr auto operator=(const state<Target>&)
     {
-        return boost::hana::make_tuple(Source {}, Event {}, guard, action, Target {});
+        return boost::hana::make_tuple(state<Source> {}, Event {}, guard, action, state<Target> {});
     }
 
   private:
@@ -83,7 +85,8 @@ template <class Source, class Event, class Guard> class TransitionSEG {
 
     template <class Target> constexpr auto operator=(const state<Target>&)
     {
-        return boost::hana::make_tuple(Source {}, Event {}, guard, noAction{}, Target {});
+        return boost::hana::make_tuple(
+            state<Source> {}, Event {}, guard, noAction {}, state<Target> {});
     }
 
   private:
@@ -99,7 +102,8 @@ template <class Source, class Event, class Action> class TransitionSEA {
 
     template <class Target> constexpr auto operator=(const state<Target>&)
     {
-        return boost::hana::make_tuple(Source {}, Event {}, noGuard{}, action, Target {});
+        return boost::hana::make_tuple(
+            state<Source> {}, Event {}, noGuard {}, action, state<Target> {});
     }
 
   private:
@@ -110,12 +114,14 @@ template <class Source, class Event> class TransitionSE {
   public:
     template <class Target> constexpr auto operator=(const state<Target>&)
     {
-        return boost::hana::make_tuple(Source {}, Event {}, noGuard{}, noAction{}, Target {});
+        return boost::hana::make_tuple(
+            state<Source> {}, Event {}, noGuard {}, noAction {}, state<Target> {});
     }
 };
 
 template <class Source> class state {
   public:
+    using type = Source;
     template <class Event> constexpr auto operator+(const event<Event>&)
     {
         return TransitionSE<Source, event<Event>> {};
@@ -138,6 +144,32 @@ template <class Source> class state {
     {
         return TransitionSEGA<Source, Event, Guard, Action> { transition.guard, transition.action };
     }
+
+    template <class OtherState> bool operator==(OtherState)
+    {
+        return boost::hana::equal(
+            boost::hana::type_c<typename OtherState::type>, boost::hana::type_c<Source>);
+    }
+};
+
+template <class Parent, class State> class direct {
+  public:
+    using type = Direct<state<Parent>, state<State>>;
+};
+
+template <class Parent, class State> class entry {
+  public:
+    using type = Entry<state<Parent>, state<State>>;
+};
+
+template <class Parent, class State> class exit {
+  public:
+    using type = Exit<state<Parent>, state<State>>;
+};
+
+template <class Parent> class history {
+  public:
+    using type = History<state<Parent>>;
 };
 
 template <class Event> struct event {

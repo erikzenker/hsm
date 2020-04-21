@@ -49,13 +49,13 @@ struct SubSubState {
     constexpr auto make_transition_table()
     {
         // clang-format off
-        return hsm::transition_table(hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, S1 {}));
+        return hsm::transition_table(hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S1> {}));
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -64,21 +64,21 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e3> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e4> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e5> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e6> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e7> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e8> {}, g1, a1, SubSubState {}),
-            hsm::transition(S1 {}, hsm::event<e9> {}, g1, a1, SubSubState {}));
+            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e2> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e3> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e4> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e5> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e6> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e7> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e8> {}, g1, a1, hsm::state<SubSubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e9> {}, g1, a1, hsm::state<SubSubState> {}));
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -88,22 +88,22 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             //              Source     , Event                    , Target
-            hsm::transition(S1 {}, hsm::event<e1> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e2> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e3> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e4> {}, g1, a1, SubState {}),            
-            hsm::transition(S1 {}, hsm::event<e5> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e6> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e7> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e8> {}, g1, a1, SubState {}),
-            hsm::transition(S1 {}, hsm::event<e9> {}, g1, a1, SubState {})                                                            
+            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e2> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e3> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e4> {}, g1, a1, hsm::state<SubState> {}),            
+            hsm::transition(hsm::state<S1> {}, hsm::event<e5> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e6> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e7> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e8> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::state<S1> {}, hsm::event<e9> {}, g1, a1, hsm::state<SubState> {})                                                            
             );
         // clang-format on
     }
 
     constexpr auto initial_state()
     {
-        return hsm::initial(S1 {});
+        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -112,5 +112,5 @@ class HsmTests : public Test {
 
 TEST_F(HsmTests, should_not_compile_with_a_lot_of_memory_consumption)
 {
-    hsm::collect_state_typeids_recursive(MainState {});
+    hsm::collect_state_typeids_recursive(hsm::state<MainState> {});
 }
