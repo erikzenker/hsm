@@ -24,7 +24,7 @@ add_executable(hsmIntegrationTests
         defer_events.cpp
         transition_dsl.cpp
         no_action.cpp
-        # state_data_members.cpp
+        state_data_members.cpp
 )
 
 target_link_libraries(hsmIntegrationTests

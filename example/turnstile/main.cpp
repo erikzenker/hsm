@@ -25,7 +25,7 @@ const auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/) {
 };
 
 struct Turnstile {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -41,7 +41,7 @@ struct Turnstile {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<Locked> {});
     }

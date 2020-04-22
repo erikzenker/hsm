@@ -24,7 +24,7 @@ class S1 {
 TEST_F(CollectEventsTests, should_collect_event_typeids_recursive)
 {
     struct P {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return boost::hana::make_tuple(boost::hana::make_tuple(
                 hsm::state<S1> {}, hsm::event<E2> {}, 0, 0, hsm::state<S1> {}));
@@ -32,7 +32,7 @@ TEST_F(CollectEventsTests, should_collect_event_typeids_recursive)
     };
 
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return boost::hana::make_tuple(boost::hana::make_tuple(
                 hsm::state<S1> {}, hsm::event<E1> {}, 0, 0, hsm::state<P> {}));

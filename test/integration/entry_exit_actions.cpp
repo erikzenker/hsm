@@ -45,7 +45,7 @@ const auto g1 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return tr
 const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
 
 struct SubState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -54,7 +54,7 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
@@ -70,7 +70,7 @@ struct SubState {
 
 
 struct MainState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -82,7 +82,7 @@ struct MainState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }

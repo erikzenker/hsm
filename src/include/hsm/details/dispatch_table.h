@@ -22,17 +22,22 @@ struct ITransition {
 template <
     class Action,
     class Guard,
-    class Source,
-    class Target,
+    class SourcePtr,
+    class TargetPtr,
     class Event,
     class OptionalDependency>
 class Transition final : public ITransition {
   public:
-    Transition(Action action, Guard guard, OptionalDependency optionalDependency)
+    Transition(
+        Action action,
+        Guard guard,
+        SourcePtr source,
+        TargetPtr target,
+        OptionalDependency optionalDependency)
         : action(action)
         , guard(guard)
-        , source(Source {})
-        , target(Target {})
+        , source(source)
+        , target(target)
         , optionalDependency(optionalDependency)
     {
     }
@@ -47,7 +52,9 @@ class Transition final : public ITransition {
             is_no_action(action),
             [](auto&&...) {},
             [](auto&& action, auto&& args) {
-                bh::unpack(args, action);
+                bh::unpack(args, [action](auto event, auto source, auto target, auto... optionalDependency){
+                    action(event, *source, *target, optionalDependency...);
+                });
             })
         (action, args);
         // clang-format on
@@ -63,7 +70,9 @@ class Transition final : public ITransition {
             is_no_guard(guard),
             [](auto&&...) { return true; },
             [](auto&& guard, auto&& args) {
-                return bh::unpack(args, guard);
+                return bh::unpack(args, [guard](auto event, auto source, auto target, auto... optionalDependency){
+                    return guard(event, *source, *target, optionalDependency...);
+                });
             })
         (guard, args);
         // clang-format on
@@ -72,8 +81,8 @@ class Transition final : public ITransition {
   private:
     Action action;
     Guard guard;
-    Source source;
-    Target target;
+    SourcePtr source;
+    TargetPtr target;
     OptionalDependency optionalDependency;
 };
 
@@ -84,13 +93,14 @@ auto make_transition = [](auto action,
                           auto target,
                           auto optionalDependency) {
     using Event = typename decltype(eventTypeid)::type;
+
     return std::make_shared<Transition<
         decltype(action),
         decltype(guard),
-        typename decltype(source)::type,
-        typename decltype(target)::type,
+        decltype(source),
+        decltype(target),
         Event,
-        decltype(optionalDependency)>>(action, guard, optionalDependency);
+        decltype(optionalDependency)>>(action, guard, source, target, optionalDependency);
 };
 
 template <class Event> struct NextState {

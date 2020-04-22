@@ -21,7 +21,8 @@ struct S1 {
     constexpr auto on_exit(){
     }
 
-    constexpr auto make_transition_table(){
+    static constexpr auto make_transition_table()
+    {
     }
 
     constexpr auto make_internal_transition_table()
@@ -60,15 +61,15 @@ TEST_F(TraitsTests, should_recognize_transition_table)
     ASSERT_TRUE(result);
 }
 
-TEST_F(TraitsTests, should_recognize_transition_table2)
+TEST_F(TraitsTests, should_not_recognize_transition_table)
 {
     namespace bh = boost::hana;
 
     auto result = bh::if_(
-        hsm::has_transition_table(bh::typeid_(S1 {})),
+        hsm::has_transition_table(hsm::state<S2> {}),
         []() { return true; },
         []() { return false; })();
-    ASSERT_TRUE(result);
+    ASSERT_FALSE(result);
 }
 
 TEST_F(TraitsTests, should_recognize_internal_transition_table)

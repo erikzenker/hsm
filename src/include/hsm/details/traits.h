@@ -5,6 +5,9 @@
 
 #include <boost/hana.hpp>
 
+#include <memory>
+#include <utility>
+
 namespace hsm {
 
 namespace bh {
@@ -12,9 +15,6 @@ using namespace boost::hana;
 }
 
 namespace details {
-constexpr auto has_transition_table
-    = bh::is_valid([](auto&& state) -> decltype(state.make_transition_table()) {});
-
 constexpr auto has_internal_transition_table
     = bh::is_valid([](auto&& state) -> decltype(state.make_internal_transition_table()) {});
 
@@ -50,8 +50,21 @@ constexpr auto is_history_state = [](auto type) {
 }
 
 constexpr auto unfold_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
+constexpr auto unfold_to_shared_ptr
+    = [](auto typeid_) { return std::make_shared<typename decltype(typeid_)::type>(); };
 
-constexpr auto has_transition_table = bh::compose(details::has_transition_table, unfold_typeid);
+constexpr auto make_transition_table = [](auto t) {
+    return decltype(std::declval<typename decltype(t)::type>().make_transition_table())();
+};
+
+constexpr auto make_transition_table2
+    = [](auto state) { return decltype(state)::type::make_transition_table(); };
+
+constexpr auto initial_states = [](auto state) { return decltype(state)::type::initial_state(); };
+
+constexpr auto has_transition_table = bh::is_valid(
+    [](auto stateTypeid) -> decltype(std::declval<typename decltype(stateTypeid)::type>()
+                                         .make_transition_table()) {});
 
 constexpr auto has_internal_transition_table
     = bh::compose(details::has_internal_transition_table, unfold_typeid);

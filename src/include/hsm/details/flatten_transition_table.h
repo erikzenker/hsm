@@ -22,7 +22,7 @@ template <class State> constexpr auto flatten_transition_table(State state)
         return bh::prepend(flatten_sub_transition_table(bh::back(transition)), extentedTransition);
     };
 
-    constexpr auto transitionTable = unfold_typeid(state).make_transition_table();
+    constexpr auto transitionTable = make_transition_table2(state);
     const auto extendedTransitionTable = bh::transform(transitionTable, flattenSubTransitionTable);
     return bh::flatten(extendedTransitionTable);
 }

@@ -2,6 +2,7 @@
 
 #include "details/collect_events.h"
 #include "details/fill_dispatch_table.h"
+#include "details/make_states_map.h"
 #include "details/transition_table.h"
 #include "details/variant_queue.h"
 
@@ -21,19 +22,22 @@ using namespace boost::hana;
 template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
     using Events = decltype(collect_events_recursive(state<RootState> {}));
+    using StatesMap = decltype(make_states_map(state<RootState> {}));
     std::array<StateIdx, maxInitialStates(state<RootState> {})> m_currentCombinedState;
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
     std::size_t m_currentRegions;
+    StatesMap m_statesMap;
 
   public:
     sm(OptionalParameters... optionalParameters)
         : m_defer_queue(collect_events_recursive(state<RootState> {}))
+        , m_statesMap(make_states_map(state<RootState> {}))
     {
         auto optionalDependency = bh::make_tuple(optionalParameters...);
-        fill_dispatch_table_with_external_transitions(rootState(), optionalDependency);
-        fill_dispatch_table_with_internal_transitions(rootState(), optionalDependency);
+        fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
+        fill_dispatch_table_with_internal_transitions(rootState(), m_statesMap, optionalDependency);
         fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);
         fill_initial_state_table(rootState(), m_initial_states);
         fill_initial_state_table(rootState(), m_history);

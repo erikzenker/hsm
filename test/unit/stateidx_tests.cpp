@@ -18,14 +18,14 @@ class S2 {
 };
 
     struct P {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }

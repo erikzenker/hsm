@@ -41,7 +41,7 @@ const auto log = [](auto event, auto source, auto target) {
 };
 
 struct SubSubState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -50,14 +50,14 @@ struct SubSubState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
 };
 
 struct SubState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -69,14 +69,14 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
 };
 
 struct MainState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -94,7 +94,7 @@ struct MainState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
