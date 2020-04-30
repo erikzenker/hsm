@@ -1,4 +1,5 @@
 # Hana State Machine (HSM)
+![Actions](https://github.com/erikzenker/hsm/workflows/CI/badge.svg)
 [![Build Status](https://travis-ci.org/erikzenker/cmake-project-template.svg?branch=master)](https://travis-ci.org/erikzenker/hsm) [![codecov](https://codecov.io/gh/erikzenker/hsm/branch/master/graph/badge.svg)](https://codecov.io/gh/erikzenker/hsm) [![GitHub license](https://img.shields.io/github/license/erikzenker/hsm.svg)](https://github.com/erikzenker/hsm/blob/master/LICENSE) [![GitHub contributors](https://img.shields.io/github/contributors/erikzenker/hsm.svg)](https://GitHub.com/erikzenker/hsm/graphs/contributors/) [![GitHub release](https://img.shields.io/github/release/erikzenker/hsm.svg)](https://GitHub.com/erikzenker/hsm/releases/) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/erikzenker) [![Join the chat at https://gitter.im/hsm-gitter/community](https://badges.gitter.im/hsm-gitter/community.svg)](https://gitter.im/hsm-gitter/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 =
 
