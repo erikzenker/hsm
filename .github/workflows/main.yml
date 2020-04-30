@@ -19,6 +19,11 @@ jobs:
         
     - name: Install Conan
       run: sudo pip install conan
+    
+    - name: Setup Environment
+      run: |
+        export CXX=g++-9
+        export CC=gcc-9
 
     - name: Install Hsm
       run: |
