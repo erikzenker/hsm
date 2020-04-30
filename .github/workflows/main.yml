@@ -19,11 +19,6 @@ jobs:
         
     - name: Install Conan
       run: sudo pip install conan
-    
-    - name: Setup Environment
-      run: |
-        export CXX=g++-9
-        export CC=gcc-9
         
     - name: Install Hsm
       run: |
@@ -32,6 +27,9 @@ jobs:
         conan install .. -s compiler.libcxx=libstdc++11 -s compiler.version=9
         cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
         cmake --build . --target install
+      env: 
+        CXX: g++-9
+        CC: gcc-9
         
     - name: Run Hsm Tests
       run: ctest -VV
