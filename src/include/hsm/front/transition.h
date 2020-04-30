@@ -119,6 +119,78 @@ template <class Source, class Event> class TransitionSE {
     }
 };
 
+template <class Event> struct event {
+    static constexpr boost::hana::type<Event> typeid_ {};
+
+    template <class Guard> constexpr auto operator[](const Guard& guard)
+    {
+        return TransitionEG<event<Event>, Guard> { guard };
+    }
+
+    template <class Action> constexpr auto operator/(const Action& guard)
+    {
+        return TransitionEA<event<Event>, Action> { guard };
+    }
+};
+
+template <class Source, class Action> class TransitionSA {
+  public:
+    constexpr TransitionSA(const Action& action)
+        : action(action)
+    {
+    }
+
+    template <class Target> constexpr auto operator=(const state<Target>&)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, event<noneEvent> {}, noGuard {}, action, state<Target> {});
+    }
+
+  private:
+    const Action action;
+};
+
+template <class Source, class Guard, class Action> class TransitionSGA {
+  public:
+    constexpr TransitionSGA(const Guard& guard, const Action& action)
+        : guard(guard)
+        , action(action)
+    {
+    }
+
+    template <class Target> constexpr auto operator=(const state<Target>&)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, event<noneEvent> {}, guard, action, state<Target> {});
+    }
+
+  private:
+    const Guard guard;
+    const Action action;
+};
+
+template <class Source, class Guard> class TransitionSG {
+  public:
+    constexpr TransitionSG(const Guard& guard)
+        : guard(guard)
+    {
+    }
+
+    template <class Target> constexpr auto operator=(const state<Target>&)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, event<noneEvent> {}, guard, noAction {}, state<Target> {});
+    }
+
+    template <class Action> constexpr auto operator/(const Action& action)
+    {
+        return TransitionSGA<Source, Guard, Action> { guard, action };
+    }
+
+  private:
+    const Guard guard;
+};
+
 template <class Source> class state {
   public:
     using type = Source;
@@ -143,6 +215,22 @@ template <class Source> class state {
     constexpr auto operator+(const TransitionEGA<Event, Guard, Action>& transition)
     {
         return TransitionSEGA<Source, Event, Guard, Action> { transition.guard, transition.action };
+    }
+
+    template <class Target> constexpr auto operator=(const state<Target>&)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, event<noneEvent> {}, noGuard {}, noAction {}, state<Target> {});
+    }
+
+    template <class Action> constexpr auto operator/(const Action& action)
+    {
+        return TransitionSA<Source, Action> { action };
+    }
+
+    template <class Guard> constexpr auto operator[](const Guard& guard)
+    {
+        return TransitionSG<Source, Guard> { guard };
     }
 
     template <class OtherState> bool operator==(OtherState)
@@ -170,20 +258,6 @@ template <class Parent, class State> class exit {
 template <class Parent> class history {
   public:
     using type = History<state<Parent>>;
-};
-
-template <class Event> struct event {
-    static constexpr boost::hana::type<Event> typeid_ {};
-
-    template <class Guard> constexpr auto operator[](const Guard& guard)
-    {
-        return TransitionEG<event<Event>, Guard> { guard };
-    }
-
-    template <class Action> constexpr auto operator/(const Action& guard)
-    {
-        return TransitionEA<event<Event>, Action> { guard };
-    }
 };
 
 using none = event<noneEvent>;
