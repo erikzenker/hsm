@@ -36,7 +36,7 @@ const auto a1 = [](auto event) { event.wasCalled->set_value();};
 TEST_F(CollectActionsTests, should_collect_action_typeids)
 {
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             // clang-format off
             return hsm::transition_table(
@@ -56,7 +56,7 @@ TEST_F(CollectActionsTests, should_collect_action_typeids)
 TEST_F(CollectActionsTests, should_collect_action_typeids_recursive)
 {
     struct P {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return boost::hana::make_tuple(
                 boost::hana::make_tuple(hsm::state<S1> {}, 0, 0, e2, hsm::state<S1> {}));
@@ -64,7 +64,7 @@ TEST_F(CollectActionsTests, should_collect_action_typeids_recursive)
     };
 
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return boost::hana::make_tuple(
                 boost::hana::make_tuple(hsm::state<S1> {}, 0, 0, e1, hsm::state<P> {}));
@@ -81,7 +81,7 @@ TEST_F(CollectActionsTests, should_collect_action_typeids_recursive)
 TEST_F(CollectActionsTests, should_collect_actions_recursive)
 {
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             // clang-format off
             return hsm::transition_table(
@@ -101,7 +101,7 @@ TEST_F(CollectActionsTests, should_collect_actions_recursive)
 TEST_F(CollectActionsTests, should_not_collect_actions_twice)
 {
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             // clang-format off
             return hsm::transition_table(

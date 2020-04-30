@@ -23,6 +23,7 @@ add_executable(
           dispatch_table_tests.cpp
           switch_tests.cpp
           variant_queue_tests.cpp
+          make_states_map_tests.cpp
         )
 
 target_link_libraries(hsmUnitTests

@@ -35,9 +35,10 @@ auto pause_playback = [](auto, auto, auto) {};
 auto stop_playback = [](auto, auto, auto) {};
 
 struct player {
-  constexpr auto make_transition_table(){
+    static constexpr auto make_transition_table()
+    {
 
-    // clang-format off
+        // clang-format off
     return transition_table(
         state<Stopped> {} + event<play>{}        /  start_playback  = state<Playing> {},
         state<Pause> {}   + event<end_pause>{}   /  resume_playback = state<Playing> {},
@@ -52,10 +53,10 @@ struct player {
         state<Empty> {}   + event<cd_detected>{} /  store_cd_info   = state<Stopped> {},
         state<Stopped> {} + event<stop>{}        /  stopped_again   = state<Stopped> {}
     );
-    // clang-format on
-  }
+        // clang-format on
+    }
 
-  auto constexpr initial_state(){
+  static constexpr auto initial_state(){
       return initial(state<Empty> {});
   }
 

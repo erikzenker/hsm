@@ -1,5 +1,6 @@
-#include "hsm/details/collect_states.h"
 #include "hsm/details/collect_parent_states.h"
+#include "hsm/details/collect_states.h"
+#include "hsm/details/make_states_map.h"
 #include "hsm/details/transition_table.h"
 
 #include <gtest/gtest.h>
@@ -58,7 +59,7 @@ struct S {
 };
 
 struct SubState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -68,14 +69,14 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
 };
 
 struct MainState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -88,7 +89,7 @@ struct MainState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {}, hsm::state<S3> {});
     }
@@ -117,7 +118,7 @@ TEST_F(CollectStatesTests, should_collect_child_states)
 TEST_F(CollectStatesTests, should_collect_child_states2)
 {
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(
                 bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
@@ -135,7 +136,7 @@ TEST_F(CollectStatesTests, should_collect_child_states2)
 TEST_F(CollectStatesTests, should_collect_empty_child_state_recursive)
 {
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple();
         }
@@ -150,7 +151,7 @@ TEST_F(CollectStatesTests, should_collect_empty_child_state_recursive)
 TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive_on_top_level)
 {
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(
                 bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
@@ -168,14 +169,14 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive_on_top_l
 TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive)
 {
     struct P {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }
@@ -193,7 +194,7 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive)
 TEST_F(CollectStatesTests, should_collect_at_least_parent_state)
 {
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple();
         }
@@ -208,14 +209,14 @@ TEST_F(CollectStatesTests, should_collect_at_least_parent_state)
 TEST_F(CollectStatesTests, should_collect_state_typeids_recursive)
 {
     struct P {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }
@@ -234,14 +235,14 @@ TEST_F(CollectStatesTests, should_collect_state_typeids_recursive)
 TEST_F(CollectStatesTests, should_collect_states_recursive)
 {
     struct P {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
-        constexpr auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }

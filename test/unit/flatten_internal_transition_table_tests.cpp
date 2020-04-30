@@ -19,7 +19,7 @@ struct T {
 };
 
 struct P {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         return boost::hana::make_tuple(boost::hana::make_tuple(
             hsm::state<T> {}, "event", "guard", "action", hsm::state<T> {}));
@@ -32,7 +32,7 @@ struct P {
 };
 
 struct S {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         return boost::hana::make_tuple(boost::hana::make_tuple(
             hsm::state<T> {}, "event", "guard", "action", hsm::state<P> {}));

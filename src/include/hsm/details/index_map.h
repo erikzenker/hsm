@@ -1,5 +1,7 @@
 #pragma once
 
+#include "to_pairs.h"
+
 #include <boost/hana.hpp>
 #include <boost/mp11.hpp>
 
@@ -15,12 +17,6 @@ constexpr auto index_of = [](auto const& iterable, auto const& element) {
         bh::drop_while(iterable, bh::not_equal.to(element))
     )){};
     return size - dropped;
-};
-
-constexpr auto to_pairs = [](const auto& tuples) {
-    return bh::transform(tuples, [](auto tuple) {
-        return bh::make_pair(bh::at_c<0>(tuple), bh::at_c<1>(tuple));
-    });
 };
 
 const auto make_index_map = [](auto typeids) {

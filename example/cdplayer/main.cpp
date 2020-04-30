@@ -50,7 +50,7 @@ const auto start_next_song = [](auto /*event*/, auto /*source*/, auto /*target*/
 const auto start_prev_song = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
 
 struct Playing {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -68,7 +68,7 @@ struct Playing {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<Song1> {});
     }
@@ -76,7 +76,7 @@ struct Playing {
 
 
 struct CdPlayer {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -103,7 +103,7 @@ struct CdPlayer {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<Empty> {});
     }

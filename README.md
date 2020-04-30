@@ -19,6 +19,7 @@ Currently the following features are supported:
 * [Dependency injection](test/integration/dependency_injection.cpp)
 * [Defer events](test/integration/defer_events.cpp)
 * [eUML frontend](test/integration/transition_dsl.cpp)
+* [State data members](test/integration/state_data_members.cpp)
 
 ## Simple Example ([Turnstile](example/turnstile/main.cpp))
 ![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
@@ -48,7 +49,7 @@ const auto beep = [](auto /*event*/, auto /*source*/, auto /*target*/){ std::cou
 const auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/){ std::cout << "blink, blink, blink!" << std::endl;};
 
 struct Turnstile {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -64,7 +65,7 @@ struct Turnstile {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<Locked> {});
     }

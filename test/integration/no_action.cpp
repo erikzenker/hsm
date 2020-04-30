@@ -20,7 +20,7 @@ struct e1 {
 using namespace ::testing;
 using namespace boost::hana;
 struct MainState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -30,7 +30,7 @@ struct MainState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }

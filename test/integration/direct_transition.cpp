@@ -29,7 +29,7 @@ const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
 using namespace ::testing;
 
 struct SubState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -38,14 +38,14 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
 };
 
 struct SubState2 {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -54,14 +54,14 @@ struct SubState2 {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
 };
 
 struct MainState {
-    constexpr auto make_transition_table()
+    static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -74,7 +74,7 @@ struct MainState {
         // clang-format on
     }
 
-    constexpr auto initial_state()
+    static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
     }
