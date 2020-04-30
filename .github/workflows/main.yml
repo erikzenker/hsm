@@ -1,0 +1,45 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Install Dependencies
+      run: sudo apt install cmake g++-9 python-pip
+        
+    - name: Install Conan
+      run: sudo pip install conan
+        
+    - name: Print System Information
+      run: |
+        which cmake
+        cmake --version
+        which g++
+        g++ --version
+        which pip
+        pip --version
+        
+    - name: Install Hsm
+      run: |
+        echo $CXX
+        echo $CC
+        mkdir build && cd build
+        mkdir install
+        conan install .. -s compiler.libcxx=libstdc++11 -s compiler.version=9
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+        cmake --build . --target install
+      env: 
+        CXX: g++-9
+        CC: gcc-9
+        
+    - name: Run Hsm Tests
+      run: |
+        cd build 
+        ctest -VV
