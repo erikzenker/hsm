@@ -24,14 +24,12 @@ jobs:
       run: |
         export CXX=g++-9
         export CC=gcc-9
-        conan profile update settings.compiler.libcxx=libstdc++11 default
-        conan profile update settings.compiler.version=9 default
         
     - name: Install Hsm
       run: |
         mkdir build && cd build
         mkdir install
-        conan install ..
+        conan install .. -s compiler.libcxx=libstdc++11 -s compiler.version=9
         cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
         cmake --build . --target install
         
