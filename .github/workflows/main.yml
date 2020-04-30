@@ -40,4 +40,6 @@ jobs:
         CC: gcc-9
         
     - name: Run Hsm Tests
-      run: ctest -VV
+      run: |
+        cd build 
+        ctest -VV
