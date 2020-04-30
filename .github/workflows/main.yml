@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Install Dependencies
+      run: |
+        apt install cmake
+        apt install g++-9
+        apt install python-pip
+        
+    - name: Install Conan
+      run: sudo pip install conan
+
+    - name: Install Hsm
+      run: |
+        mkdir build && cd build
+        mkdir install
+        conan install 
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+        cmake --build . --target install
+        
+    - name: Run Hsm Tests
+      run: ctest -VV
