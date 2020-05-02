@@ -45,7 +45,7 @@ template <class RootState, class... OptionalParameters> class sm {
         update_current_regions();
     }
 
-    template <class Event> auto process_event(Event event)
+    template <class Event> auto process_event(Event&& event)
     {
         if (!process_event_internal(event)) {
             call_unexpected_event_handler(event);
@@ -106,7 +106,7 @@ template <class RootState, class... OptionalParameters> class sm {
     }
 
   private:
-    template <class Event> auto process_event_internal(Event event) -> bool
+    template <class Event> auto process_event_internal(Event&& event) -> bool
     {
         bool allGuardsFailed = true;
 
@@ -123,14 +123,14 @@ template <class RootState, class... OptionalParameters> class sm {
                 return false;    
             }
 
-            if (!result.transition->executeGuard(event)) {
+            if (!result.transition->executeGuard(std::ref(event))) {
                 continue;
             }
 
             allGuardsFailed = false;
             update_current_state(region, result);
 
-            result.transition->executeAction(event);
+            result.transition->executeAction(std::ref(event));
         }
 
         if (allGuardsFailed) {
@@ -169,12 +169,12 @@ template <class RootState, class... OptionalParameters> class sm {
                             return;
                         }
 
-                        if (!result.transition->executeGuard(event)) {
+                        if (!result.transition->executeGuard(std::ref(event))) {
                             continue;
                         }
 
                         update_current_state(region, result);
-                        result.transition->executeAction(event);
+                        result.transition->executeAction(std::ref(event));
                     }
                 }
             },

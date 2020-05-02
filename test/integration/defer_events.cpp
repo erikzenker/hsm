@@ -10,10 +10,8 @@ namespace {
 
 // Events
 struct e1 {
-    static const int name = 1;
 };
 struct e2 {
-    static const int name = 2;
 };
 
 // States
@@ -44,14 +42,6 @@ struct MainState {
     static constexpr auto initial_state()
     {
         return hsm::initial(hsm::state<S1> {});
-    }
-
-    constexpr auto on_unexpected_event()
-    {
-        return [](auto event) {
-            throw std::runtime_error(
-                std::string("unexpected event ") + experimental::print(typeid_(event)));
-        };
     }
 };
 
