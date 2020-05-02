@@ -66,9 +66,9 @@ template <class Source, class Event, class Guard, class Action> class Transition
     {
     }
 
-    template <class Target> constexpr auto operator=(const state<Target>&)
+    template <class Target> constexpr auto operator=(const Target& target)
     {
-        return boost::hana::make_tuple(state<Source> {}, Event {}, guard, action, state<Target> {});
+        return boost::hana::make_tuple(state<Source> {}, Event {}, guard, action, target);
     }
 
   private:
@@ -83,10 +83,9 @@ template <class Source, class Event, class Guard> class TransitionSEG {
     {
     }
 
-    template <class Target> constexpr auto operator=(const state<Target>&)
+    template <class Target> constexpr auto operator=(const Target& target)
     {
-        return boost::hana::make_tuple(
-            state<Source> {}, Event {}, guard, noAction {}, state<Target> {});
+        return boost::hana::make_tuple(state<Source> {}, Event {}, guard, noAction {}, target);
     }
 
   private:
@@ -100,10 +99,9 @@ template <class Source, class Event, class Action> class TransitionSEA {
     {
     }
 
-    template <class Target> constexpr auto operator=(const state<Target>&)
+    template <class Target> constexpr auto operator=(const Target& target)
     {
-        return boost::hana::make_tuple(
-            state<Source> {}, Event {}, noGuard {}, action, state<Target> {});
+        return boost::hana::make_tuple(state<Source> {}, Event {}, noGuard {}, action, target);
     }
 
   private:
@@ -112,10 +110,9 @@ template <class Source, class Event, class Action> class TransitionSEA {
 
 template <class Source, class Event> class TransitionSE {
   public:
-    template <class Target> constexpr auto operator=(const state<Target>&)
+    template <class Target> constexpr auto operator=(const Target& target)
     {
-        return boost::hana::make_tuple(
-            state<Source> {}, Event {}, noGuard {}, noAction {}, state<Target> {});
+        return boost::hana::make_tuple(state<Source> {}, Event {}, noGuard {}, noAction {}, target);
     }
 };
 
@@ -140,10 +137,10 @@ template <class Source, class Action> class TransitionSA {
     {
     }
 
-    template <class Target> constexpr auto operator=(const state<Target>&)
+    template <class Target> constexpr auto operator=(const Target& target)
     {
         return boost::hana::make_tuple(
-            state<Source> {}, event<noneEvent> {}, noGuard {}, action, state<Target> {});
+            state<Source> {}, event<noneEvent> {}, noGuard {}, action, target);
     }
 
   private:
@@ -158,10 +155,10 @@ template <class Source, class Guard, class Action> class TransitionSGA {
     {
     }
 
-    template <class Target> constexpr auto operator=(const state<Target>&)
+    template <class Target> constexpr auto operator=(const Target& target)
     {
         return boost::hana::make_tuple(
-            state<Source> {}, event<noneEvent> {}, guard, action, state<Target> {});
+            state<Source> {}, event<noneEvent> {}, guard, action, target);
     }
 
   private:
@@ -176,10 +173,10 @@ template <class Source, class Guard> class TransitionSG {
     {
     }
 
-    template <class Target> constexpr auto operator=(const state<Target>&)
+    template <class Target> constexpr auto operator=(const Target& target)
     {
         return boost::hana::make_tuple(
-            state<Source> {}, event<noneEvent> {}, guard, noAction {}, state<Target> {});
+            state<Source> {}, event<noneEvent> {}, guard, noAction {}, target);
     }
 
     template <class Action> constexpr auto operator/(const Action& action)
@@ -191,73 +188,72 @@ template <class Source, class Guard> class TransitionSG {
     const Guard guard;
 };
 
-template <class Source> class state {
-  public:
-    using type = Source;
+template <class Type> struct StateBase {
+    using type = Type;
+
     template <class Event> constexpr auto operator+(const event<Event>&)
     {
-        return TransitionSE<Source, event<Event>> {};
+        return TransitionSE<Type, event<Event>> {};
     }
 
     template <class Event, class Guard>
     constexpr auto operator+(const TransitionEG<Event, Guard>& transition)
     {
-        return TransitionSEG<Source, Event, Guard> { transition.guard };
+        return TransitionSEG<Type, Event, Guard> { transition.guard };
     }
 
     template <class Event, class Action>
     constexpr auto operator+(const TransitionEA<Event, Action>& transition)
     {
-        return TransitionSEA<Source, Event, Action> { transition.action };
+        return TransitionSEA<Type, Event, Action> { transition.action };
     }
 
     template <class Event, class Guard, class Action>
     constexpr auto operator+(const TransitionEGA<Event, Guard, Action>& transition)
     {
-        return TransitionSEGA<Source, Event, Guard, Action> { transition.guard, transition.action };
-    }
-
-    template <class Target> constexpr auto operator=(const state<Target>&)
-    {
-        return boost::hana::make_tuple(
-            state<Source> {}, event<noneEvent> {}, noGuard {}, noAction {}, state<Target> {});
+        return TransitionSEGA<Type, Event, Guard, Action> { transition.guard, transition.action };
     }
 
     template <class Action> constexpr auto operator/(const Action& action)
     {
-        return TransitionSA<Source, Action> { action };
+        return TransitionSA<Type, Action> { action };
     }
 
     template <class Guard> constexpr auto operator[](const Guard& guard)
     {
-        return TransitionSG<Source, Guard> { guard };
+        return TransitionSG<Type, Guard> { guard };
+    }
+
+    template <class Target> constexpr auto operator=(const Target& target)
+    {
+        return boost::hana::make_tuple(
+            state<Type> {}, event<noneEvent> {}, noGuard {}, noAction {}, target);
     }
 
     template <class OtherState> bool operator==(OtherState)
     {
         return boost::hana::equal(
-            boost::hana::type_c<typename OtherState::type>, boost::hana::type_c<Source>);
+            boost::hana::type_c<typename OtherState::type>, boost::hana::type_c<Type>);
     }
 };
 
-template <class Parent, class State> class direct {
-  public:
-    using type = Direct<state<Parent>, state<State>>;
+template <class Source> struct state : public StateBase<Source> {
+    using StateBase<Source>::operator=;
 };
-
-template <class Parent, class State> class entry {
-  public:
-    using type = Entry<state<Parent>, state<State>>;
+template <class Parent, class State>
+struct direct : public StateBase<Direct<state<Parent>, state<State>>> {
+    using StateBase<Direct<state<Parent>, state<State>>>::operator=;
 };
-
-template <class Parent, class State> class exit {
-  public:
-    using type = Exit<state<Parent>, state<State>>;
+template <class Parent, class State>
+struct entry : public StateBase<Entry<state<Parent>, state<State>>> {
+    using StateBase<Entry<state<Parent>, state<State>>>::operator=;
 };
-
-template <class Parent> class history {
-  public:
-    using type = History<state<Parent>>;
+template <class Parent, class State>
+struct exit : public StateBase<Exit<state<Parent>, state<State>>> {
+    using StateBase<Exit<state<Parent>, state<State>>>::operator=;
+};
+template <class Parent> struct history : public StateBase<History<state<Parent>>> {
+    using StateBase<History<state<Parent>>>::operator=;
 };
 
 using none = event<noneEvent>;

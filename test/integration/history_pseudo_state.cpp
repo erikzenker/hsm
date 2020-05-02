@@ -24,12 +24,6 @@ struct e2 {
 struct e3 {
 };
 
-// Guards
-const auto g1 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
-
-// Actions
-const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
-
 using namespace ::testing;
 using namespace boost::hana;
 
@@ -38,7 +32,7 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
+            hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {}
         );
         // clang-format on
     }
@@ -54,9 +48,9 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(hsm::state<S1> {}       , hsm::event<e1> {} , g1, a1,  hsm::state<SubState> {}),
-            hsm::transition(hsm::state<SubState> {} , hsm::event<e3> {} , g1, a1,  hsm::state<S2> {}),
-            hsm::transition(hsm::state<SubState> {} , hsm::event<e2> {} , g1, a1,  hsm::history<SubState> {})
+            hsm::state<S1> {}       + hsm::event<e1> {} = hsm::state<SubState> {},
+            hsm::state<SubState> {} + hsm::event<e3> {} = hsm::state<S2> {},
+            hsm::state<SubState> {} + hsm::event<e2> {} = hsm::history<SubState> {}
         );
         // clang-format on
     }
