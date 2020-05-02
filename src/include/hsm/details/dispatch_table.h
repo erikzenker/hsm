@@ -15,8 +15,8 @@ using namespace boost::hana;
 }
 
 struct ITransition {
-    virtual void executeAction(boost::any event) = 0;
-    virtual bool executeGuard(boost::any event) = 0;
+    virtual void executeAction(boost::any eventRef) = 0;
+    virtual bool executeGuard(boost::any eventRef) = 0;
 };
 
 template <
@@ -42,10 +42,12 @@ class Transition final : public ITransition {
     {
     }
 
-    void executeAction(boost::any event) override
+    void executeAction(boost::any eventRef) override
     {
         auto args = bh::concat(
-            bh::make_tuple(boost::any_cast<Event>(event), source, target), optionalDependency);
+            bh::make_tuple(
+                boost::any_cast<std::reference_wrapper<Event>>(eventRef), source, target),
+            optionalDependency);
 
         // clang-format off
         bh::if_(
@@ -53,17 +55,19 @@ class Transition final : public ITransition {
             [](auto&&...) {},
             [](auto&& action, auto&& args) {
                 bh::unpack(args, [action](auto event, auto source, auto target, auto... optionalDependency){
-                    action(event, *source, *target, optionalDependency...);
+                    action(event.get(), *source, *target, optionalDependency...);
                 });
             })
         (action, args);
         // clang-format on
     }
 
-    bool executeGuard(boost::any event) override
+    bool executeGuard(boost::any eventRef) override
     {
         auto args = bh::concat(
-            bh::make_tuple(boost::any_cast<Event>(event), source, target), optionalDependency);
+            bh::make_tuple(
+                boost::any_cast<std::reference_wrapper<Event>>(eventRef), source, target),
+            optionalDependency);
 
         // clang-format off
         return bh::if_(
@@ -71,7 +75,7 @@ class Transition final : public ITransition {
             [](auto&&...) { return true; },
             [](auto&& guard, auto&& args) {
                 return bh::unpack(args, [guard](auto event, auto source, auto target, auto... optionalDependency){
-                    return guard(event, *source, *target, optionalDependency...);
+                    return guard(event.get(), *source, *target, optionalDependency...);
                 });
             })
         (guard, args);

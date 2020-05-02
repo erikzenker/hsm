@@ -19,40 +19,40 @@ struct S2 {
 
 // Events
 struct readEvent {
-    std::shared_ptr<std::string> sourceData;
-    std::shared_ptr<std::string> targetData;
+    std::string sourceData;
+    std::string targetData;
 };
 
 struct writeEvent {
-    std::shared_ptr<std::string> sourceData;
-    std::shared_ptr<std::string> targetData;
+    std::string sourceData;
+    std::string targetData;
 };
 
 struct resetEvent {
 };
 
 // Actions
-const auto readDataAction = [](auto event, auto& source, auto& target) {
-    *(event.sourceData) = source.data;
-    *(event.targetData) = target.data;
+const auto readDataAction = [](auto&& event, auto& source, auto& target) {
+    event.sourceData = source.data;
+    event.targetData = target.data;
 };
 
-const auto writeDataAction = [](auto event, auto& source, auto& target) {
-    source.data = *(event.sourceData);
-    target.data = *(event.targetData);
+const auto writeDataAction = [](auto&& event, auto& source, auto& target) {
+    source.data = event.sourceData;
+    target.data = event.targetData;
     return true;
 };
 
 // Guard
-const auto readDataGuard = [](auto event, auto& source, auto& target) {
-    *(event.sourceData) = source.data;
-    *(event.targetData) = target.data;
+const auto readDataGuard = [](auto&& event, auto& source, auto& target) {
+    event.sourceData = source.data;
+    event.targetData = target.data;
     return true;
 };
 
-const auto writeDataGuard = [](auto event, auto& source, auto& target) {
-    source.data = *(event.sourceData);
-    target.data = *(event.targetData);
+const auto writeDataGuard = [](auto&& event, auto& source, auto& target) {
+    source.data = event.sourceData;
+    target.data = event.targetData;
     return true;
 };
 
@@ -104,28 +104,23 @@ class StateDataMembersActionTests : public Test {
 
 TEST_F(StateDataMembersActionTests, should_read_state_data_member_in_action)
 {
-    auto sourceData = std::make_shared<std::string>("");
-    auto targetData = std::make_shared<std::string>("");
+    auto event = readEvent { "", "" };
 
-    sm.process_event(readEvent { sourceData, targetData });
-    ASSERT_EQ("S1", *sourceData);
-    ASSERT_EQ("S2", *targetData);
+    sm.process_event(event);
+    ASSERT_EQ("S1", event.sourceData);
+    ASSERT_EQ("S2", event.targetData);
 }
 
 TEST_F(StateDataMembersActionTests, should_write_state_data_member_in_action)
 {
-    auto sourceData = std::make_shared<std::string>("42");
-    auto targetData = std::make_shared<std::string>("43");
-
-    sm.process_event(writeEvent { sourceData, targetData });
+    sm.process_event(writeEvent { "42", "43" });
     sm.process_event(resetEvent {});
 
-    *sourceData = "";
-    *targetData = "";
+    auto event = readEvent { "", "" };
 
-    sm.process_event(readEvent { sourceData, targetData });
-    ASSERT_EQ("42", *sourceData);
-    ASSERT_EQ("43", *targetData);
+    sm.process_event(event);
+    ASSERT_EQ("42", event.sourceData);
+    ASSERT_EQ("43", event.targetData);
 }
 
 class StateDataMembersGuardTests : public Test {
@@ -135,12 +130,11 @@ class StateDataMembersGuardTests : public Test {
 
 TEST_F(StateDataMembersGuardTests, should_read_state_data_member_in_guard)
 {
-    auto sourceData = std::make_shared<std::string>("");
-    auto targetData = std::make_shared<std::string>("");
+    auto event = readEvent { "", "" };
 
-    sm.process_event(readEvent { sourceData, targetData });
-    ASSERT_EQ("S1", *sourceData);
-    ASSERT_EQ("S2", *targetData);
+    sm.process_event(event);
+    ASSERT_EQ("S1", event.sourceData);
+    ASSERT_EQ("S2", event.targetData);
 }
 
 TEST_F(StateDataMembersGuardTests, should_write_state_data_member_in_guard)
@@ -148,13 +142,12 @@ TEST_F(StateDataMembersGuardTests, should_write_state_data_member_in_guard)
     auto sourceData = std::make_shared<std::string>("42");
     auto targetData = std::make_shared<std::string>("43");
 
-    sm.process_event(writeEvent { sourceData, targetData });
+    sm.process_event(writeEvent { "42", "43" });
     sm.process_event(resetEvent {});
 
-    *sourceData = "";
-    *targetData = "";
+    auto event = readEvent { "", "" };
 
-    sm.process_event(readEvent { sourceData, targetData });
-    ASSERT_EQ("42", *sourceData);
-    ASSERT_EQ("43", *targetData);
+    sm.process_event(event);
+    ASSERT_EQ("42", event.sourceData);
+    ASSERT_EQ("43", event.targetData);
 }
