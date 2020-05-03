@@ -204,11 +204,6 @@ int main()
     return 0;
 }
 ```
-## Feature Comparison
-
-
-
-
 
 ## Runtime Benchmark Results
 ### [Simple Benchmark](benchmark/simple/)
