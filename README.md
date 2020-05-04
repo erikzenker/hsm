@@ -206,30 +206,62 @@ int main()
 ```
 
 ## Runtime Benchmark Results
-### [Simple Benchmark](benchmark/simple/)
-| Events | States | Transitions | Process Events |
-|--------|--------|-------------|----------------|
-|  6     |   5    |      12     |        1000000 |
 
-| Runtime | Compile Time |
-|--|--|
-|![Simple benchmark results](doc/benchmark/simple_benchmark_results.svg "simple benchmark results")|![Simple benchmark compile timeresults](doc/benchmark/simple_benchmark_compiletime_results.svg "simple benchmark compile time results")|
+ <table style="width:100%">
+  <tr>
+    <th>Benchmark</th>
+    <th><a href="https://github.com/erikzenker/hsm">Hsm</a></th>
+    <th><a href="https://boost-experimental.github.io/sml/index.html">Sml</a></th>
+    <th><a href="https://www.boost.org/doc/libs/1_73_0/libs/msm/doc/HTML/index.html">Msm</a></th>
+    <th><a href="https://www.boost.org/doc/libs/1_73_0/libs/statechart/doc/index.html">Statechart</a></th>
+  </tr>
+  <tr>
+    <td><a href="benchmark/simple/">Simple state machine</a></td>
+    <td><center>49 ms</center></td>
+    <td><center>26 ms</center></td>
+    <td><center>38 ms</center></td>
+    <td><center>414ms</center></td>
+  </tr>
+  <tr>
+    <td><a href="benchmark/complex/">Complex state machine</a></td>
+    <td><center>526 ms</center></td>
+    <td><center>528 ms</center></td>
+    <td><center>541 ms</center></td>
+    <td><center>877 ms</center></td>
+  </tr>
+</table>  
 
+## Compiletime Benchmark Results
 
-### [Complex Benchmark](benchmark/complex/)
-| Events | States | Transitions | Process Events |
-|--------|--------|-------------|----------------|
-|  50    |   50   |      50     |        1000000 |
-
-| Runtime | Compile Time |
-|--|--|
-|![Complex benchmark results](doc/benchmark/complex_benchmark_results.svg "Complex benchmark results")|![Complex benchmark compile time results](doc/benchmark/complex_benchmark_compiletime_results.svg "Complex benchmark compile time results")|
+ <table style="width:100%">
+  <tr>
+    <th>Benchmark</th>
+    <th><a href="https://github.com/erikzenker/hsm">Hsm</a></th>
+    <th><a href="https://boost-experimental.github.io/sml/index.html">Sml</a></th>
+    <th><a href="https://www.boost.org/doc/libs/1_73_0/libs/msm/doc/HTML/index.html">Msm</a></th>
+    <th><a href="https://www.boost.org/doc/libs/1_73_0/libs/statechart/doc/index.html">Statechart</a></th>
+  </tr>
+  <tr>
+    <td><a href="benchmark/simple/">Simple state machine</a></td>
+    <td><center>10.010 s</center></td>
+    <td><center>0.786 s</center></td>
+    <td><center>5.380 s </center></td>
+    <td><center>1.480 s</center></td>
+  </tr>
+  <tr>
+    <td><a href="benchmark/complex/">Complex state machine</a></td>
+    <td><center>77.120 s</center></td>
+    <td><center>3.130 s</center></td>
+    <td><center>26.820 s</center></td>
+    <td><center>5.190 s</center></td>
+  </tr>
+</table>  
 
 ## Dependencies
 * Boost 1.72
 * C++17
-* >= g++-8
-* >= clang-8
+* \>= g++-8
+* \>= clang-8
 
 ## Create and Install the Package
 ``` bash
