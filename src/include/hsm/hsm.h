@@ -123,14 +123,14 @@ template <class RootState, class... OptionalParameters> class sm {
                 return false;    
             }
 
-            if (!result.transition->executeGuard(std::ref(event))) {
+            if (!result.transition->executeGuard(event)) {
                 continue;
             }
 
             allGuardsFailed = false;
             update_current_state(region, result);
 
-            result.transition->executeAction(std::ref(event));
+            result.transition->executeAction(event);
         }
 
         if (allGuardsFailed) {
@@ -169,12 +169,12 @@ template <class RootState, class... OptionalParameters> class sm {
                             return;
                         }
 
-                        if (!result.transition->executeGuard(std::ref(event))) {
+                        if (!result.transition->executeGuard(event)) {
                             continue;
                         }
 
                         update_current_state(region, result);
-                        result.transition->executeAction(std::ref(event));
+                        result.transition->executeAction(event);
                     }
                 }
             },
