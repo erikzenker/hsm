@@ -31,4 +31,4 @@ set_target_properties(complex_hsm
           PROPERTIES
            CXX_STANDARD 17)
 
-#add_executable(complex_sml sml.cpp)
+add_executable(complex_sml sml.cpp)

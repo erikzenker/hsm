@@ -26,4 +26,4 @@ target_link_libraries(simple_hsm
 
 
 
-#add_executable(simple_sml sml.cpp)
+add_executable(simple_sml sml.cpp)

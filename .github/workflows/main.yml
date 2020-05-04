@@ -62,3 +62,9 @@ jobs:
       run: |
         cd build 
         ctest -VV
+
+    - name: Evaluate Runtime Benchmark
+      run: cd benchmark && ./evaluate_runtime.sh
+
+    - name: Evaluate Compiletime Benchmark
+      run: cd benchmark && ./evaluate_compiletime.sh

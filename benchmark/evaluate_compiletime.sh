@@ -1,22 +1,18 @@
 #! /bin/bash
 
 RootPath="../build/"
-SimpleBenchmarks="simple_hsm simple_euml simple_sc"
-ComplexBenchmarks="complex_euml complex_hsm complex_sc complex_switch"
+SimpleBenchmarks="simple_hsm simple_sml simple_euml simple_sc"
+ComplexBenchmarks="complex_hsm complex_sml complex_euml complex_sc"
 
 cd $RootPath
 make clean
 
-rm simple_benchmark_compiletime_results.dat
 for Name in $SimpleBenchmarks; do
     Result=$((/usr/bin/time -f "user %e" make $Name) 2>&1 | grep "user" | awk '{ print $2 }')
-    echo $Name $Result >> simple_benchmark_compiletime_results.dat
+    echo $Name $Result
 done
-./simple_compiletime.pl
 
-rm complex_benchmark_compiletime_results.dat
 for Name in $ComplexBenchmarks; do
     Result=$((/usr/bin/time -f "user %e" make $Name) 2>&1 | grep "user" | awk '{ print $2 }')
-    echo $Name $Result >> complex_benchmark_compiletime_results.dat
+    echo $Name $Result
 done
-./complex_compiletime.pl
