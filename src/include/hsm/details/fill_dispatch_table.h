@@ -252,8 +252,6 @@ constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& tra
           const auto defer = false;
           const auto valid = true;
 
-        //   std::cout << "fill from: " << from << " to " << to << std::endl;
-
           auto source2 = bh::find(statesMap, bh::typeid_(source)).value();
           auto target2 = bh::find(statesMap, bh::typeid_(target)).value();
 
@@ -278,8 +276,6 @@ const auto addDispatchTableEntryOfSubMachineExits
                           const auto history = resolveHistory(transition);
                           const auto defer = false;
                           const auto valid = true;
-
-                        //   std::cout << "subexit fill from: " << from << " to " << to << std::endl;                          
 
                           auto parentState2 = bh::find(statesMap, bh::typeid_(parentState)).value();
                           auto target2 = bh::find(statesMap, bh::typeid_(target)).value();
@@ -308,8 +304,6 @@ constexpr auto fill_dispatch_table_with_transitions(
 
     bh::for_each(eventTypeids, [&](auto eventTypeid) {
         using Event = typename decltype(eventTypeid)::type;
-
-        // std::cout << "Event: " << bh::experimental::print(eventTypeid) << std::endl;
 
         auto filteredTransitions = filter_transitions(transitions, eventTypeid);
         auto& dispatchTable = DispatchTable<states, Event>::table;

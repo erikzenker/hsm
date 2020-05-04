@@ -57,22 +57,11 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class State> auto is(State state) -> bool
     {
-        // std::cout << "combined: " << m_currentCombinedState[0] << ", current: " <<
-        // currentState(0)
-        //           << " == " << getStateIdx(rootState(), state) << std::endl;
-
         return currentState(0) == getStateIdx(rootState(), state);
     }
 
     template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
     {
-        // std::cout << "combined: " << m_currentCombinedState[0]
-        //           << " parent: " << currentParentState()
-        //           << " == " << getParentStateIdx(rootState(), parentState)
-        //           << ", current: " << currentState(0) << " == " << getStateIdx(rootState(),
-        //           state)
-        //           << std::endl;
-
         return currentParentState() == getParentStateIdx(rootState(), parentState)
             && currentState(0) == getStateIdx(rootState(), state);
     }
@@ -86,10 +75,6 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class ParentState> auto parent_is(ParentState parentState) -> bool
     {
-        // std::cout << "combined: " << m_currentCombinedState[0]
-        //           << " parent: " << currentParentState()
-        //           << " == " << getParentStateIdx(rootState(), parentState) << std::endl;
-
         return currentParentState() == getParentStateIdx(rootState(), parentState);
     }
 
@@ -184,7 +169,6 @@ template <class RootState, class... OptionalParameters> class sm {
     template <class Event> constexpr auto& dispatch_table_at(StateIdx index, const Event& /*event*/)
     {
         constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
-        // std::cout << "access index: " << index << std::endl;
         return DispatchTable<states, Event>::table[index];
     }
 
