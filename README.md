@@ -160,8 +160,13 @@ struct Coin {
 const auto noError = [](auto /*event*/, auto /*source*/, auto /*target*/){return true;};
 
 // Actions
-const auto beep = [](auto /*event*/, auto /*source*/, auto /*target*/){ std::cout << "beep!" << std::endl;};
-const auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/){ std::cout << "blink, blink, blink!" << std::endl;};
+const auto beep = [](auto /*event*/, auto /*source*/, auto /*target*/){ 
+  std::cout << "beep!" << std::endl;
+};
+
+const auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/){ 
+  std::cout << "blink, blink, blink!" << std::endl;
+};
 
 struct Turnstile {
     static constexpr auto make_transition_table()
