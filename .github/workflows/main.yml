@@ -7,37 +7,56 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cxx: ["g++-8", "g++-9", "clang++-8", "clang++-9"]
+        include: 
+
+          - cxx: "g++-8"
+            cc: "gcc-8"
+          - cxx: "g++-9"
+            cc: "gcc-9"
+          - cxx: "clang++-8"
+            cc: "clang-8"
+          - cxx: "clang++-9"
+            cc: "clang-9"
+
     steps:
     - uses: actions/checkout@v2
       
     - name: Install Dependencies
-      run: sudo apt install cmake g++-9 python-pip
+      run: sudo apt install cmake g++-8 g++-9 clang-8 clang-9 python-pip
         
     - name: Install Conan
       run: sudo pip install conan
         
     - name: Print System Information
       run: |
-        which cmake
         cmake --version
-        which g++
-        g++ --version
-        which pip
         pip --version
-        
-    - name: Install Hsm
+        ${{ matrix.cxx }} --version
+    
+    - name: Install Conan Dependencies
       run: |
         echo $CXX
         echo $CC
         mkdir build && cd build
-        mkdir install
-        conan install .. -s compiler.libcxx=libstdc++11 -s compiler.version=9
+        conan install .. -s compiler.libcxx=libstdc++11 --build missing
+      env: 
+        CXX: ${{ matrix.cxx }}
+        CC: ${{ matrix.cc}}
+
+    - name: Install Hsm
+      run: |
+        echo $CXX
+        echo $CC
+        cd build && mkdir install
         cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
         cmake --build . --target install
       env: 
-        CXX: g++-9
-        CC: gcc-9
+        CXX: ${{ matrix.cxx }}
+        CC: ${{ matrix.cc}}
         
     - name: Run Hsm Tests
       run: |

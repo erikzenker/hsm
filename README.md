@@ -228,6 +228,8 @@ int main()
 ## Dependencies
 * Boost 1.72
 * C++17
+* >= g++-8
+* >= clang-8
 
 ## Create and Install the Package
 ``` bash

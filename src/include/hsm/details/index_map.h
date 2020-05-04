@@ -24,17 +24,17 @@ const auto make_index_map = [](auto typeids) {
     return bh::to_map(to_pairs(bh::zip(typeids, range)));
 };
 
-constexpr auto find = [](auto&& reverseIndexMap, auto index, auto&& closure) {
-    boost::mp11::mp_with_index<bh::size(reverseIndexMap)>(
-        index,
-        [reverseIndexMap, &closure](auto i) { closure(bh::find(reverseIndexMap, i).value()); });
-};
+// constexpr auto find = [](auto&& reverseIndexMap, auto index, auto&& closure) {
+//     boost::mp11::mp_with_index<bh::size(reverseIndexMap)>(
+//         index,
+//         [reverseIndexMap, &closure](auto i) { closure(bh::find(reverseIndexMap, i).value()); });
+// };
 
-constexpr auto make_reverse_index_map = [](auto&& tuple) {
-    auto range = bh::to_tuple(bh::make_range(bh::int_c<0>, bh::size(tuple)));
-    auto ids
-        = bh::transform(range, [](auto&& element) { return boost::mp11::mp_size_t<element> {}; });
+// constexpr auto make_reverse_index_map = [](auto&& tuple) {
+//     auto range = bh::to_tuple(bh::make_range(bh::int_c<0>, bh::size(tuple)));
+//     auto ids
+//         = bh::transform(range, [](auto&& element) { return boost::mp11::mp_size_t<element> {}; });
 
-    return bh::to_map(to_pairs(bh::zip(ids, tuple)));
-};
+//     return bh::to_map(to_pairs(bh::zip(ids, tuple)));
+// };
 }
