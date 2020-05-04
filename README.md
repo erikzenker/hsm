@@ -80,7 +80,7 @@ A click on a particular feature check mark will forward to the feature documenta
   </tr>  
   <tr>
     <td>Transition logging</td>
-    <td><center>✓</center></td>
+    <td><center><a href="test/integration/transition_logging.cpp">✓</a></center></td>
     <td><center><a href="https://boost-experimental.github.io/sml/examples.html#logging">✓</a></center></td>
     <td><center>✓</center></td>
     <td><center>?</center></td>

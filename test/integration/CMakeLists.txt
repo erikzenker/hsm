@@ -25,6 +25,7 @@ add_executable(hsmIntegrationTests
         transition_dsl.cpp
         no_action.cpp
         state_data_members.cpp
+        transition_logging.cpp
 )
 
 target_link_libraries(hsmIntegrationTests
