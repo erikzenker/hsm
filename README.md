@@ -266,24 +266,29 @@ int main()
 * \>= g++-8
 * \>= clang-8
 
-## Install the Library with Cmake
+## Install with CMake
 ``` bash
 mkdir src/build && cd src/build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
 cmake --build . --target install
 ```
 
-## Install the Library with Conan/Cmake
+## Install with Conan/Cmake
 ``` bash
 mkdir src/build && cd src/build
 conan install ../..
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
 cmake --build . --target install
 ```
-## Install the Library with Conan [![Download](https://api.bintray.com/packages/erikzenker/conan-erikzenker/hsm%3Aerikzenker/images/download.svg) ](https://bintray.com/erikzenker/conan-erikzenker/hsm%3Aerikzenker/_latestVersion)
+## Install from Conan [![Download](https://api.bintray.com/packages/erikzenker/conan-erikzenker/hsm%3Aerikzenker/images/download.svg) ](https://bintray.com/erikzenker/conan-erikzenker/hsm%3Aerikzenker/_latestVersion)
 ``` bash
 conan remote add conan-erikzenker https://api.bintray.com/conan/erikzenker/conan-erikzenker
 conan install hsm/1.0@erikzenker/testing --build missing
+```
+
+## Install from AUR
+``` bash
+pacaur -S hsm-git
 ```
 
 ## Compile and Run the Tests Using the Installed Library
