@@ -136,9 +136,7 @@ A click on a particular feature check mark will forward to the feature documenta
   </tr>
 </table> 
 
-## Simple Example ([Turnstile](example/turnstile/main.cpp))
-![Turnstile fsm](doc/example/turnstile_example.svg "Turnstile fsm")
-
+## Example 
 ```c++
 #include "hsm/hsm.h"
 
