@@ -210,6 +210,8 @@ int main()
 
 ## Runtime Benchmark Results
 
+The benchmark result are taken from the [state machine benchmark repository](https://github.com/erikzenker/state-machine-benchmark).
+
  <table style="width:100%">
   <tr>
     <th>Benchmark</th>
