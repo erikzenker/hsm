@@ -1,6 +1,7 @@
 #pragma once
 
 #include "collect_events.h"
+#include "collect_initial_states.h"
 #include "dispatch_table.h"
 #include "flatten_internal_transition_table.h"
 #include "for_each_idx.h"
@@ -29,83 +30,6 @@ constexpr auto nStates
 constexpr auto nEvents
     = [](auto rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
 
-/**
- * Collect the initial states for the parent states
- * and returns it as tuple of state idx.
- *
- * Returns: [[StateIdx]]
- *
- * Example: [[0,1], [0], [1], [1,2]]
- */
-constexpr auto collect_initial_state_typeids = [](auto rootState, auto parentStateTypeids) {
-    return bh::transform(parentStateTypeids, [rootState](auto parentStateTypeid) {
-        using ParentState = typename decltype(parentStateTypeid)::type;
-
-        constexpr auto initialStates = initial_states(ParentState {});
-        constexpr auto initialStatesTypeIds
-            = bh::transform(initialStates, [rootState](auto initialState) {
-                  return getStateIdx(rootState, initialState);
-              });
-
-        return initialStatesTypeIds;
-    });
-};
-
-/**
- * Returns a tuple of initial state sizes
- *
- * Returns: [std::size_t]
- *
- * Example: [3, 1, 2]
- */
-constexpr auto initialStateSizes = [](auto parentStateTypeids) {
-    return bh::transform(parentStateTypeids, [](auto parentStateTypeid) {
-        using ParentState = typename decltype(parentStateTypeid)::type;
-        return bh::size(initial_states(ParentState {}));
-    });
-};
-
-/**
- * Returns the maximal number of initial states
- */
-constexpr auto maxInitialStates = [](auto rootState) {
-    constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
-    return bh::fold(initialStateSizes(parentStateTypeids), bh::size_c<0>, bh::max);
-};
-
-/**
- * Return a map from parent state id to inital state ids
- *
- * Returns: (ParentStateIdx -> [StateIdx])
- *
- * Example:
- * [[0 -> [0, 1]],
- *  [1 -> [3, 1]],
- *  [2 -> [0, 2]]]
- */
-constexpr auto make_initial_state_map = [](auto rootState) {
-    constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
-    constexpr auto initialStates = collect_initial_state_typeids(rootState, parentStateTypeids);
-    return bh::to_map(to_pairs(bh::zip(parentStateTypeids, initialStates)));
-};
-
-constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateTable) {
-    constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
-    for_each_idx(
-        parentStateTypeids,
-        [rootState, &initialStateTable](auto parentStateTypeid, auto parentStateId) {
-            constexpr auto initialStates
-                = bh::find(make_initial_state_map(rootState), parentStateTypeid).value();
-            auto initialStatesStateIdx = std::vector<std::size_t>(bh::size(initialStates));
-
-            for_each_idx(initialStates, [&initialStatesStateIdx](auto stateIdx, auto regionId) {
-                initialStatesStateIdx[regionId] = stateIdx;
-            });
-
-            initialStateTable.at(parentStateId) = initialStatesStateIdx;
-        });
-};
-
 constexpr auto hasRegions
     = [](auto rootState) { return bh::equal(bh::size_c<1>, maxInitialStates(rootState)); };
 
@@ -114,13 +38,13 @@ constexpr auto resolveDst = [](auto&& transition) {
     return bh::apply([](auto&& dstTypeid){
         return lazy_switch_(
             // TODO: make multi region capable    
-            case_(bh::make_lazy(has_transition_table(dstTypeid)), [](auto&&, auto&& submachine) { return bh::at_c<0>(submachine.initial_state());}),
-            case_(bh::make_lazy(is_entry_state(dstTypeid)),        [](auto&& entry, auto&&) { return unfold_typeid(entry).get_state(); }),
-            case_(bh::make_lazy(is_direct_state(dstTypeid)),       [](auto&& direct, auto&&) { return unfold_typeid(direct).get_state(); }),
+            case_(bh::make_lazy(has_transition_table(dstTypeid)), [](auto&& submachine, auto&&) { return bh::at_c<0>(collect_initial_states(submachine));}),
+            case_(bh::make_lazy(is_entry_state(dstTypeid)),       [](auto&& entry, auto&&) { return unwrap_typeid(entry).get_state(); }),
+            case_(bh::make_lazy(is_direct_state(dstTypeid)),      [](auto&& direct, auto&&) { return unwrap_typeid(direct).get_state(); }),
             // TODO: make multi region capable 
-            case_(bh::make_lazy(is_history_state(dstTypeid)),      [](auto&&, auto&& history) { return bh::at_c<0>(unfold_typeid(history.get_parent_state()).initial_state());}),
-            case_(bh::make_lazy((otherwise())),                    [](auto&& dstTypeid, auto&&) { return dstTypeid; }))
-            (dstTypeid, unfold_typeid(dstTypeid));
+            case_(bh::make_lazy(is_history_state(dstTypeid)),     [](auto&&, auto&& history) { return bh::at_c<0>(collect_initial_states(history.get_parent_state()));}),
+            case_(bh::make_lazy((otherwise())),                   [](auto&& dstTypeid, auto&&) { return dstTypeid; }))
+            (dstTypeid, unwrap_typeid(dstTypeid));
     },
     getDst(transition));
     // clang-format on
@@ -131,10 +55,10 @@ constexpr auto resolveDstParent = [](auto transition) {
     return bh::apply([](auto&& dstTypeid, auto&& transition){
         return lazy_switch_(
             case_(bh::make_lazy(has_transition_table(dstTypeid)), [](auto&& submachine, auto&&) { return submachine; }),
-            case_(bh::make_lazy(is_entry_state(dstTypeid)),        [](auto&& entry, auto&&) { return unfold_typeid(entry).get_parent_state(); }),
-            case_(bh::make_lazy(is_direct_state(dstTypeid)),       [](auto&& direct, auto&&) { return unfold_typeid(direct).get_parent_state(); }),
-            case_(bh::make_lazy(is_history_state(dstTypeid)),      [](auto&& history, auto&&) { return unfold_typeid(history).get_parent_state(); }),
-            case_(bh::make_lazy(otherwise()),                      [](auto&&, auto&& transition) { return getSrcParent(transition); }))
+            case_(bh::make_lazy(is_entry_state(dstTypeid)),       [](auto&& entry, auto&&) { return unwrap_typeid(entry).get_parent_state(); }),
+            case_(bh::make_lazy(is_direct_state(dstTypeid)),      [](auto&& direct, auto&&) { return unwrap_typeid(direct).get_parent_state(); }),
+            case_(bh::make_lazy(is_history_state(dstTypeid)),     [](auto&& history, auto&&) { return unwrap_typeid(history).get_parent_state(); }),
+            case_(bh::make_lazy(otherwise()),                     [](auto&&, auto&& transition) { return getSrcParent(transition); }))
             (dstTypeid, transition);
     },
     getDst(transition), transition);
@@ -145,9 +69,10 @@ constexpr auto resolveSrc = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src){
         return lazy_switch_(
-            case_(bh::make_lazy(is_exit_state(src)),   [](auto&& exit) { return unfold_typeid(exit).get_state(); }),
-            case_(bh::make_lazy(is_direct_state(src)), [](auto&& direct) { return unfold_typeid(direct).get_state(); }),
-            case_(bh::make_lazy(otherwise()),          [](auto&& state) { return state; }))
+            case_(bh::make_lazy(is_initial_state(src)), [](auto&& initial) { return unwrap_typeid(initial).get_state(); }),    
+            case_(bh::make_lazy(is_exit_state(src)),    [](auto&& exit) { return unwrap_typeid(exit).get_state(); }),
+            case_(bh::make_lazy(is_direct_state(src)),  [](auto&& direct) { return unwrap_typeid(direct).get_state(); }),
+            case_(bh::make_lazy(otherwise()),           [](auto&& state) { return state; }))
             (src);    
     },
     getSrc(transition));
@@ -158,8 +83,8 @@ constexpr auto resolveSrcParent = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src, auto&& transition){
         return lazy_switch_(
-            case_(bh::make_lazy(is_exit_state(src)),   [](auto&& exit, auto&&) { return unfold_typeid(exit).get_parent_state(); }),
-            case_(bh::make_lazy(is_direct_state(src)), [](auto&& direct, auto&&) { return unfold_typeid(direct).get_parent_state(); }),
+            case_(bh::make_lazy(is_exit_state(src)),   [](auto&& exit, auto&&) { return unwrap_typeid(exit).get_parent_state(); }),
+            case_(bh::make_lazy(is_direct_state(src)), [](auto&& direct, auto&&) { return unwrap_typeid(direct).get_parent_state(); }),
             case_(bh::make_lazy(otherwise()),          [](auto&&, auto&& transition) { return getSrcParent(transition); }))
             (src, transition);
     },
@@ -179,7 +104,7 @@ constexpr auto resolveEntryAction = [](auto&& transition) {
         return bh::if_(has_entry_action(dst)
             , [](auto&& dst) { return dst.on_entry(); }
             , [](auto&&) { return [](auto...) {}; })
-            (unfold_typeid(dst));    
+            (unwrap_typeid(dst));    
     },
     getDst(transition));
     // clang-format on
@@ -191,7 +116,7 @@ constexpr auto resolveExitAction = [](auto&& transition) {
         return bh::if_(has_exit_action(src)
             , [](auto&& src) { return src.on_exit(); }
             , [](auto&&) { return [](auto...) {}; })
-            (unfold_typeid(src));
+            (unwrap_typeid(src));
     },
     getSrc(transition));
     // clang-format on
@@ -263,7 +188,7 @@ const auto addDispatchTableEntryOfSubMachineExits
           bh::if_(
               has_transition_table(getSrc(transition)),
               [&](auto parentState) {
-                  auto states = collect_child_states(parentState);
+                  auto states = collect_child_state_typeids(parentState);
 
                   bh::for_each(
                       states, [&](auto state) {
@@ -317,7 +242,7 @@ constexpr auto fill_dispatch_table_with_transitions(
 
 constexpr auto getDeferingTransitions = [](auto rootState) {
     constexpr auto transitionHasDeferedEvents
-        = [](auto transition) { return has_deferred_events(getSrc(transition)); };
+        = [](auto transition) { return has_deferred_events(resolveExtentedInitialState(transition)); };
 
     constexpr auto transitions = flatten_transition_table(rootState);
     return bh::filter(transitions, transitionHasDeferedEvents);
@@ -335,7 +260,7 @@ fill_dispatch_table_with_deferred_events(RootState rootState, OptionalDependency
     constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
 
     bh::for_each(transitions, [&](auto transition) {
-        const auto deferredEvents = unfold_typeid(getSrc(transition)).defer_events();
+        const auto deferredEvents = unwrap_typeid(resolveExtentedInitialState(transition)).defer_events();
 
         bh::for_each(deferredEvents, [&](auto event) {
             using Event = decltype(event);

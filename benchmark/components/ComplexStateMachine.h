@@ -212,15 +212,10 @@ class s50 {
 };
 
     struct ComplexStateMachine {
-        static constexpr auto initial_state()
-        {
-            return initial(state<idle> {});
-        }
-
         static constexpr auto make_transition_table()
         {
             return transition_table(
-                state<idle> {} + event<e1> {}[guard] / action = state<s1> {},
+                *state<idle> {} + event<e1> {}[guard] / action = state<s1> {},
                 state<s1> {} + event<e2> {}[guard] / action = state<s2> {},
                 state<s2> {} + event<e3> {}[guard] / action = state<s3> {},
                 state<s3> {} + event<e4> {}[guard] / action = state<s4> {},

@@ -35,6 +35,8 @@ class DirectPseudoState {
 };
 class HistoryPseudoState {
 };
+class InitialPseudoState {
+};
 
 template <class ParentState, class State>
 class Exit final : public PseudoState<ParentState, State>, public ExitPseudoState {
@@ -46,7 +48,7 @@ class Exit final : public PseudoState<ParentState, State>, public ExitPseudoStat
 };
 
 template <class ParentState, class State>
-class Entry : public PseudoState<ParentState, State>, public EntryPseudoState {
+class Entry final : public PseudoState<ParentState, State>, public EntryPseudoState {
   public:
     constexpr Entry()
         : PseudoState<ParentState, State>(ParentState {}, State {})
@@ -55,7 +57,7 @@ class Entry : public PseudoState<ParentState, State>, public EntryPseudoState {
 };
 
 template <class ParentState, class State>
-class Direct : public PseudoState<ParentState, State>, public DirectPseudoState {
+class Direct final : public PseudoState<ParentState, State>, public DirectPseudoState {
   public:
     constexpr Direct()
         : PseudoState<ParentState, State>(ParentState {}, State {})
@@ -63,7 +65,7 @@ class Direct : public PseudoState<ParentState, State>, public DirectPseudoState 
     }
 };
 
-template <class ParentState> class History : public HistoryPseudoState {
+template <class ParentState> class History final : public HistoryPseudoState {
   public:
     constexpr History()
         : parentState(ParentState {})
@@ -77,5 +79,21 @@ template <class ParentState> class History : public HistoryPseudoState {
 
   private:
     ParentState parentState;
+};
+
+template <class State> class Initial final : public InitialPseudoState {
+  public:
+    constexpr Initial()
+        : state(State {})
+    {
+    }
+
+    constexpr auto get_state()
+    {
+        return state;
+    }
+
+  private:
+    State state;
 };
 }

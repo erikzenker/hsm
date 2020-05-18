@@ -34,14 +34,9 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {} +  hsm::event<e1> {} [g1] /  a1 = hsm::state<S1> {}
+            * hsm::state<S1> {} +  hsm::event<e1> {} [g1] /  a1 = hsm::state<S1> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 

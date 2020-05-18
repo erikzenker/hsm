@@ -34,15 +34,10 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {},
-            hsm::state<S2> {} + hsm::event<e2> {} = hsm::state<S1> {}
+            * hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {},
+              hsm::state<S2> {} + hsm::event<e2> {} = hsm::state<S1> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 
     constexpr auto on_unexpected_event()

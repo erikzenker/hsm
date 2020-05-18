@@ -47,10 +47,14 @@ constexpr auto is_history_state = [](auto type) {
     return bh::equal(
         bh::bool_c<std::is_base_of<HistoryPseudoState, decltype(type)>::value>, bh::true_c);
 };
+constexpr auto is_initial_state = [](auto type) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<InitialPseudoState, decltype(type)>::value>, bh::true_c);
+};
 }
 
-constexpr auto unfold_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
-constexpr auto unfold_to_shared_ptr
+constexpr auto unwrap_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
+constexpr auto unwrap_typeid_to_shared_ptr
     = [](auto typeid_) { return std::make_shared<typename decltype(typeid_)::type>(); };
 
 constexpr auto make_transition_table = [](auto t) {
@@ -60,34 +64,32 @@ constexpr auto make_transition_table = [](auto t) {
 constexpr auto make_transition_table2
     = [](auto state) { return decltype(state)::type::make_transition_table(); };
 
-constexpr auto initial_states = [](auto state) { return decltype(state)::type::initial_state(); };
-
 constexpr auto has_transition_table = bh::is_valid(
     [](auto stateTypeid) -> decltype(std::declval<typename decltype(stateTypeid)::type>()
                                          .make_transition_table()) {});
 
 constexpr auto has_internal_transition_table
-    = bh::compose(details::has_internal_transition_table, unfold_typeid);
+    = bh::compose(details::has_internal_transition_table, unwrap_typeid);
 
-constexpr auto has_initial_state
-    = bh::is_valid([](auto&& state) -> decltype(state.initial_state()) {});
+constexpr auto has_entry_action = bh::compose(details::has_entry_action, unwrap_typeid);
 
-constexpr auto has_entry_action = bh::compose(details::has_entry_action, unfold_typeid);
-
-constexpr auto has_exit_action = bh::compose(details::has_exit_action, unfold_typeid);
+constexpr auto has_exit_action = bh::compose(details::has_exit_action, unwrap_typeid);
 
 constexpr auto has_unexpected_event_handler
-    = bh::compose(details::has_unexpected_event_handler, unfold_typeid);
+    = bh::compose(details::has_unexpected_event_handler, unwrap_typeid);
 
-constexpr auto has_deferred_events = bh::compose(details::has_deferred_events, unfold_typeid);
+constexpr auto has_deferred_events = bh::compose(details::has_deferred_events, unwrap_typeid);
 
-constexpr auto is_exit_state = bh::compose(details::is_exit_state, unfold_typeid);
-
-constexpr auto is_entry_state = bh::compose(details::is_entry_state, unfold_typeid);
-
-constexpr auto is_direct_state = bh::compose(details::is_direct_state, unfold_typeid);
-
-constexpr auto is_history_state = bh::compose(details::is_history_state, unfold_typeid);
+constexpr auto is_exit_state = bh::compose(details::is_exit_state, unwrap_typeid);
+constexpr auto is_entry_state = bh::compose(details::is_entry_state, unwrap_typeid);
+constexpr auto is_direct_state = bh::compose(details::is_direct_state, unwrap_typeid);
+constexpr auto is_history_state = bh::compose(details::is_history_state, unwrap_typeid);
+// constexpr auto is_initial_state = bh::compose(details::is_initial_state, unwrap_typeid);
+constexpr auto is_initial_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<InitialPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
 
 constexpr auto is_no_action
     = [](auto action) { return bh::equal(bh::typeid_(action), bh::typeid_(noAction {})); };

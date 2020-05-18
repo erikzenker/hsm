@@ -61,16 +61,11 @@ struct MainStateWithActions {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1>{} + hsm::event<readEvent>{}   / readDataAction  = hsm::state<S2>{},
-            hsm::state<S1>{} + hsm::event<writeEvent>{}  / writeDataAction = hsm::state<S2>{},
-            hsm::state<S2>{} + hsm::event<resetEvent>{}                    = hsm::state<S1>{}
+            * hsm::state<S1>{} + hsm::event<readEvent>{}   / readDataAction  = hsm::state<S2>{},
+              hsm::state<S1>{} + hsm::event<writeEvent>{}  / writeDataAction = hsm::state<S2>{},
+              hsm::state<S2>{} + hsm::event<resetEvent>{}                    = hsm::state<S1>{}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 
     std::string data = "MainStateWithActions";
@@ -81,16 +76,11 @@ struct MainStateWithGuards {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1>{} + hsm::event<readEvent>{}   [readDataGuard]  = hsm::state<S2>{},
-            hsm::state<S1>{} + hsm::event<writeEvent>{}  [writeDataGuard] = hsm::state<S2>{},
-            hsm::state<S2>{} + hsm::event<resetEvent>{}                   = hsm::state<S1>{}
+            * hsm::state<S1>{} + hsm::event<readEvent>{}   [readDataGuard]  = hsm::state<S2>{},
+              hsm::state<S1>{} + hsm::event<writeEvent>{}  [writeDataGuard] = hsm::state<S2>{},
+              hsm::state<S2>{} + hsm::event<resetEvent>{}                   = hsm::state<S1>{}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 
     std::string data = "MainStateWithGuards";

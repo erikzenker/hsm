@@ -112,6 +112,17 @@ TEST_F(TraitsTests, should_recognize_history_state)
     ASSERT_TRUE(result);
 }
 
+TEST_F(TraitsTests, should_recognize_initial_state)
+{
+    namespace bh = boost::hana;
+
+    constexpr auto result = bh::if_(
+        hsm::is_initial_state(hsm::state<hsm::Initial<S1>> {}),
+        []() { return true; },
+        []() { return false; })();
+    ASSERT_TRUE(result);
+}
+
 TEST_F(TraitsTests, should_recognize_defered_events)
 {
     namespace bh = boost::hana;
