@@ -52,17 +52,12 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {},
-            hsm::state<S1> {} + hsm::event<e2> {} = hsm::state<S3> {},
-            hsm::state<S1> {} + hsm::event<e4> {} = hsm::state<S4> {},
-            hsm::state<S1> {} + hsm::event<e5> {} = hsm::state<S5> {}
+            * hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {},
+              hsm::state<S1> {} + hsm::event<e2> {} = hsm::state<S3> {},
+              hsm::state<S1> {} + hsm::event<e4> {} = hsm::state<S4> {},
+              hsm::state<S1> {} + hsm::event<e5> {} = hsm::state<S5> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -71,25 +66,20 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {}          + hsm::event<e1> {}                    = hsm::entry<SubState, S3> {},
-            hsm::state<S1> {}          + hsm::event<e2> {}                    = hsm::state<SubState> {},
-            hsm::state<S1> {}          + hsm::event<e3> {} [fail]             = hsm::entry<SubState, S3> {},
-            hsm::state<S1> {}          + hsm::event<e4> {} [fail]    / action = hsm::entry<SubState, S3> {},
-            hsm::state<S1> {}          + hsm::event<e5> {}           / action = hsm::entry<SubState, S3> {},
-            hsm::state<S1> {}          + hsm::event<e6> {}                    = hsm::state<S2> {},
-            hsm::state<S2> {}                                                 = hsm::entry<SubState, S3> {},
-            hsm::exit<SubState, S4> {} + hsm::event<e1> {}                    = hsm::state<S1> {},
-            hsm::exit<SubState, S4> {} + hsm::event<e2> {} [success]          = hsm::state<S1> {},
-            hsm::exit<SubState, S4> {} + hsm::event<e3> {} [success] / action = hsm::state<S1> {},
-            hsm::exit<SubState, S4> {} + hsm::event<e4> {}           / action = hsm::state<S1> {},
-            hsm::exit<SubState, S5> {}                                        = hsm::state<S1> {}
+            * hsm::state<S1> {}          + hsm::event<e1> {}                    = hsm::entry<SubState, S3> {},
+              hsm::state<S1> {}          + hsm::event<e2> {}                    = hsm::state<SubState> {},
+              hsm::state<S1> {}          + hsm::event<e3> {} [fail]             = hsm::entry<SubState, S3> {},
+              hsm::state<S1> {}          + hsm::event<e4> {} [fail]    / action = hsm::entry<SubState, S3> {},
+              hsm::state<S1> {}          + hsm::event<e5> {}           / action = hsm::entry<SubState, S3> {},
+              hsm::state<S1> {}          + hsm::event<e6> {}                    = hsm::state<S2> {},
+              hsm::state<S2> {}                                                 = hsm::entry<SubState, S3> {},
+              hsm::exit<SubState, S4> {} + hsm::event<e1> {}                    = hsm::state<S1> {},
+              hsm::exit<SubState, S4> {} + hsm::event<e2> {} [success]          = hsm::state<S1> {},
+              hsm::exit<SubState, S4> {} + hsm::event<e3> {} [success] / action = hsm::state<S1> {},
+              hsm::exit<SubState, S4> {} + hsm::event<e4> {}           / action = hsm::state<S1> {},
+              hsm::exit<SubState, S5> {}                                        = hsm::state<S1> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 

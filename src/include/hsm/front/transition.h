@@ -2,7 +2,8 @@
 
 #include "hsm/details/pseudo_states.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/bool.hpp>
+#include <boost/hana/tuple.hpp>
 
 namespace hsm {
 
@@ -15,7 +16,6 @@ struct noAction {
 struct noGuard {
 };
 
-template <class Source> class state;
 template <class Event> struct event;
 
 template <class Event, class Guard, class Action> class TransitionEGA {
@@ -237,8 +237,19 @@ template <class Type> struct StateBase {
     }
 };
 
+template <class Source> struct istate;
+
 template <class Source> struct state : public StateBase<Source> {
     using StateBase<Source>::operator=;
+
+    constexpr auto operator*()
+    {
+        return istate<Source> {};
+    }
+};
+
+template <class Source> struct istate : public StateBase<Initial<state<Source>>> {
+    using StateBase<Initial<state<Source>>>::operator=;
 };
 template <class Parent, class State>
 struct direct : public StateBase<Direct<state<Parent>, state<State>>> {

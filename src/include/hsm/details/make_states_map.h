@@ -21,7 +21,7 @@ constexpr auto make_states_map = [](auto&& parentState) {
     auto collectedStates = bh::transform(
         remove_duplicate_types(
             bh::append(collect_child_states_recursive(parentState), parentState)),
-        unfold_to_shared_ptr);
+        unwrap_typeid_to_shared_ptr);
     return bh::to_map(to_pairs(bh::zip(collectedStateTypeids, collectedStates)));
 };
 }

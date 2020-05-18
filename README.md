@@ -171,21 +171,16 @@ struct Turnstile {
     {
         // clang-format off
         return hsm::transition_table(
-            // Source               + Event               [Guard]   / Action = Target
-            // +--------------------+---------------------+---------+--------+------------------------+
-            hsm::state<Locked> {}   + hsm::event<Push> {}           / beep   = hsm::state<Locked> {}  ,
-            hsm::state<Locked> {}   + hsm::event<Coin> {} [noError] / blink  = hsm::state<Unlocked> {},
-            // +--------------------+---------------------+---------+--------+------------------------+
-            hsm::state<Unlocked> {} + hsm::event<Push> {} [noError]          = hsm::state<Locked> {}  ,
-            hsm::state<Unlocked> {} + hsm::event<Coin> {}           / blink  = hsm::state<Unlocked> {}
-            // +--------------------+---------------------+---------+--------+------------------------+
+            // Source                 + Event               [Guard]   / Action = Target
+            // +----------------------+---------------------+---------+--------+------------------------+
+            * hsm::state<Locked> {}   + hsm::event<Push> {}           / beep   = hsm::state<Locked> {}  ,
+              hsm::state<Locked> {}   + hsm::event<Coin> {} [noError] / blink  = hsm::state<Unlocked> {},
+            // +----------------------+---------------------+---------+--------+------------------------+
+              hsm::state<Unlocked> {} + hsm::event<Push> {} [noError]          = hsm::state<Locked> {}  ,
+              hsm::state<Unlocked> {} + hsm::event<Coin> {}           / blink  = hsm::state<Unlocked> {}
+            // +----------------------+---------------------+---------+--------+------------------------+
             );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<Locked> {});
     }
 };
 

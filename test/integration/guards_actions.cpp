@@ -44,14 +44,9 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {} + hsm::event<e1> {} / a2 = hsm::state<S1> {}
+            * hsm::state<S1> {} + hsm::event<e1> {} / a2 = hsm::state<S1> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -60,17 +55,12 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {} + hsm::event<e1> {} /  a2 = hsm::state<S1> {},
-            hsm::state<S1> {} + hsm::event<e2> {}       = hsm::state<SubState> {},
-            hsm::state<S1> {} + hsm::event<e3> {}  [g2] = hsm::state<S2> {},
-            hsm::state<S1> {} + hsm::event<e4> {}  [g3] = hsm::state<S2> {}
+            * hsm::state<S1> {} + hsm::event<e1> {} /  a2 = hsm::state<S1> {},
+              hsm::state<S1> {} + hsm::event<e2> {}       = hsm::state<SubState> {},
+              hsm::state<S1> {} + hsm::event<e3> {}  [g2] = hsm::state<S2> {},
+              hsm::state<S1> {} + hsm::event<e4> {}  [g3] = hsm::state<S2> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 

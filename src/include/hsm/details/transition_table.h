@@ -20,7 +20,6 @@ using EventIdx = Idx;
 using ActionIdx = Idx;
 using GuardIdx = Idx;
 
-// TODO: replace these free standing functions by type alias
 template <typename... Args> constexpr auto transition_table(Args... args)
 {
     return bh::make_tuple(args...);
@@ -135,7 +134,7 @@ const auto has_history = [](auto rootState) {
 const auto get_unexpected_event_handler = [](auto rootState) {
     return bh::if_(
         has_unexpected_event_handler(rootState),
-        [](auto rootState) { return unfold_typeid(rootState).on_unexpected_event(); },
+        [](auto rootState) { return unwrap_typeid(rootState).on_unexpected_event(); },
         [](auto) { return [](auto /*event*/) {}; })(rootState);
 };
 }

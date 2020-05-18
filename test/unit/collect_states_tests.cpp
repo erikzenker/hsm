@@ -97,7 +97,7 @@ struct MainState {
 
 }
 
-TEST_F(CollectStatesTests, should_collect_child_states)
+TEST_F(CollectStatesTests, should_collect_child_states_typeids)
 {
     struct S {
         auto make_transition_table()
@@ -108,14 +108,29 @@ TEST_F(CollectStatesTests, should_collect_child_states)
         }
     };
 
-    auto collectedStates = hsm::collect_child_states(hsm::state<S> {});
+    auto collectedStates = hsm::collect_child_state_typeids(hsm::state<S> {});
     auto expectedStates
         = bh::make_tuple(bh::typeid_(hsm::state<S1> {}), bh::typeid_(hsm::state<S2> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
 
-TEST_F(CollectStatesTests, should_collect_child_states2)
+TEST_F(CollectStatesTests, should_resolve_initial_state_on_collect_child_state_typeids)
+{
+    struct S {
+        static constexpr auto make_transition_table()
+        {
+            return bh::make_tuple(bh::make_tuple(*hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}));
+        }
+    };
+
+    auto collectedStates = hsm::collect_child_state_typeids(hsm::state<S> {});
+    auto expectedStates = bh::make_tuple(bh::typeid_(hsm::state<S1> {}));
+
+    ASSERT_EQ(expectedStates, collectedStates);
+}
+
+TEST_F(CollectStatesTests, should_collect_child_states)
 {
     struct S {
         static constexpr auto make_transition_table()
@@ -126,7 +141,7 @@ TEST_F(CollectStatesTests, should_collect_child_states2)
         }
     };
 
-    auto collectedStates = hsm::collect_child_states(hsm::state<S> {});
+    auto collectedStates = bh::transform(hsm::collect_child_states(hsm::state<S> {}), bh::typeid_);
     auto expectedStates
         = bh::make_tuple(bh::typeid_(hsm::state<S1> {}), bh::typeid_(hsm::state<S2> {}));
 

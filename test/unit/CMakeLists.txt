@@ -24,6 +24,7 @@ add_executable(
           switch_tests.cpp
           variant_queue_tests.cpp
           make_states_map_tests.cpp
+                  collect_initial_states_tests.cpp
         )
 
 target_link_libraries(hsmUnitTests

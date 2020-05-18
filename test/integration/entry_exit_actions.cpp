@@ -49,19 +49,16 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {} + hsm::event<e1> {} / a1 =  hsm::state<S1> {}
+            * hsm::state<S1> {} + hsm::event<e1> {} / a1 =  hsm::state<S1> {}
         );
         // clang-format on
     }
 
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
-    }
     constexpr auto on_entry()
     {
         return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
     }
+
     constexpr auto on_exit()
     {
         return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
@@ -74,20 +71,14 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {}       + hsm::event<e1> {} / a1 = hsm::state<S2> {},
-            hsm::state<S2> {}       + hsm::event<e1> {} / a1 = hsm::state<S1> {},
-            hsm::state<S1> {}       + hsm::event<e2> {} / a1 = hsm::state<SubState> {},
-            hsm::state<SubState> {} + hsm::event<e2> {} / a1 = hsm::state<S1> {}
+            * hsm::state<S1> {}       + hsm::event<e1> {} / a1 = hsm::state<S2> {},
+              hsm::state<S2> {}       + hsm::event<e1> {} / a1 = hsm::state<S1> {},
+              hsm::state<S1> {}       + hsm::event<e2> {} / a1 = hsm::state<SubState> {},
+              hsm::state<SubState> {} + hsm::event<e2> {} / a1 = hsm::state<S1> {}
         );
         // clang-format on
     }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
-    }
 };
-
 }
 
 class EntryExitActionsTests : public Test {

@@ -20,6 +20,8 @@ struct S2 {
 };
 struct S3 {
 };
+struct S4 {
+};
 
 // Events
 struct e1 {
@@ -45,14 +47,9 @@ struct SubSubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {} + hsm::event<e1> {} / log = hsm::state<S2> {}
+            * hsm::state<S1> {} + hsm::event<e1> {} / log = hsm::state<S2> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -61,17 +58,12 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::state<S1> {}          + hsm::event<e1> {} / log = hsm::state<S2> {},
-            hsm::state<S1> {}          + hsm::event<e5> {} / log = hsm::state<S3> {},
-            hsm::state<S2> {}          + hsm::event<e1> {} / log = hsm::state<SubSubState> {},
-            hsm::state<SubSubState> {} + hsm::event<e2> {} / log = hsm::state<S1> {}
+            * hsm::state<S1> {}          + hsm::event<e1> {} / log = hsm::state<S2> {},
+              hsm::state<S1> {}          + hsm::event<e5> {} / log = hsm::state<S3> {},
+              hsm::state<S2> {}          + hsm::event<e1> {} / log = hsm::state<SubSubState> {},
+              hsm::state<SubSubState> {} + hsm::event<e2> {} / log = hsm::state<S1> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -81,22 +73,17 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             //              Source     , Event                    , Target
-            hsm::state<S1> {}       + hsm::event<e1> {} / log = hsm::state<S2> {},
-            hsm::state<S1> {}       + hsm::event<e2> {} / log = hsm::state<S3> {},
-            hsm::state<S1> {}       + hsm::event<e4> {} / log = hsm::state<SubState> {},
-            hsm::state<S1> {}       + hsm::event<e5> {} / log = hsm::state<S3> {},
-            hsm::state<S2> {}       + hsm::event<e1> {} / log = hsm::state<S1> {},
-            hsm::state<S2> {}       + hsm::event<e2> {} / log = hsm::state<S1> {},
-            hsm::state<S2> {}       + hsm::event<e3> {} / log = hsm::state<S3> {},
-            hsm::state<SubState> {} + hsm::event<e2> {} / log = hsm::state<S1> {},
-            hsm::state<SubState> {} + hsm::event<e4> {} / log = hsm::state<SubState> {}
+            * hsm::state<S1> {}       + hsm::event<e1> {} / log = hsm::state<S2> {},
+              hsm::state<S1> {}       + hsm::event<e2> {} / log = hsm::state<S3> {},
+              hsm::state<S1> {}       + hsm::event<e4> {} / log = hsm::state<SubState> {},
+              hsm::state<S1> {}       + hsm::event<e5> {} / log = hsm::state<S3> {},
+              hsm::state<S2> {}       + hsm::event<e1> {} / log = hsm::state<S1> {},
+              hsm::state<S2> {}       + hsm::event<e2> {} / log = hsm::state<S1> {},
+              hsm::state<S2> {}       + hsm::event<e3> {} / log = hsm::state<S3> {},
+              hsm::state<SubState> {} + hsm::event<e2> {} / log = hsm::state<S1> {},
+              hsm::state<SubState> {} + hsm::event<e4> {} / log = hsm::state<SubState> {}
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 
     constexpr auto on_unexpected_event()
