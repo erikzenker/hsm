@@ -71,7 +71,6 @@ template <class Source, class Event, class Guard, class Action> class Transition
         return boost::hana::make_tuple(state<Source> {}, Event {}, guard, action, target);
     }
 
-  private:
     const Guard guard;
     const Action action;
 };
@@ -88,7 +87,6 @@ template <class Source, class Event, class Guard> class TransitionSEG {
         return boost::hana::make_tuple(state<Source> {}, Event {}, guard, noAction {}, target);
     }
 
-  private:
     const Guard guard;
 };
 
@@ -104,7 +102,6 @@ template <class Source, class Event, class Action> class TransitionSEA {
         return boost::hana::make_tuple(state<Source> {}, Event {}, noGuard {}, action, target);
     }
 
-  private:
     const Action action;
 };
 
@@ -228,6 +225,40 @@ template <class Type> struct StateBase {
     {
         return boost::hana::make_tuple(
             state<Type> {}, event<noneEvent> {}, noGuard {}, noAction {}, target);
+    }
+
+    template <class Source, class Event>
+    constexpr auto operator<=(const TransitionSE<Source, Event>& transition)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, Event {}, noGuard {}, noAction {}, state<Type> {});
+    }
+
+    template <class Source, class Event, class Guard>
+    constexpr auto operator<=(const TransitionSEG<Source, Event, Guard>& transition)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, Event {}, transition.guard, noAction {}, state<Type> {});
+    }
+
+    template <class Source, class Event, class Action>
+    constexpr auto operator<=(const TransitionSEA<Source, Event, Action>& transition)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, Event {}, noGuard {}, transition.action, state<Type> {});
+    }
+
+    template <class Source, class Event, class Guard, class Action>
+    constexpr auto operator<=(const TransitionSEGA<Source, Event, Guard, Action>& transition)
+    {
+        return boost::hana::make_tuple(
+            state<Source> {}, Event {}, transition.guard, transition.action, state<Type> {});
+    }
+
+    template <class Source> constexpr auto operator<=(const state<Source>& source)
+    {
+        return boost::hana::make_tuple(
+            source, event<noneEvent> {}, noGuard {}, noAction {}, state<Type> {});
     }
 
     template <class OtherState> bool operator==(OtherState)

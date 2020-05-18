@@ -100,8 +100,15 @@ A click on a particular feature check mark will forward to the feature documenta
     <td><center><a href="https://www.boost.org/doc/libs/1_73_0/libs/statechart/doc/tutorial.html#History">✓</a></center></td>
   </tr>
   <tr>
-    <td>eUml frontend</td>
-    <td><center><a href="test/integration/transition_dsl.cpp">✓</a></center></td>
+    <td>eUml postfix frontend</td>
+    <td><center><a href="test/integration/transition_postfix_dsl.cpp">✓</a></center></td>
+    <td><center><a href="https://boost-experimental.github.io/sml/uml_vs_sml.html">✓</a></center></td>
+    <td><center><a href="https://www.boost.org/doc/libs/1_73_0/libs/msm/doc/HTML/ch03s04.html">✓</a></center></td>
+    <td><center>✗</center></td>
+  </tr>
+  <tr>
+    <td>eUml prefix frontend</td>
+    <td><center><a href="test/integration/transition_prefix_dsl.cpp">✓</a></center></td>
     <td><center><a href="https://boost-experimental.github.io/sml/uml_vs_sml.html">✓</a></center></td>
     <td><center><a href="https://www.boost.org/doc/libs/1_73_0/libs/msm/doc/HTML/ch03s04.html">✓</a></center></td>
     <td><center>✗</center></td>

@@ -22,7 +22,8 @@ add_executable(hsmIntegrationTests
         history_pseudo_state.cpp
         dependency_injection.cpp
         defer_events.cpp
-        transition_dsl.cpp
+        transition_postfix_dsl.cpp
+        transition_prefix_dsl.cpp
         no_action.cpp
         state_data_members.cpp
         transition_logging.cpp
