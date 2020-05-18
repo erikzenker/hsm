@@ -105,8 +105,7 @@ TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action)
         exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
-// TODO: No exit actions of substates are generated
-TEST_F(EntryExitActionsTests, DISABLED_should_call_entry_and_exit_action_of_substate)
+TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action_of_substate)
 {
     auto entryActionCalled = std::make_shared<std::promise<void>>();
     auto exitActionCalled = std::make_shared<std::promise<void>>();

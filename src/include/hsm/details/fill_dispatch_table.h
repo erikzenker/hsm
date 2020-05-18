@@ -195,7 +195,7 @@ const auto addDispatchTableEntryOfSubMachineExits
                           const auto target = resolveDst(transition);                          
                           const auto from = getCombinedStateIdx(combinedStateTypids, parentState, state);
                           const auto guard = getGuard(transition);
-                          const auto action = getAction(transition);
+                          const auto action = resolveAction(transition);
                           const auto to = getCombinedStateIdx(
                               combinedStateTypids, resolveDstParent(transition), target);
                           const auto history = resolveHistory(transition);
