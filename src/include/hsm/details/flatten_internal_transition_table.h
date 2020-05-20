@@ -29,13 +29,13 @@ constexpr auto get_internal_transition_table = [](auto state) {
         [](auto) { return bh::make_tuple(); })(state);
 };
 
-constexpr auto extend_internal_transition = [](auto transition, auto state) {
+constexpr auto extend_internal_transition = [](auto internalTransition, auto state) {
     return bh::make_tuple(
-        bh::at_c<0>(transition),
+        bh::at_c<0>(internalTransition),
         state,
-        bh::at_c<2>(transition),
-        bh::at_c<3>(transition),
-        bh::at_c<4>(transition),
+        bh::at_c<2>(internalTransition),
+        bh::at_c<3>(internalTransition),
+        bh::at_c<4>(internalTransition),
         state);
 };
 
@@ -45,11 +45,12 @@ constexpr auto flatten_internal_transition_table = [](auto parentState) {
     auto internalTransitionTables = bh::transform(states, get_internal_transition_table);
     auto internalTransitions = bh::flatten(bh::filter(internalTransitionTables, isNotEmpty));
 
-    return bh::flatten(bh::transform(internalTransitions, [states](auto transition) {
-        return bh::transform(states, [transition](auto state) {
-            return extend_internal_transition(transition, state);
-        });
-    }));
+    return bh::to<bh::tuple_tag>(
+        bh::flatten(bh::transform(internalTransitions, [states](auto transition) {
+            return bh::transform(states, [transition](auto state) {
+                return extend_internal_transition(transition, state);
+            });
+        })));
 };
 
 } // namespace hsm

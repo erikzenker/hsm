@@ -26,6 +26,11 @@ template <class Event, class Guard, class Action> class TransitionEGA {
     {
     }
 
+    constexpr auto operator+()
+    {
+        return boost::hana::make_tuple(Event {}, guard, action);
+    }
+
   public:
     const Guard guard;
     const Action action;
@@ -43,6 +48,11 @@ template <class Event, class Guard> class TransitionEG {
         return TransitionEGA<Event, Guard, Action> { guard, action };
     }
 
+    constexpr auto operator+()
+    {
+        return boost::hana::make_tuple(Event {}, guard, noAction {});
+    }
+
   public:
     const Guard guard;
 };
@@ -52,6 +62,11 @@ template <class Event, class Action> class TransitionEA {
     constexpr TransitionEA(const Action& action)
         : action(action)
     {
+    }
+
+    constexpr auto operator+()
+    {
+        return boost::hana::make_tuple(Event {}, noGuard {}, action);
     }
 
   public:
@@ -115,6 +130,11 @@ template <class Source, class Event> class TransitionSE {
 
 template <class Event> struct event {
     static constexpr boost::hana::type<Event> typeid_ {};
+
+    constexpr auto operator+()
+    {
+        return boost::hana::make_tuple(event<Event> {}, noGuard {}, noAction {});
+    }
 
     template <class Guard> constexpr auto operator[](const Guard& guard)
     {

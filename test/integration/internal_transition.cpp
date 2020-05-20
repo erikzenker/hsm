@@ -28,13 +28,21 @@ struct e2 {
 };
 struct e3 {
 };
+struct e4 {
+    e4(const std::shared_ptr<std::promise<void>>& called)
+        : called(called)
+    {
+    }
+    std::shared_ptr<std::promise<void>> called;
+};
+struct e5 {
+};
 
 // Guards
-const auto g1 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
+const auto fail = [](auto /*event*/, auto /*source*/, auto /*target*/) { return false; };
 
 // Actions
-const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
-const auto a2 = [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
+const auto action = [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
 
 using namespace ::testing;
 using namespace boost::hana;
@@ -53,7 +61,7 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(hsm::event<e1> {}, g1, a1)
+            + (hsm::event<e1> {})
         );
         // clang-format on
     }
@@ -75,8 +83,10 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(hsm::event<e1> {}, g1, a1),
-            hsm::transition(hsm::event<e2> {}, g1, a2)
+            + (hsm::event<e1>{}),
+            + (hsm::event<e2>{} / action),
+            + (hsm::event<e5>{} [fail]),
+            + (hsm::event<e4>{} [fail] / action)
         );
         // clang-format on
     }
@@ -113,4 +123,26 @@ TEST_F(InternalTransitionTests, should_call_action_on_internal_transition)
 
     ASSERT_EQ(
         std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
+}
+
+TEST_F(InternalTransitionTests, should_guard_internal_transition)
+{
+    auto actionCalled = std::make_shared<std::promise<void>>();
+
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    sm.process_event(e5 {});
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+}
+
+TEST_F(InternalTransitionTests, should_guard_internal_transition_with_action)
+{
+    auto actionCalled = std::make_shared<std::promise<void>>();
+
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    sm.process_event(e4 { actionCalled });
+    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+
+    ASSERT_EQ(
+        std::future_status::timeout,
+        actionCalled->get_future().wait_for(std::chrono::milliseconds(1)));
 }
