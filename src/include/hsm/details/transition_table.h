@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../front/transition.h"
-#include "index_map.h"
-#include "collect_states.h"
 #include "collect_guards.h"
 #include "collect_parent_states.h"
+#include "collect_states.h"
+#include "event.h"
+#include "index_map.h"
 
 #include <boost/hana.hpp>
 
@@ -19,31 +19,6 @@ using StateIdx = Idx;
 using EventIdx = Idx;
 using ActionIdx = Idx;
 using GuardIdx = Idx;
-
-template <typename... Args> constexpr auto transition_table(Args... args)
-{
-    return bh::make_tuple(args...);
-}
-
-template <typename... Args> constexpr auto row(Args... args)
-{
-    return bh::make_tuple(args...);
-}
-
-template <typename... Args> constexpr auto transition(Args... args)
-{
-    return bh::make_tuple(args...);
-}
-
-template <typename... Args> constexpr auto initial(Args... args)
-{
-    return bh::make_tuple(args...);
-}
-
-template <typename... Args> constexpr auto defer(Args... args)
-{
-    return bh::make_tuple(args...);
-}
 
 constexpr auto getIdx = [](auto map, auto type) -> Idx { return bh::find(map, type).value(); };
 

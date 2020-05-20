@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../front/transition.h"
 #include "pseudo_states.h"
 
 #include <boost/hana.hpp>

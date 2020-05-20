@@ -1,6 +1,6 @@
 
-#include "hsm/details/transition_table.h"
 #include "hsm/details/flatten_internal_transition_table.h"
+#include "hsm/front/transition_dsl.h"
 
 #include <gtest/gtest.h>
 
