@@ -1,9 +1,19 @@
 cmake_minimum_required(VERSION 3.5)
 project(hsm)
 
+# Conan
 if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
     include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
     conan_basic_setup(TARGETS)
+endif()
+
+# Sanatizers
+if(${HSM_ASAN})
+    set(CMAKE_CXX_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
+endif()
+
+if(${HSM_UBSAN})
+    set(CMAKE_CXX_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer -fno-sanitize-recover -fsanitize=float-divide-by-zero")
 endif()
 
 # dependencies

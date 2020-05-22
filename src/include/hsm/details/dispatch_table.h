@@ -14,6 +14,11 @@ namespace bh {
 using namespace boost::hana;
 }
 
+template <class T> auto& get(std::reference_wrapper<T> ref)
+{
+    return ref.get();
+}
+
 template <class Event> struct ITransition {
     virtual ~ITransition() = default;
     virtual void executeAction(Event& event) = 0;
@@ -32,14 +37,14 @@ class Transition final : public ITransition<Event> {
     Transition(
         Action action,
         Guard guard,
-        SourcePtr source,
-        TargetPtr target,
+        const SourcePtr& source,
+        const TargetPtr& target,
         OptionalDependency optionalDependency)
-        : action(action)
-        , guard(guard)
-        , source(source)
-        , target(target)
-        , optionalDependency(optionalDependency)
+        : m_action(action)
+        , m_guard(guard)
+        , m_source(source)
+        , m_target(target)
+        , m_optionalDependency(optionalDependency)
     {
     }
 
@@ -47,14 +52,18 @@ class Transition final : public ITransition<Event> {
     {
         // clang-format off
         bh::if_(
-            is_no_action(action),
+            is_no_action(m_action),
             [](auto&&...) {},
-            [](auto&& action, auto&& event, auto&& source, auto&& target, auto&& optionalDependency) {
-                bh::unpack(optionalDependency, [&action, &event, &source, &target](auto... optionalDependency){
-                    action(event, *source, *target, optionalDependency...);
+            [](auto& action, 
+               auto& event, 
+               const auto& source, 
+               const auto& target, 
+               const auto& optionalDependency) {
+                bh::unpack(optionalDependency, [&action, &event, &source, &target](const auto&... optionalDependency){
+                    action(event, *source, *target, get(optionalDependency)...);
                 });
             })
-        (action, event, source, target, optionalDependency);
+        (m_action, event, m_source, m_target, m_optionalDependency);
         // clang-format on
     }
 
@@ -62,28 +71,28 @@ class Transition final : public ITransition<Event> {
     {
         // clang-format off
         return bh::if_(
-            is_no_guard(guard),
+            is_no_guard(m_guard),
             [](auto&&...) { return true; },
-            [](auto&& guard,
-               auto&& event,
-               auto&& source,
-               auto&& target,
-               auto&& optionalDependency) {
+            [](auto& guard,
+               auto& event,
+               const auto& source,
+               const auto& target,
+               const auto& optionalDependency) {
                 return bh::unpack(
                     optionalDependency,
-                    [&guard, &event, &source, &target](auto... optionalDependency) {
-                        return guard(event, *source, *target, optionalDependency...);
+                    [&guard, &event, &source, &target](const auto&... optionalDependency) {
+                        return guard(event, *source, *target, get(optionalDependency)...);
                     });
-            })(guard, event, source, target, optionalDependency);
+            })(m_guard, event, m_source, m_target, m_optionalDependency);
         // clang-format on
     }
 
   private:
-    Action action;
-    Guard guard;
-    SourcePtr source;
-    TargetPtr target;
-    OptionalDependency optionalDependency;
+    Action m_action;
+    Guard m_guard;
+    SourcePtr m_source;
+    TargetPtr m_target;
+    OptionalDependency m_optionalDependency;
 };
 
 auto make_transition = [](auto action,
