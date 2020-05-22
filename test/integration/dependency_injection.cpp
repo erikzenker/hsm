@@ -17,14 +17,14 @@ struct e1 {
 };
 
 // Guards
-const auto g1 = [](auto /*event*/, auto /*source*/, auto /*target*/, const auto& dependency) {
-    (*dependency.callCount)++;
+constexpr auto guard = [](auto /*event*/, auto /*source*/, auto /*target*/, auto& dependency) {
+    dependency.callCount++;
     return true;
 };
 
 // Actions
-const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/, const auto& dependency) {
-    (*dependency.callCount)++;
+constexpr auto action = [](auto /*event*/, auto /*source*/, auto /*target*/, auto& dependency) {
+    dependency.callCount++;
 };
 
 using namespace ::testing;
@@ -34,31 +34,41 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} +  hsm::event<e1> {} [g1] /  a1 = hsm::state<S1> {}
+            * hsm::state<S1> {} +  hsm::event<e1> {} [guard] / action = hsm::state<S1> {}
         );
         // clang-format on
     }
 };
-
 }
 
 class DependencyInjectionTests : public Test {
-    struct Dependency {
-        std::shared_ptr<int> callCount = std::make_shared<int>(0);
-    };
-
   protected:
-    DependencyInjectionTests()
-        : sm(dependency)
-    {
-    }
-
-    Dependency dependency;
-    hsm::sm<MainState, Dependency> sm;
+    struct Dependency {
+        int callCount = 0;
+    };
 };
 
-TEST_F(DependencyInjectionTests, should_inject_dependency_with_shared_ptr)
+TEST_F(DependencyInjectionTests, should_inject_dependency)
 {
+    Dependency dependency;
+    hsm::sm<MainState, Dependency> sm { dependency };
+
     sm.process_event(e1 {});
-    ASSERT_EQ(2, *dependency.callCount);
+    ASSERT_EQ(2, dependency.callCount);
+}
+
+TEST_F(DependencyInjectionTests, should_set_dependency)
+{
+    Dependency dependency;
+    Dependency newDependency;
+    hsm::sm<MainState, Dependency> sm { dependency };
+
+    sm.process_event(e1 {});
+    ASSERT_EQ(2, dependency.callCount);
+
+    sm.set_dependency(newDependency);
+
+    sm.process_event(e1 {});
+    // ASSERT_EQ(2, dependency.callCount);
+    // ASSERT_EQ(2, newDependency.callCount);
 }

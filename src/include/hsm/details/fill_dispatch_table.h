@@ -166,7 +166,7 @@ constexpr auto resolveHistory = [](auto&& transition) {
     // clang-format on                   
 };
 
-constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable, auto eventTypeid, auto&& statesMap, auto&& optionalDependency) {
+constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable, auto eventTypeid, auto&& statesMap, auto optionalDependency) {
           const auto source = resolveSrc(transition);
           const auto target = resolveDst(transition);
           const auto from = getCombinedStateIdx(combinedStateTypids, resolveSrcParent(transition), source);
@@ -184,7 +184,7 @@ constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& tra
       };
 
 const auto addDispatchTableEntryOfSubMachineExits
-    = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable, auto&& eventTypeid, auto&& statesMap, auto&& optionalDependency) {
+    = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable, auto&& eventTypeid, auto&& statesMap, auto optionalDependency) {
           bh::if_(
               has_transition_table(getSrc(transition)),
               [&](auto parentState) {

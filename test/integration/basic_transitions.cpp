@@ -34,6 +34,8 @@ struct e4 {
 };
 struct e5 {
 };
+struct e6 {
+};
 
 // Actions
 const auto log = [](auto event, auto source, auto target) {
@@ -77,6 +79,7 @@ struct MainState {
               hsm::state<S1> {}       + hsm::event<e2> {} / log = hsm::state<S3> {},
               hsm::state<S1> {}       + hsm::event<e4> {} / log = hsm::state<SubState> {},
               hsm::state<S1> {}       + hsm::event<e5> {} / log = hsm::state<S3> {},
+              hsm::state<S1> {}       + hsm::event<e6> {} / log = hsm::state<S1> {},
               hsm::state<S2> {}       + hsm::event<e1> {} / log = hsm::state<S1> {},
               hsm::state<S2> {}       + hsm::event<e2> {} / log = hsm::state<S1> {},
               hsm::state<S2> {}       + hsm::event<e3> {} / log = hsm::state<S3> {},
@@ -174,4 +177,13 @@ TEST_F(BasicTransitionTests, should_reentry_substate_on_initial_state)
     sm.process_event(e4 {});
     ASSERT_TRUE(sm.parent_is(hsm::state<SubState> {}));
     ASSERT_TRUE(sm.is(hsm::state<SubState> {}, hsm::state<S1> {}));
+}
+
+TEST_F(BasicTransitionTests, should_self_transit)
+{
+    ASSERT_TRUE(sm.is(hsm::state<MainState> {}, hsm::state<S1> {}));
+    sm.process_event(e6 {});
+    ASSERT_TRUE(sm.is(hsm::state<MainState> {}, hsm::state<S1> {}));
+    sm.process_event(e6 {});
+    ASSERT_TRUE(sm.is(hsm::state<MainState> {}, hsm::state<S1> {}));
 }

@@ -32,14 +32,11 @@ template <class RootState, class... OptionalParameters> class sm {
     StatesMap m_statesMap;
 
   public:
-    sm(OptionalParameters... optionalParameters)
+    sm(OptionalParameters&... optionalParameters)
         : m_defer_queue(collect_events_recursive(state<RootState> {}))
         , m_statesMap(make_states_map(state<RootState> {}))
     {
-        auto optionalDependency = bh::make_tuple(optionalParameters...);
-        fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
-        fill_dispatch_table_with_internal_transitions(rootState(), m_statesMap, optionalDependency);
-        fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);
+        fill_dispatch_table(optionalParameters...);
         fill_initial_state_table(rootState(), m_initial_states);
         fill_initial_state_table(rootState(), m_history);
         init_current_state();
@@ -91,6 +88,11 @@ template <class RootState, class... OptionalParameters> class sm {
         return statusStream.str();
     }
 
+    auto set_dependency(OptionalParameters&... optionalParameters)
+    {
+        fill_dispatch_table(optionalParameters...);
+    }
+
   private:
     template <class Event> auto process_event_internal(Event&& event) -> bool
     {
@@ -100,12 +102,12 @@ template <class RootState, class... OptionalParameters> class sm {
 
             auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
-            if (result.defer) {
+            if(result.defer){
                 m_defer_queue.push(event);
                 return true;
             }
 
-            if (!result.valid) {
+            if(!result.valid){
                 return false;
             }
 
@@ -239,6 +241,14 @@ template <class RootState, class... OptionalParameters> class sm {
                 initialParentState,
                 m_initial_states[initialParentState][region]);
         }
+    }
+
+    void fill_dispatch_table(OptionalParameters&... optionalParameters)
+    {
+        auto optionalDependency = bh::make_tuple(std::ref(optionalParameters)...);
+        fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
+        fill_dispatch_table_with_internal_transitions(rootState(), m_statesMap, optionalDependency);
+        fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);
     }
 };
 }
