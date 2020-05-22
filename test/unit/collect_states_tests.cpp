@@ -1,7 +1,7 @@
 #include "hsm/details/collect_parent_states.h"
 #include "hsm/details/collect_states.h"
 #include "hsm/details/make_states_map.h"
-#include "hsm/details/transition_table.h"
+#include "hsm/front/transition_tuple.h"
 
 #include <gtest/gtest.h>
 
@@ -42,7 +42,7 @@ const auto a1 = [](auto event) {};
 struct Defer {
     constexpr auto defer_events()
     {
-        return hsm::defer(e1{});
+        return hsm::events(e1{});
     }    
 };
 
@@ -64,14 +64,9 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
+            hsm::transition(* hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
     }
 };
 
@@ -81,17 +76,12 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
+            hsm::transition(* hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
             hsm::transition(hsm::state<S2> {}, hsm::event<e1> {}, g1, a1, hsm::state<SubState> {}),
             // Region 1
-            hsm::transition(hsm::state<S3> {}, hsm::event<e1> {}, g1, a1, hsm::state<S4> {})
+            hsm::transition(* hsm::state<S3> {}, hsm::event<e1> {}, g1, a1, hsm::state<S4> {})
         );
         // clang-format on
-    }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {}, hsm::state<S3> {});
     }
 };
 

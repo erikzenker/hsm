@@ -56,11 +56,6 @@ struct SubState {
         );
         // clang-format on
     }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {});
-    }
 };
 
 struct MainState {
@@ -92,13 +87,7 @@ struct MainState {
         );
         // clang-format on
     }
-
-    static constexpr auto initial_state()
-    {
-        return hsm::initial(hsm::state<S1> {}, hsm::state<S3> {});
-    }
 };
-
 }
 
 class OrthogonalRegionsTests : public Test {

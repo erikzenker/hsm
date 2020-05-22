@@ -1,4 +1,5 @@
 #include "hsm/details/collect_events.h"
+#include "hsm/details/state.h"
 #include "hsm/details/transition_table.h"
 
 #include <gtest/gtest.h>

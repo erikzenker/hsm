@@ -1,5 +1,5 @@
 #include "hsm/details/fill_dispatch_table.h"
-#include "hsm/details/transition_table.h"
+#include "hsm/front/transition_dsl.h"
 
 #include <gtest/gtest.h>
 
@@ -40,7 +40,7 @@ const auto a1 = [](auto event) {};
 struct Defer {
     constexpr auto defer_events()
     {
-        return hsm::defer(e1{});
+        return hsm::events(e1{});
     }    
 };
 
