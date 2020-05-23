@@ -5,7 +5,11 @@
 #include "remove_duplicates.h"
 #include "traits.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/at.hpp>
+#include <boost/hana/concat.hpp>
+#include <boost/hana/flatten.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/tuple.hpp>
 
 namespace hsm {
 

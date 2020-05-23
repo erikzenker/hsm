@@ -64,7 +64,7 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(* hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
+            hsm::transition(hsm::initial<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
         );
         // clang-format on
     }
@@ -76,10 +76,10 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(* hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
+            hsm::transition(hsm::initial<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
             hsm::transition(hsm::state<S2> {}, hsm::event<e1> {}, g1, a1, hsm::state<SubState> {}),
             // Region 1
-            hsm::transition(* hsm::state<S3> {}, hsm::event<e1> {}, g1, a1, hsm::state<S4> {})
+            hsm::transition(hsm::initial<S3> {}, hsm::event<e1> {}, g1, a1, hsm::state<S4> {})
         );
         // clang-format on
     }
@@ -92,9 +92,9 @@ TEST_F(CollectStatesTests, should_collect_child_states_typeids)
     struct S {
         auto make_transition_table()
         {
-            return bh::make_tuple(
-                bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
-                bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
+                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
@@ -110,7 +110,8 @@ TEST_F(CollectStatesTests, should_resolve_initial_state_on_collect_child_state_t
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(*hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}));
+            return hsm::transition_table(
+                hsm::transition(*hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}));
         }
     };
 
@@ -125,9 +126,9 @@ TEST_F(CollectStatesTests, should_collect_child_states)
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(
-                bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
-                bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
+                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
@@ -143,7 +144,7 @@ TEST_F(CollectStatesTests, should_collect_empty_child_state_recursive)
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple();
+            return hsm::transition_table();
         }
     };
 
@@ -158,9 +159,9 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive_on_top_l
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(
-                bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
-                bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
+                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
@@ -176,14 +177,16 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive)
     struct P {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }
     };
 
@@ -201,7 +204,7 @@ TEST_F(CollectStatesTests, should_collect_at_least_parent_state)
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple();
+            return hsm::transition_table();
         }
     };
 
@@ -216,14 +219,16 @@ TEST_F(CollectStatesTests, should_collect_state_typeids_recursive)
     struct P {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }
     };
 
@@ -242,14 +247,16 @@ TEST_F(CollectStatesTests, should_collect_states_recursive)
     struct P {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }
     };
 

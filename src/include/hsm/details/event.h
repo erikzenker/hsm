@@ -2,7 +2,7 @@
 
 #include "forwards.h"
 
-#include <boost/hana/tuple.hpp>
+#include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/type.hpp>
 
 namespace hsm {
@@ -16,7 +16,7 @@ template <class Event> struct event {
 
     constexpr auto operator+()
     {
-        return bh::make_tuple(event<Event> {}, noGuard {}, noAction {});
+        return bh::make_basic_tuple(event<Event> {}, noGuard {}, noAction {});
     }
 
     template <class Guard> constexpr auto operator[](const Guard& guard)

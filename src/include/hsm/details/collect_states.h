@@ -5,7 +5,12 @@
 #include "to_pairs.h"
 #include "traits.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/at.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/flatten.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/type.hpp>
 
 namespace hsm {
 
@@ -30,17 +35,17 @@ constexpr auto resolveExtentedInitialState = [](auto transition) {
 };
 
 constexpr auto extractExtendedStateTypeids = [](auto transition) {
-    return bh::make_tuple(
+    return bh::make_basic_tuple(
         bh::typeid_(resolveExtentedInitialState(transition)), bh::typeid_(bh::at_c<5>(transition)));
 };
 constexpr auto extractExtendedStates = [](auto transition) {
-    return bh::make_tuple(resolveExtentedInitialState(transition), bh::at_c<5>(transition));
+    return bh::make_basic_tuple(resolveExtentedInitialState(transition), bh::at_c<5>(transition));
 };
 const auto extractStates = [](auto transition) {
-    return bh::make_tuple(bh::at_c<0>(transition), bh::at_c<4>(transition));
+    return bh::make_basic_tuple(bh::at_c<0>(transition), bh::at_c<4>(transition));
 };
 constexpr auto extractStateTypeids = [](auto transition) {
-    return bh::make_tuple(
+    return bh::make_basic_tuple(
         bh::typeid_(resolveInitialState(transition)), bh::typeid_(bh::at_c<4>(transition)));
 };
 }

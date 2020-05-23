@@ -2,7 +2,12 @@
 
 #include "traits.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/back.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/flatten.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/prepend.hpp>
+#include <boost/hana/transform.hpp>
 
 namespace hsm {
 
@@ -16,14 +21,13 @@ template <class State> constexpr auto flatten_sub_transition_table(State state);
 
 template <class State> constexpr auto flatten_transition_table(State state)
 {
-
-    const auto flattenSubTransitionTable = [state](auto transition) {
-        const auto extentedTransition = bh::prepend(transition, state);
+    constexpr auto flattenSubTransitionTable = [](auto state, auto transition) {
+        auto extentedTransition = bh::prepend(transition, state);
         return bh::prepend(flatten_sub_transition_table(bh::back(transition)), extentedTransition);
     };
 
     constexpr auto transitionTable = make_transition_table2(state);
-    const auto extendedTransitionTable = bh::transform(transitionTable, flattenSubTransitionTable);
+    constexpr auto extendedTransitionTable = bh::transform(transitionTable, bh::partial(flattenSubTransitionTable, state));
     return bh::flatten(extendedTransitionTable);
 }
 
@@ -36,7 +40,7 @@ template <class State> constexpr auto flatten_sub_transition_table(State state)
         [](auto stateWithTransitionTable) {
             return flatten_transition_table(stateWithTransitionTable);
         },
-        [](auto) { return bh::make_tuple(); })(state);
+        [](auto) { return bh::make_basic_tuple(); })(state);
     // clang-format on
 }
 }

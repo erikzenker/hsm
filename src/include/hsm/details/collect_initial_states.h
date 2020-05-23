@@ -4,6 +4,12 @@
 #include "for_each_idx.h"
 #include "transition_table.h"
 
+#include <boost/hana/find.hpp>
+#include <boost/hana/fold.hpp>
+#include <boost/hana/max.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/transform.hpp>
+
 #include <vector>
 
 namespace hsm {

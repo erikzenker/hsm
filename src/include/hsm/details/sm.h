@@ -245,7 +245,7 @@ template <class RootState, class... OptionalParameters> class sm {
 
     void fill_dispatch_table(OptionalParameters&... optionalParameters)
     {
-        auto optionalDependency = bh::make_tuple(std::ref(optionalParameters)...);
+        auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
         fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
         fill_dispatch_table_with_internal_transitions(rootState(), m_statesMap, optionalDependency);
         fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);

@@ -9,13 +9,17 @@
 #include "to_pairs.h"
 #include "transition_table.h"
 
-#include <boost/hana.hpp>
-#include <boost/hana/experimental/printable.hpp>
-
-#include <functional>
-#include <optional>
-#include <tuple>
-#include <vector>
+#include <boost/hana/equal.hpp>
+#include <boost/hana/filter.hpp>
+#include <boost/hana/find.hpp>
+#include <boost/hana/for_each.hpp>
+#include <boost/hana/functional/apply.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/lazy.hpp>
+#include <boost/hana/length.hpp>
+#include <boost/hana/mult.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/type.hpp>
 
 namespace hsm {
 

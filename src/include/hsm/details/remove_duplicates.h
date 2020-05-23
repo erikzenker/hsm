@@ -1,7 +1,8 @@
 #pragma once
 
-#include <boost/hana.hpp>
-#include <iostream>
+#include <boost/hana/map.hpp>
+#include <boost/hana/pair.hpp>
+#include <boost/hana/type.hpp>
 
 namespace hsm {
 
