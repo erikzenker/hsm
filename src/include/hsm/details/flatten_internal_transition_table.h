@@ -1,7 +1,7 @@
 #pragma once
 
-#include "collect_states.h"
-#include "traits.h"
+#include "hsm/details/collect_states.h"
+#include "hsm/details/traits.h"
 
 #include <boost/hana/append.hpp>
 #include <boost/hana/at.hpp>

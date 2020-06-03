@@ -1,6 +1,6 @@
 #pragma once
 
-#include "to_pairs.h"
+#include "hsm/details/to_pairs.h"
 
 #include <boost/hana/drop_while.hpp>
 #include <boost/hana/map.hpp>

@@ -1,5 +1,5 @@
 #pragma once
 
-#include "details/sm.h"
-#include "front/transition_dsl.h"
-#include "front/transition_tuple.h"
+#include "hsm/details/sm.h"
+#include "hsm/front/transition_dsl.h"
+#include "hsm/front/transition_tuple.h"

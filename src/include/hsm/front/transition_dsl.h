@@ -3,7 +3,7 @@
 #include "hsm/details/event.h"
 #include "hsm/details/pseudo_states.h"
 #include "hsm/details/state.h"
-#include "transition_tuple.h"
+#include "hsm/front/transition_tuple.h"
 
 #include <boost/hana/bool.hpp>
 #include <boost/hana/tuple.hpp>

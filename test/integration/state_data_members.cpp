@@ -1,4 +1,3 @@
-#include "hsm/details/transition_table.h"
 #include "hsm/hsm.h"
 
 #include <gtest/gtest.h>

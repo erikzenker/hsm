@@ -1,6 +1,6 @@
 #pragma once
 
-#include "traits.h"
+#include "hsm/details/traits.h"
 
 #include <boost/hana/back.hpp>
 #include <boost/hana/basic_tuple.hpp>

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "collect_events.h"
-#include "collect_initial_states.h"
-#include "dispatch_table.h"
-#include "flatten_internal_transition_table.h"
-#include "for_each_idx.h"
-#include "switch.h"
-#include "to_pairs.h"
-#include "transition_table.h"
+#include "hsm/details/collect_events.h"
+#include "hsm/details/collect_initial_states.h"
+#include "hsm/details/dispatch_table.h"
+#include "hsm/details/flatten_internal_transition_table.h"
+#include "hsm/details/for_each_idx.h"
+#include "hsm/details/switch.h"
+#include "hsm/details/to_pairs.h"
+#include "hsm/details/transition_table.h"
 
 #include <boost/hana/equal.hpp>
 #include <boost/hana/filter.hpp>

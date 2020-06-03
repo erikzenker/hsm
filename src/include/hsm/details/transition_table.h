@@ -1,10 +1,10 @@
 #pragma once
 
-#include "collect_guards.h"
-#include "collect_parent_states.h"
-#include "collect_states.h"
-#include "event.h"
-#include "index_map.h"
+#include "hsm/details/collect_guards.h"
+#include "hsm/details/collect_parent_states.h"
+#include "hsm/details/collect_states.h"
+#include "hsm/details/event.h"
+#include "hsm/details/index_map.h"
 
 #include <boost/hana/at.hpp>
 #include <boost/hana/cartesian_product.hpp>

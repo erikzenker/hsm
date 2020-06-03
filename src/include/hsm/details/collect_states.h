@@ -1,9 +1,9 @@
 #pragma once
 
-#include "flatten_transition_table.h"
-#include "remove_duplicates.h"
-#include "to_pairs.h"
-#include "traits.h"
+#include "hsm/details/flatten_transition_table.h"
+#include "hsm/details/remove_duplicates.h"
+#include "hsm/details/to_pairs.h"
+#include "hsm/details/traits.h"
 
 #include <boost/hana/at.hpp>
 #include <boost/hana/basic_tuple.hpp>

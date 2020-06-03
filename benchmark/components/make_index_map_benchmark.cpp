@@ -1,4 +1,3 @@
-#include <hsm/hsm.h>
 #include <iostream>
 
 #include "ComplexStateMachine.h"

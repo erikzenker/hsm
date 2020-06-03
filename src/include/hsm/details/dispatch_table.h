@@ -1,6 +1,6 @@
 #pragma once
 
-#include "transition_table.h"
+#include "hsm/details/transition_table.h"
 
 #include <boost/any.hpp>
 

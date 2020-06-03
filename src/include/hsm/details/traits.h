@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pseudo_states.h"
+#include "hsm/details/pseudo_states.h"
 
 #include <boost/hana/bool.hpp>
 #include <boost/hana/equal.hpp>
