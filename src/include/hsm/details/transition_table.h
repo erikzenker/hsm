@@ -6,7 +6,12 @@
 #include "event.h"
 #include "index_map.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/at.hpp>
+#include <boost/hana/cartesian_product.hpp>
+#include <boost/hana/find.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/type.hpp>
 
 namespace hsm {
 
@@ -49,12 +54,12 @@ constexpr auto getCombinedStateTypeids = [](const auto& rootState) {
     auto parentStateTypeids = collect_parent_state_typeids(rootState);
     auto stateTypeids = collect_state_typeids_recursive(rootState);
     auto stateCartesianProduct
-        = bh::cartesian_product(bh::make_tuple(parentStateTypeids, stateTypeids));
+        = bh::cartesian_product(bh::make_basic_tuple(parentStateTypeids, stateTypeids));
     return bh::transform(stateCartesianProduct, bh::typeid_);
 };
 
-constexpr auto getCombinedStateTypeid = [](const auto& parentState, const auto& state){
-    return bh::typeid_(bh::make_tuple(bh::typeid_(parentState), bh::typeid_(state)));
+constexpr auto getCombinedStateTypeid = [](const auto& parentState, const auto& state) {
+    return bh::typeid_(bh::make_basic_tuple(bh::typeid_(parentState), bh::typeid_(state)));
 };
 
 constexpr auto getCombinedStateIdx = [](auto combinedStateTypids, auto parentState, auto state) {

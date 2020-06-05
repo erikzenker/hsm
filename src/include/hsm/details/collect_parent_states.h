@@ -4,7 +4,9 @@
 #include "remove_duplicates.h"
 #include "traits.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/front.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/type.hpp>
 
 namespace hsm {
 

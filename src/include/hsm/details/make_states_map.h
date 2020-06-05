@@ -3,7 +3,10 @@
 #include "collect_states.h"
 #include "to_pairs.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/append.hpp>
+#include <boost/hana/map.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/zip.hpp>
 
 namespace hsm {
 

@@ -2,7 +2,11 @@
 
 #include "pseudo_states.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/bool.hpp>
+#include <boost/hana/equal.hpp>
+#include <boost/hana/functional/compose.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/type.hpp>
 
 #include <memory>
 #include <utility>

@@ -1,6 +1,8 @@
 #pragma once
 
-#include <boost/hana.hpp>
+#include <boost/hana/type.hpp>
+#include <boost/hana/unpack.hpp>
+
 #include <stdexcept>
 #include <queue>
 #include <variant>

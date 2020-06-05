@@ -5,7 +5,9 @@
 #include "traits.h"
 #include "flatten_transition_table.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/at.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/type.hpp>
 
 namespace hsm {
 

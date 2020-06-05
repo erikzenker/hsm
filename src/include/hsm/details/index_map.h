@@ -2,8 +2,16 @@
 
 #include "to_pairs.h"
 
-#include <boost/hana.hpp>
-#include <boost/mp11.hpp>
+#include <boost/hana/drop_while.hpp>
+#include <boost/hana/map.hpp>
+#include <boost/hana/minus.hpp>
+#include <boost/hana/not_equal.hpp>
+#include <boost/hana/range.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/zip.hpp>
+
+//#include <boost/mp11.hpp>
 
 namespace hsm {
 
@@ -20,7 +28,7 @@ constexpr auto index_of = [](auto const& iterable, auto const& element) {
 };
 
 const auto make_index_map = [](auto typeids) {
-    const auto range = bh::to_tuple(bh::make_range(bh::int_c<0>, bh::size(typeids)));
+    const auto range = bh::to<bh::basic_tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(typeids)));
     return bh::to_map(to_pairs(bh::zip(typeids, range)));
 };
 
@@ -31,7 +39,7 @@ const auto make_index_map = [](auto typeids) {
 // };
 
 // constexpr auto make_reverse_index_map = [](auto&& tuple) {
-//     auto range = bh::to_tuple(bh::make_range(bh::int_c<0>, bh::size(tuple)));
+//     auto range = bh::to<bh::basic_tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(tuple)));
 //     auto ids
 //         = bh::transform(range, [](auto&& element) { return boost::mp11::mp_size_t<element> {}; });
 

@@ -3,7 +3,15 @@
 #include "collect_states.h"
 #include "traits.h"
 
-#include <boost/hana.hpp>
+#include <boost/hana/append.hpp>
+#include <boost/hana/at.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/equal.hpp>
+#include <boost/hana/filter.hpp>
+#include <boost/hana/not.hpp>
+#include <boost/hana/prepend.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/transform.hpp>
 
 namespace hsm {
 
@@ -26,11 +34,11 @@ constexpr auto get_internal_transition_table = [](auto state) {
                     parentState);
             });
         },
-        [](auto) { return bh::make_tuple(); })(state);
+        [](auto) { return bh::make_basic_tuple(); })(state);
 };
 
 constexpr auto extend_internal_transition = [](auto internalTransition, auto state) {
-    return bh::make_tuple(
+    return bh::make_basic_tuple(
         bh::at_c<0>(internalTransition),
         state,
         bh::at_c<2>(internalTransition),
@@ -45,7 +53,7 @@ constexpr auto flatten_internal_transition_table = [](auto parentState) {
     auto internalTransitionTables = bh::transform(states, get_internal_transition_table);
     auto internalTransitions = bh::flatten(bh::filter(internalTransitionTables, isNotEmpty));
 
-    return bh::to<bh::tuple_tag>(
+    return bh::to<bh::basic_tuple_tag>(
         bh::flatten(bh::transform(internalTransitions, [states](auto transition) {
             return bh::transform(states, [transition](auto state) {
                 return extend_internal_transition(transition, state);

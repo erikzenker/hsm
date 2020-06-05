@@ -1,6 +1,8 @@
 #pragma once
 
-#include <boost/hana.hpp>
+#include <boost/hana/at.hpp>
+#include <boost/hana/pair.hpp>
+#include <boost/hana/transform.hpp>
 
 namespace hsm {
 
