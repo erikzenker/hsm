@@ -223,26 +223,27 @@ constexpr auto filter_transitions = [](auto transitions, auto eventTypeid) {
     return bh::filter(transitions, isEvent);
 };
 
-template <class RootState, class StatesMap, class OptionalDependency, class Transitions>
-constexpr auto fill_dispatch_table_with_transitions(
-    RootState rootState, StatesMap&& statesMap, OptionalDependency&& optionalDependency, Transitions transitions)
-{
-    auto eventTypeids = collect_event_typeids_recursive_with_transitions(transitions);
-    constexpr auto combinedStateTypeids = getCombinedStateTypeids(rootState);
-    constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
-
-    bh::for_each(eventTypeids, [&](auto eventTypeid) {
-        using Event = typename decltype(eventTypeid)::type;
-
-        auto filteredTransitions = filter_transitions(transitions, eventTypeid);
-        auto& dispatchTable = DispatchTable<states, Event>::table;
-
-        bh::for_each(filteredTransitions, [&](auto transition) {
+constexpr auto fill_dispatch_table_with_filtered_transitions = [](auto rootState, auto combinedStateTypeids, auto eventTypeid, auto&& statesMap, auto&& optionalDependency, auto transition){
+            using Event = typename decltype(eventTypeid)::type;  
+            constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
+            auto& dispatchTable = DispatchTable<states, Event>::table;
             addDispatchTableEntry(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
             addDispatchTableEntryOfSubMachineExits(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
-        });
-    });
-}
+};
+
+constexpr auto fill_dispatch_table_with_transitions_for_event = [](auto&& statesMap, auto&& optionalDependency, auto transitions, auto rootState, auto combinedStateTypeids, auto eventTypeid){
+        constexpr auto filteredTransitions = filter_transitions(transitions, eventTypeid);
+        bh::for_each(filteredTransitions, bh::partial(fill_dispatch_table_with_filtered_transitions, rootState, combinedStateTypeids, eventTypeid, statesMap, optionalDependency));
+};
+
+constexpr auto fill_dispatch_table_with_transitions = [](
+    auto rootState, auto&& statesMap, auto&& optionalDependency, auto transitions)
+{
+    constexpr auto eventTypeids = collect_event_typeids_recursive_with_transitions(transitions);
+    constexpr auto combinedStateTypeids = getCombinedStateTypeids(rootState);
+
+    bh::for_each(eventTypeids, bh::partial(fill_dispatch_table_with_transitions_for_event, statesMap, optionalDependency, transitions, rootState, combinedStateTypeids));
+};
 
 constexpr auto getDeferingTransitions = [](auto rootState) {
     constexpr auto transitionHasDeferedEvents
