@@ -1,5 +1,4 @@
-#include "hsm/hsm.h"
-#include "hsm/details/transition_table.h"
+#include "hsm/hsm_gen.h"
 
 #include <boost/hana.hpp>
 #include <boost/hana/experimental/printable.hpp>

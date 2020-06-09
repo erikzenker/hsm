@@ -1,6 +1,6 @@
 #pragma once
 
-#include "forwards.h"
+#include "hsm/details/forwards.h"
 
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/type.hpp>

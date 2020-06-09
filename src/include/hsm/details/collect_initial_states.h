@@ -1,8 +1,8 @@
 #pragma once
 
-#include "collect_states.h"
-#include "for_each_idx.h"
-#include "transition_table.h"
+#include "hsm/details/collect_states.h"
+#include "hsm/details/for_each_idx.h"
+#include "hsm/details/transition_table.h"
 
 #include <boost/hana/find.hpp>
 #include <boost/hana/fold.hpp>

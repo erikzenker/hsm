@@ -1,7 +1,7 @@
 #pragma once
 
-#include "collect_states.h"
-#include "to_pairs.h"
+#include "hsm/details/collect_states.h"
+#include "hsm/details/to_pairs.h"
 
 #include <boost/hana/append.hpp>
 #include <boost/hana/map.hpp>

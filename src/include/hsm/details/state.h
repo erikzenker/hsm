@@ -1,8 +1,7 @@
 #pragma once
 
-#include "forwards.h"
-
-#include "event.h"
+#include "hsm/details/forwards.h"
+#include "hsm/details/event.h"
 
 namespace hsm {
 

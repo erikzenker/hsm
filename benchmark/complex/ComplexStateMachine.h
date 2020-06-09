@@ -1,4 +1,4 @@
-#include <hsm/hsm.h>
+#include "hsm/hsm_gen.h"
 
 using namespace hsm;
 

@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "remove_duplicates.h"
-#include "traits.h"
-#include "flatten_transition_table.h"
+#include "hsm/details/remove_duplicates.h"
+#include "hsm/details/traits.h"
+#include "hsm/details/flatten_transition_table.h"
 
 #include <boost/hana/at.hpp>
 #include <boost/hana/transform.hpp>
