@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hsm/details/transition_table.h"
+#include "hsm/details/idx.h"
 
 #include <boost/any.hpp>
 
@@ -19,8 +19,8 @@ template <class T> auto& get(std::reference_wrapper<T> ref)
     return ref.get();
 }
 
-template <class Event> struct ITransition {
-    virtual ~ITransition() = default;
+template <class Event> struct IDispatchTableEntry {
+    virtual ~IDispatchTableEntry() = default;
     virtual void executeAction(Event& event) = 0;
     virtual bool executeGuard(Event& event) = 0;
 };
@@ -32,9 +32,9 @@ template <
     class TargetPtr,
     class Event,
     class OptionalDependency>
-class Transition final : public ITransition<Event> {
+class DispatchTableEntry final : public IDispatchTableEntry<Event> {
   public:
-    Transition(
+    DispatchTableEntry(
         Action action,
         Guard guard,
         const SourcePtr& source,
@@ -95,15 +95,15 @@ class Transition final : public ITransition<Event> {
     OptionalDependency m_optionalDependency;
 };
 
-auto make_transition = [](auto action,
-                          auto guard,
-                          auto eventTypeid,
-                          auto source,
-                          auto target,
-                          auto optionalDependency) {
+constexpr auto make_transition = [](auto action,
+                                    auto guard,
+                                    auto eventTypeid,
+                                    auto source,
+                                    auto target,
+                                    auto optionalDependency) {
     using Event = typename decltype(eventTypeid)::type;
 
-    return std::make_unique<Transition<
+    return std::make_unique<DispatchTableEntry<
         decltype(action),
         decltype(guard),
         decltype(source),
@@ -117,7 +117,7 @@ template <class Event> struct NextState {
     bool history;
     bool defer;
     bool valid = false;
-    std::unique_ptr<ITransition<Event>> transition;
+    std::unique_ptr<IDispatchTableEntry<Event>> transition;
 };
 
 template <StateIdx NStates, class Event>

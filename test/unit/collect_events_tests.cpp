@@ -1,6 +1,8 @@
 #include "hsm/details/collect_events.h"
+#include "hsm/details/idx.h"
 #include "hsm/details/state.h"
 #include "hsm/details/transition_table.h"
+#include "hsm/front/transition_tuple.h"
 
 #include <gtest/gtest.h>
 
@@ -32,26 +34,26 @@ class S1 {
 struct P {
     static constexpr auto make_transition_table()
     {
-        return bh::make_basic_tuple(
-            bh::make_basic_tuple(hsm::state<S1> {}, hsm::event<E2> {}, 0, 0, hsm::state<S1> {}));
+        return hsm::transition_table(
+            hsm::transition(hsm::state<S1> {}, hsm::event<E2> {}, 0, 0, hsm::state<S1> {}));
     }
 
     static constexpr auto make_internal_transition_table()
     {
-        return bh::make_basic_tuple(bh::make_basic_tuple(hsm::event<E4> {}, 0, 0));
+        return hsm::transition_table(hsm::internal_transition(hsm::event<E4> {}, 0, 0));
     }
 };
 
 struct S {
     static constexpr auto make_transition_table()
     {
-        return bh::make_basic_tuple(
-            bh::make_basic_tuple(hsm::state<S1> {}, hsm::event<E1> {}, 0, 0, hsm::state<P> {}));
+        return hsm::transition_table(
+            hsm::transition(hsm::state<S1> {}, hsm::event<E1> {}, 0, 0, hsm::state<P> {}));
     }
 
     static constexpr auto make_internal_transition_table()
     {
-        return bh::make_basic_tuple(bh::make_basic_tuple(hsm::event<E3> {}, 0, 0));
+        return hsm::transition_table(hsm::internal_transition(hsm::event<E3> {}, 0, 0));
     }
 };
 }

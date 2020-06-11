@@ -1,4 +1,6 @@
 #include "hsm/details/make_states_map.h"
+#include "hsm/details/state.h"
+#include "hsm/details/transition_table.h"
 #include "hsm/front/transition_tuple.h"
 
 #include <gtest/gtest.h>

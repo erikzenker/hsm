@@ -2,6 +2,7 @@
 
 #include "hsm/details/collect_states.h"
 #include "hsm/details/traits.h"
+#include "hsm/details/transition.h"
 
 #include <boost/hana/append.hpp>
 #include <boost/hana/at.hpp>
@@ -29,22 +30,28 @@ constexpr auto get_internal_transition_table = [](auto state) {
             auto internalTransitionTable
                 = unwrap_typeid(parentState).make_internal_transition_table();
             return bh::transform(internalTransitionTable, [parentState](auto internalTransition) {
-                return bh::append(
-                    bh::prepend(bh::prepend(internalTransition, parentState), parentState),
-                    parentState);
+                return details::extended_transition(
+                    parentState,
+                    details::transition(
+                        parentState,
+                        internalTransition.event(),
+                        internalTransition.guard(),
+                        internalTransition.action(),
+                        parentState));
             });
         },
         [](auto) { return bh::make_basic_tuple(); })(state);
 };
 
 constexpr auto extend_internal_transition = [](auto internalTransition, auto state) {
-    return bh::make_basic_tuple(
-        bh::at_c<0>(internalTransition),
-        state,
-        bh::at_c<2>(internalTransition),
-        bh::at_c<3>(internalTransition),
-        bh::at_c<4>(internalTransition),
-        state);
+    return details::extended_transition(
+        internalTransition.parent(),
+        details::transition(
+            state,
+            internalTransition.event(),
+            internalTransition.guard(),
+            internalTransition.action(),
+            state));
 };
 
 constexpr auto flatten_internal_transition_table = [](auto parentState) {

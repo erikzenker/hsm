@@ -1,4 +1,5 @@
 #include "hsm/details/collect_initial_states.h"
+#include "hsm/details/idx.h"
 #include "hsm/details/transition_table.h"
 #include "hsm/front/transition_dsl.h"
 

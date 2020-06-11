@@ -1,5 +1,7 @@
 #include "hsm/details/fill_dispatch_table.h"
+#include "hsm/details/transition_table.h"
 #include "hsm/front/transition_dsl.h"
+#include "hsm/front/transition_tuple.h"
 
 #include <gtest/gtest.h>
 
@@ -86,8 +88,10 @@ struct MainState {
 
 TEST(ResolveHistoryTests, should_resolve_history_state)
 {
-    constexpr auto historyTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::history<S> {});
-    constexpr auto noHistoryTransition = bh::make_tuple(0, 1, 2, 3, 4, hsm::state<S> {});
+    constexpr auto historyTransition
+        = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, hsm::history<S> {}));
+    constexpr auto noHistoryTransition
+        = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, hsm::state<S> {}));
 
     ASSERT_TRUE(hsm::resolveHistory(historyTransition));
     ASSERT_FALSE(hsm::resolveHistory(noHistoryTransition));
@@ -96,13 +100,14 @@ TEST(ResolveHistoryTests, should_resolve_history_state)
 TEST(ResolveDestinationTests, should_resolve_destination)
 {
     auto dst = hsm::state<S1> {};
-    auto transition = bh::make_tuple(0, 1, 2, 3, 4, dst);
+    auto transition = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, dst));
     ASSERT_TRUE(dst == hsm::resolveDst(transition));
 }
 
 TEST(ResolveDestinationTests, should_resolve_submachine_destination)
 {
-    auto transition = bh::make_tuple(0, 1, 2, 3, 4, hsm::state<SubState> {});
+    auto transition = hsm::details::extended_transition(
+        0, hsm::transition(1, 2, 3, 4, hsm::state<SubState> {}));
     ASSERT_TRUE(hsm::state<S1> {} == hsm::resolveDst(transition));
 }
 
@@ -110,27 +115,29 @@ TEST(ResolveParentDestinationTests, should_resolve_destination_parent)
 {
     auto dst = hsm::state<S1> {};
     auto srcParent = hsm::state<S2> {};
-    auto transition = bh::make_tuple(srcParent, 1, 2, 3, 4, dst);
+    auto transition
+        = hsm::details::extended_transition(srcParent, hsm::transition(1, 2, 3, 4, dst));
     ASSERT_TRUE(srcParent == hsm::resolveDstParent(transition));
 }
 
 TEST(ResolveParentDestinationTests, should_resolve_submachine_destination_parent)
 {
     auto dst = hsm::state<SubState> {};
-    auto transition = bh::make_tuple(0, 1, 2, 3, 4, dst);
+    auto transition = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, dst));
     ASSERT_TRUE(dst == hsm::resolveDstParent(transition));
 }
 
 TEST(ResolveSourceTests, should_resolve_source)
 {
     auto src = hsm::state<S1> {};
-    auto transition = bh::make_tuple(0, src, 2, 3, 4, 5);
+    auto transition = hsm::details::extended_transition(0, hsm::transition(src, 2, 3, 4, 5));
     ASSERT_TRUE(src == hsm::resolveSrc(transition));
 }
 
 TEST(ResolveSourceParentTests, should_resolve_source)
 {
     auto srcParent = hsm::state<S2> {};
-    auto transition = bh::make_tuple(srcParent, hsm::state<S1> {}, 2, 3, 4, 5);
+    auto transition = hsm::details::extended_transition(
+        srcParent, hsm::transition(hsm::state<S1> {}, 2, 3, 4, 5));
     ASSERT_TRUE(srcParent == hsm::resolveSrcParent(transition));
 }

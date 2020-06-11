@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hsm/details/traits.h"
+#include "hsm/details/transition.h"
 
 #include <boost/hana/back.hpp>
 #include <boost/hana/basic_tuple.hpp>
@@ -21,13 +22,15 @@ template <class State> constexpr auto flatten_sub_transition_table(State state);
 
 template <class State> constexpr auto flatten_transition_table(State state)
 {
-    constexpr auto flattenSubTransitionTable = [](auto state, auto transition) {
-        auto extentedTransition = bh::prepend(transition, state);
-        return bh::prepend(flatten_sub_transition_table(bh::back(transition)), extentedTransition);
+    auto flattenSubTransitionTable = [state](auto transition) {
+        return bh::prepend(
+            flatten_sub_transition_table(transition.target()),
+            details::extended_transition(state, transition));
     };
 
     constexpr auto transitionTable = make_transition_table2(state);
-    constexpr auto extendedTransitionTable = bh::transform(transitionTable, bh::partial(flattenSubTransitionTable, state));
+    constexpr auto extendedTransitionTable
+        = bh::transform(transitionTable, flattenSubTransitionTable);
     return bh::flatten(extendedTransitionTable);
 }
 

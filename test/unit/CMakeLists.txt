@@ -21,6 +21,7 @@ add_executable(
           flatten_transition_table_tests.cpp
           flatten_internal_transition_table_tests.cpp
           dispatch_table_tests.cpp
+          fill_dispatch_table_tests.cpp
           switch_tests.cpp
           variant_queue_tests.cpp
           make_states_map_tests.cpp

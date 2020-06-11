@@ -2,8 +2,8 @@
 
 #include "hsm/details/collect_events.h"
 #include "hsm/details/fill_dispatch_table.h"
+#include "hsm/details/idx.h"
 #include "hsm/details/make_states_map.h"
-#include "hsm/details/transition_table.h"
 #include "hsm/details/variant_queue.h"
 
 #include <boost/hana/basic_tuple.hpp>
