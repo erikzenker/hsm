@@ -18,10 +18,9 @@ using namespace boost::hana;
 }
 
 namespace {
-constexpr auto collectEventTypeids
-    = [](auto transition) { return bh::at_c<2>(transition).typeid_; };
+constexpr auto collectEventTypeids = [](auto transition) { return transition.event().typeid_; };
 constexpr auto collectEvents = [](auto transition) {
-    using Event = typename decltype(bh::at_c<2>(transition).typeid_)::type;
+    using Event = typename decltype(transition.event().typeid_)::type;
     return bh::tuple_t<Event>;
 };
 }

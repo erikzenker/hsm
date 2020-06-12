@@ -22,31 +22,31 @@ namespace {
 
 constexpr auto resolveInitialState = [](auto transition) {
     return bh::if_(
-        is_initial_state(bh::at_c<0>(transition)),
+        is_initial_state(transition.source()),
         [](auto initial) { return unwrap_typeid(initial).get_state(); },
-        [](auto source) { return source; })(bh::at_c<0>(transition));
+        [](auto source) { return source; })(transition.source());
 };
 
 constexpr auto resolveExtentedInitialState = [](auto transition) {
     return bh::if_(
-        is_initial_state(bh::at_c<1>(transition)),
+        is_initial_state(transition.source()),
         [](auto initial) { return unwrap_typeid(initial).get_state(); },
-        [](auto source) { return source; })(bh::at_c<1>(transition));
+        [](auto source) { return source; })(transition.source());
 };
 
 constexpr auto extractExtendedStateTypeids = [](auto transition) {
     return bh::make_basic_tuple(
-        bh::typeid_(resolveExtentedInitialState(transition)), bh::typeid_(bh::at_c<5>(transition)));
+        bh::typeid_(resolveExtentedInitialState(transition)), bh::typeid_(transition.target()));
 };
 constexpr auto extractExtendedStates = [](auto transition) {
-    return bh::make_basic_tuple(resolveExtentedInitialState(transition), bh::at_c<5>(transition));
+    return bh::make_basic_tuple(resolveExtentedInitialState(transition), transition.target());
 };
 const auto extractStates = [](auto transition) {
-    return bh::make_basic_tuple(bh::at_c<0>(transition), bh::at_c<4>(transition));
+    return bh::make_basic_tuple(transition.source(), transition.target());
 };
 constexpr auto extractStateTypeids = [](auto transition) {
     return bh::make_basic_tuple(
-        bh::typeid_(resolveInitialState(transition)), bh::typeid_(bh::at_c<4>(transition)));
+        bh::typeid_(resolveInitialState(transition)), bh::typeid_(transition.target()));
 };
 }
 

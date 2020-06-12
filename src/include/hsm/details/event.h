@@ -1,6 +1,8 @@
 #pragma once
 
 #include "hsm/details/forwards.h"
+#include "hsm/details/pseudo_states.h"
+#include "hsm/details/transition.h"
 
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/type.hpp>
@@ -16,7 +18,7 @@ template <class Event> struct event {
 
     constexpr auto operator+()
     {
-        return bh::make_basic_tuple(event<Event> {}, noGuard {}, noAction {});
+        return details::internal_transition(event<Event> {}, noGuard {}, noAction {});
     }
 
     template <class Guard> constexpr auto operator[](const Guard& guard)

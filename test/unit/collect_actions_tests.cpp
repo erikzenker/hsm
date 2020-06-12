@@ -1,4 +1,6 @@
 #include "hsm/details/collect_actions.h"
+#include "hsm/details/state.h"
+#include "hsm/details/transition_table.h"
 #include "hsm/front/transition_tuple.h"
 
 #include <gtest/gtest.h>
@@ -58,16 +60,16 @@ TEST_F(CollectActionsTests, should_collect_action_typeids_recursive)
     struct P {
         static constexpr auto make_transition_table()
         {
-            return boost::hana::make_tuple(
-                boost::hana::make_tuple(hsm::state<S1> {}, 0, 0, e2, hsm::state<S1> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, e2, hsm::state<S1> {}));
         }
     };
 
     struct S {
         static constexpr auto make_transition_table()
         {
-            return boost::hana::make_tuple(
-                boost::hana::make_tuple(hsm::state<S1> {}, 0, 0, e1, hsm::state<P> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, e1, hsm::state<P> {}));
         }
     };
 

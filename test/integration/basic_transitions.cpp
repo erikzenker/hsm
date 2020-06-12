@@ -1,4 +1,4 @@
-#include "hsm/hsm_gen.h"
+#include "hsm/hsm.h"
 
 #include <boost/hana.hpp>
 #include <boost/hana/experimental/printable.hpp>

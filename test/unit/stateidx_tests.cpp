@@ -1,4 +1,6 @@
 #include "hsm/details/fill_dispatch_table.h"
+#include "hsm/details/state.h"
+#include "hsm/details/transition_table.h"
 #include "hsm/front/transition_tuple.h"
 
 #include <gtest/gtest.h>
@@ -20,14 +22,16 @@ class S2 {
     struct P {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
         }
     };
 
     struct S {
         static constexpr auto make_transition_table()
         {
-            return bh::make_tuple(bh::make_tuple(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
+            return hsm::transition_table(
+                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
         }
     };
 

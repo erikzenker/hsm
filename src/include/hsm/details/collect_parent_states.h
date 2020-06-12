@@ -15,10 +15,10 @@ using namespace boost::hana;
 }
 
 constexpr auto collect_parent_state_typeids = [](auto state) {
-    auto toParentState = [](auto transition) { return bh::typeid_(bh::front(transition)); };
+    auto toParentStateTypeid = [](auto transition) { return bh::typeid_(transition.parent()); };
 
     auto transitions = flatten_transition_table(state);
-    auto collectedParentStates = bh::transform(transitions, toParentState);
-    return remove_duplicate_typeids(collectedParentStates);
+    auto parentStateTypeids = bh::transform(transitions, toParentStateTypeid);
+    return remove_duplicate_typeids(parentStateTypeids);
 };
 }
