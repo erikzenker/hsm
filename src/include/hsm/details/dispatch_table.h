@@ -14,7 +14,7 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class T> auto& get(std::reference_wrapper<T> ref)
+template <class T> auto get(std::reference_wrapper<T> ref) -> auto&
 {
     return ref.get();
 }
@@ -22,7 +22,7 @@ template <class T> auto& get(std::reference_wrapper<T> ref)
 template <class Event> struct IDispatchTableEntry {
     virtual ~IDispatchTableEntry() = default;
     virtual void executeAction(Event& event) = 0;
-    virtual bool executeGuard(Event& event) = 0;
+    virtual auto executeGuard(Event& event) -> bool = 0;
 };
 
 template <
@@ -37,13 +37,13 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     DispatchTableEntry(
         Action action,
         Guard guard,
-        const SourcePtr& source,
-        const TargetPtr& target,
+        SourcePtr  source,
+        TargetPtr  target,
         OptionalDependency optionalDependency)
         : m_action(action)
         , m_guard(guard)
-        , m_source(source)
-        , m_target(target)
+        , m_source(std::move(source))
+        , m_target(std::move(target))
         , m_optionalDependency(optionalDependency)
     {
     }
@@ -67,7 +67,7 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
         // clang-format on
     }
 
-    bool executeGuard(Event& event) override
+    auto executeGuard(Event& event) -> bool override
     {
         // clang-format off
         return bh::if_(
@@ -113,9 +113,9 @@ constexpr auto make_transition = [](auto action,
 };
 
 template <class Event> struct NextState {
-    StateIdx combinedState;
-    bool history;
-    bool defer;
+    StateIdx combinedState{};
+    bool history{};
+    bool defer{};
     bool valid = false;
     std::unique_ptr<IDispatchTableEntry<Event>> transition;
 };

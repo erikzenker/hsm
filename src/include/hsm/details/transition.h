@@ -11,27 +11,27 @@ template <class Source, class Event, class Guard, class Action, class Target> st
     {
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }
@@ -48,17 +48,17 @@ template <class Event, class Guard, class Action> struct InternalTransition {
     {
     }
 
-    constexpr Event event() const
+    constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
@@ -77,32 +77,32 @@ struct ExtendedTransition {
     {
     }
 
-    constexpr Parent parent() const
+    [[nodiscard]] constexpr auto parent() const -> Parent
     {
         return Parent {};
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }

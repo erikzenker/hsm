@@ -86,7 +86,7 @@ template <class Type> struct StateBase {
             source, event<noneEvent> {}, noGuard {}, noAction {}, state<Type> {});
     }
 
-    template <class OtherState> bool operator==(OtherState)
+    template <class OtherState> auto operator==(OtherState) -> bool
     {
         return boost::hana::equal(
             boost::hana::type_c<typename OtherState::type>, boost::hana::type_c<Type>);

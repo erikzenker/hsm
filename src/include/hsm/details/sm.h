@@ -28,7 +28,7 @@ template <class RootState, class... OptionalParameters> class sm {
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
-    std::size_t m_currentRegions;
+    std::size_t m_currentRegions{};
     StatesMap m_statesMap;
 
   public:
@@ -169,7 +169,7 @@ template <class RootState, class... OptionalParameters> class sm {
             []() {})();
     }
 
-    template <class Event> constexpr auto& dispatch_table_at(StateIdx index, const Event& /*event*/)
+    template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
         constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
         return DispatchTable<states, Event>::table[index];

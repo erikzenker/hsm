@@ -1,0 +1,26 @@
+name: Clang tidy
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Install Dependencies
+      run: | 
+        sudo apt install clang-tidy-9 libboost-all-dev
+        clang-tidy-9 --version
+
+    - name: Clang tidy
+      run: |
+        CHECKS=-\*,clang-analyzer-\*,boost-\*,cppcoreguidelines-\*,modernize-\*,performance-\*
+        clang-tidy-9 --warnings-as-errors=${CHECKS} \
+                     -checks=${CHECKS} \
+                     -header-filter=src/include/hsm/\* \
+                     benchmark/complex/hsm.cpp \
+                     -- -Isrc/include/ -Ibenchmark/ -std=c++17

@@ -218,27 +218,27 @@ template <class Source, class Event, class Guard, class Action, class Target> st
     {
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }
@@ -255,17 +255,17 @@ template <class Event, class Guard, class Action> struct InternalTransition {
     {
     }
 
-    constexpr Event event() const
+    constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
@@ -284,32 +284,32 @@ struct ExtendedTransition {
     {
     }
 
-    constexpr Parent parent() const
+    [[nodiscard]] constexpr auto parent() const -> Parent
     {
         return Parent {};
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }
@@ -992,7 +992,7 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class T> auto& get(std::reference_wrapper<T> ref)
+template <class T> auto get(std::reference_wrapper<T> ref) -> auto&
 {
     return ref.get();
 }
@@ -1000,7 +1000,7 @@ template <class T> auto& get(std::reference_wrapper<T> ref)
 template <class Event> struct IDispatchTableEntry {
     virtual ~IDispatchTableEntry() = default;
     virtual void executeAction(Event& event) = 0;
-    virtual bool executeGuard(Event& event) = 0;
+    virtual auto executeGuard(Event& event) -> bool = 0;
 };
 
 template <
@@ -1015,13 +1015,13 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     DispatchTableEntry(
         Action action,
         Guard guard,
-        const SourcePtr& source,
-        const TargetPtr& target,
+        SourcePtr  source,
+        TargetPtr  target,
         OptionalDependency optionalDependency)
         : m_action(action)
         , m_guard(guard)
-        , m_source(source)
-        , m_target(target)
+        , m_source(std::move(source))
+        , m_target(std::move(target))
         , m_optionalDependency(optionalDependency)
     {
     }
@@ -1045,7 +1045,7 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
         // clang-format on
     }
 
-    bool executeGuard(Event& event) override
+    auto executeGuard(Event& event) -> bool override
     {
         // clang-format off
         return bh::if_(
@@ -1091,9 +1091,9 @@ constexpr auto make_transition = [](auto action,
 };
 
 template <class Event> struct NextState {
-    StateIdx combinedState;
-    bool history;
-    bool defer;
+    StateIdx combinedState{};
+    bool history{};
+    bool defer{};
     bool valid = false;
     std::unique_ptr<IDispatchTableEntry<Event>> transition;
 };
@@ -1465,11 +1465,11 @@ public:
     variant_queue(const EventsTuple& events) : m_events(events){
     }
 
-    bool empty() const{
+    [[nodiscard]] auto empty() const -> bool{
         return m_queue.empty();
     }
 
-    std::size_t size() const {
+    [[nodiscard]] auto size() const -> std::size_t {
         return m_queue.size();    
     }
 
@@ -1522,7 +1522,7 @@ template <class RootState, class... OptionalParameters> class sm {
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
-    std::size_t m_currentRegions;
+    std::size_t m_currentRegions{};
     StatesMap m_statesMap;
 
   public:
@@ -1663,7 +1663,7 @@ template <class RootState, class... OptionalParameters> class sm {
             []() {})();
     }
 
-    template <class Event> constexpr auto& dispatch_table_at(StateIdx index, const Event& /*event*/)
+    template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
         constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
         return DispatchTable<states, Event>::table[index];
@@ -1829,7 +1829,7 @@ template <class Type> struct StateBase {
             source, event<noneEvent> {}, noGuard {}, noAction {}, state<Type> {});
     }
 
-    template <class OtherState> bool operator==(OtherState)
+    template <class OtherState> auto operator==(OtherState) -> bool
     {
         return boost::hana::equal(
             boost::hana::type_c<typename OtherState::type>, boost::hana::type_c<Type>);
