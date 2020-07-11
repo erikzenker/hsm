@@ -22,5 +22,5 @@ jobs:
         clang-tidy-9 --warnings-as-errors=${CHECKS} \
                      -checks=${CHECKS} \
                      -header-filter=src/include/hsm/\* \
-                     benchmark/complex/hsm.cpp \
+                     benchmark/simple/hsm.cpp \
                      -- -Isrc/include/ -Ibenchmark/ -std=c++17

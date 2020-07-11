@@ -73,6 +73,7 @@ template <class Source, class Event, class Guard, class Action> class Transition
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, guard, action, target);
@@ -89,6 +90,7 @@ template <class Source, class Event, class Guard> class TransitionSEG {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, guard, noAction {}, target);
@@ -104,6 +106,7 @@ template <class Source, class Event, class Action> class TransitionSEA {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, noGuard {}, action, target);
@@ -114,6 +117,8 @@ template <class Source, class Event, class Action> class TransitionSEA {
 
 template <class Source, class Event> class TransitionSE {
   public:
+    
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, noGuard {}, noAction {}, target);
@@ -127,6 +132,7 @@ template <class Source, class Action> class TransitionSA {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
@@ -145,6 +151,7 @@ template <class Source, class Guard, class Action> class TransitionSGA {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, event<noneEvent> {}, guard, action, target);
@@ -162,6 +169,7 @@ template <class Source, class Guard> class TransitionSG {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(

@@ -1,6 +1,5 @@
 #include "hsm/hsm.h"
 
-#include <cassert>
 #include <iostream>
 
 // States
@@ -19,9 +18,9 @@ struct Coin {
 const auto noError = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
 
 // Actions
-const auto beep
+constexpr auto beep
     = [](auto /*event*/, auto /*source*/, auto /*target*/) { std::cout << "beep!" << std::endl; };
-const auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/) {
+constexpr auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/) {
     std::cout << "blink, blink, blink!" << std::endl;
 };
 
@@ -43,7 +42,7 @@ struct Turnstile {
     }
 };
 
-int main()
+auto main() -> int
 {
     hsm::sm<Turnstile> turnstileSm;
 

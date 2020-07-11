@@ -19,6 +19,7 @@ template <class T> auto get(std::reference_wrapper<T> ref) -> auto&
     return ref.get();
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)    
 template <class Event> struct IDispatchTableEntry {
     virtual ~IDispatchTableEntry() = default;
     virtual void executeAction(Event& event) = 0;

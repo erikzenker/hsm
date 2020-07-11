@@ -42,6 +42,7 @@ template <class Type> struct StateBase {
         return TransitionSG<Type, Guard> { guard };
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
