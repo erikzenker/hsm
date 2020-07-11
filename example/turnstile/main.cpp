@@ -1,6 +1,7 @@
 #include "hsm/hsm.h"
 
 #include <iostream>
+#include <cassert>
 
 // States
 struct Locked {

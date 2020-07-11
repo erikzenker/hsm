@@ -26,26 +26,17 @@ jobs:
     - uses: actions/checkout@v2
       
     - name: Install Dependencies
-      run: sudo apt install cmake g++-8 g++-9 clang-8 clang-9 python3-pip python-pip
+      run: sudo apt install cmake g++-8 g++-9 clang-8 clang-9 python-pip
         
-    - name: Install Quom
-      run: sudo pip3 install quom
-    
     - name: Install Conan
       run: sudo pip install conan
         
     - name: Print System Information
       run: |
         cmake --version
-        pip3 --version
         pip --version
         ${{ matrix.cxx }} --version
 
-    - name: Check Single Header File
-      run: |
-        quom --include_directory src/include/ src/include/hsm/hsm.h src/include/hsm/hsm_gen.h
-        git diff --exit-code
-    
     - name: Install Conan Dependencies
       run: |
         echo $CXX
@@ -61,7 +52,7 @@ jobs:
         echo $CXX
         echo $CC
         cd build && mkdir install
-        cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
         cmake --build . --target install
       env: 
         CXX: ${{ matrix.cxx }}

@@ -1,0 +1,28 @@
+name: Quom check
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Install Dependencies
+      run: sudo apt install python3-pip
+        
+    - name: Install Quom
+      run: sudo pip3 install quom
+        
+    - name: Print System Information
+      run: |
+        pip3 --version
+
+    - name: Check Single Header File
+      run: |
+        quom --include_directory src/include/ src/include/hsm/hsm.h src/include/hsm/hsm_gen.h
+        git diff --exit-code
