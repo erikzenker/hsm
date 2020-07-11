@@ -5,7 +5,7 @@
 namespace hsm {
 namespace details {
 template <class Source, class Event, class Guard, class Action, class Target> struct Transition {
-    constexpr Transition(Source source, Event event, Guard guard, Action action, Target target)
+    constexpr Transition(Source, Event, Guard guard, Action action, Target)
         : m_guard(guard)
         , m_action(action)
     {
@@ -42,7 +42,7 @@ template <class Source, class Event, class Guard, class Action, class Target> st
 };
 
 template <class Event, class Guard, class Action> struct InternalTransition {
-    constexpr InternalTransition(Event event, Guard guard, Action action)
+    constexpr InternalTransition(Event, Guard guard, Action action)
         : m_guard(guard)
         , m_action(action)
     {
@@ -71,7 +71,7 @@ template <class Event, class Guard, class Action> struct InternalTransition {
 template <class Parent, class Source, class Event, class Guard, class Action, class Target>
 struct ExtendedTransition {
     constexpr ExtendedTransition(
-        Parent parent, Source source, Event event, Guard guard, Action action, Target target)
+        Parent, Source, Event, Guard guard, Action action, Target)
         : m_guard(guard)
         , m_action(action)
     {
@@ -108,8 +108,8 @@ struct ExtendedTransition {
     }
 
   private:
-    const Action m_action;
     const Guard m_guard;
+    const Action m_action;
 };
 
 constexpr auto transition

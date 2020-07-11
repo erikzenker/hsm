@@ -137,7 +137,7 @@ template <class RootState, class... OptionalParameters> class sm {
             hasDeferedEvents(rootState()),
             [this]() {
                 if (!m_defer_queue.empty()) {
-                    m_defer_queue.visit([this](auto event) { process_event_internal(event); });
+                    m_defer_queue.visit([this](auto event) { this->process_event_internal(event); });
                 }
             },
             []() {})();

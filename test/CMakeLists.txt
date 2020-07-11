@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(hsm)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -g3 -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror -Wall -Wextra -Wpedantic -g3 -O0")
 
 if(${HSM_CLANG_COVERAGE})
     set(CMAKE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping")

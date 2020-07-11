@@ -39,7 +39,7 @@ struct e1 {
 const auto g1 = [](auto) { return true; };
 
 // Actions
-const auto a1 = [](auto event) {};
+const auto a1 = [](auto /*event*/) {};
 
 struct SubState {
     static constexpr auto make_transition_table()

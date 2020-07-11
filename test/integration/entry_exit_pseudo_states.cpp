@@ -41,12 +41,6 @@ const auto success = [](auto /*event*/, auto /*source*/, auto /*target*/) { retu
 // Actions
 const auto action = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
 
-const auto log = [](auto event, auto source, auto target) {
-    std::cout << experimental::print(typeid_(source)) << " + "
-              << experimental::print(typeid_(event)) << " = "
-              << experimental::print(typeid_(target)) << std::endl;
-};
-
 struct SubState {
     static constexpr auto make_transition_table()
     {

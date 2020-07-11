@@ -50,7 +50,7 @@ template <class Type> struct StateBase {
     }
 
     template <class Source, class Event>
-    constexpr auto operator<=(const TransitionSE<Source, Event>& transitionSe)
+    constexpr auto operator<=(const TransitionSE<Source, Event>&)
     {
         return details::transition(
             state<Source> {}, Event {}, noGuard {}, noAction {}, state<Type> {});

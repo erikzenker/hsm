@@ -38,9 +38,6 @@ struct e2 {
     std::shared_ptr<std::promise<void>> called;
 };
 
-// Guards
-const auto g1 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
-
 // Actions
 const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
 
