@@ -32,7 +32,6 @@ class S1 {
 const auto e1 = []() {};
 const auto e2 = []() {};
 
-const auto a1 = [](auto event) { event.wasCalled->set_value();};
 }
 
 TEST_F(CollectActionsTests, should_collect_action_typeids)

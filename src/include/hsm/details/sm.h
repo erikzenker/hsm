@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <sstream>
 #include <vector>
+#include <iostream>
 
 namespace hsm {
 
@@ -28,7 +29,7 @@ template <class RootState, class... OptionalParameters> class sm {
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
-    std::size_t m_currentRegions;
+    std::size_t m_currentRegions{};
     StatesMap m_statesMap;
 
   public:
@@ -79,7 +80,7 @@ template <class RootState, class... OptionalParameters> class sm {
     auto status() -> std::string
     {
         std::stringstream statusStream;
-        for (std::size_t region = 0; region < current_regions(); region++) {
+        for (Region region = 0; region < current_regions(); region++) {
             statusStream << "[" << region << "] "
                          << "combined: " << m_currentCombinedState[region] << " "
                          << "parent: " << currentParentState() << " "
@@ -98,8 +99,9 @@ template <class RootState, class... OptionalParameters> class sm {
     {
         bool allGuardsFailed = true;
 
-        for (std::size_t region = 0; region < current_regions(); region++) {
+        for (Region region = 0; region < current_regions(); region++) {
 
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
             if(result.defer){
@@ -135,7 +137,7 @@ template <class RootState, class... OptionalParameters> class sm {
             hasDeferedEvents(rootState()),
             [this]() {
                 if (!m_defer_queue.empty()) {
-                    m_defer_queue.visit([this](auto event) { process_event_internal(event); });
+                    m_defer_queue.visit([this](auto event) { this->process_event_internal(event); });
                 }
             },
             []() {})();
@@ -148,9 +150,10 @@ template <class RootState, class... OptionalParameters> class sm {
             [this]() {
                 while (true) {
 
-                    for (std::size_t region = 0; region < current_regions(); region++) {
+                    for (Region region = 0; region < current_regions(); region++) {
 
                         auto event = noneEvent {};
+                        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
                         auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
                         if (!result.valid) {
@@ -169,27 +172,33 @@ template <class RootState, class... OptionalParameters> class sm {
             []() {})();
     }
 
-    template <class Event> constexpr auto& dispatch_table_at(StateIdx index, const Event& /*event*/)
+    template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
         constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
         return DispatchTable<states, Event>::table[index];
     }
 
     template <class DispatchTableEntry>
-    void update_current_state(std::size_t region, const DispatchTableEntry& dispatchTableEntry)
+    void update_current_state(Region region, const DispatchTableEntry& dispatchTableEntry)
     {
         bh::if_(
             has_history(rootState()),
             [&, this]() {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                 m_history[currentParentState()][region] = m_currentCombinedState[region];
 
                 if (dispatchTableEntry.history) {
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                     m_currentCombinedState[region] = m_history[currentParentState()][region];
                 } else {
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                     m_currentCombinedState[region] = dispatchTableEntry.combinedState;
                 }
             },
-            [&, this]() { m_currentCombinedState[region] = dispatchTableEntry.combinedState; })();
+            [&, this]() { 
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
+                m_currentCombinedState[region] = dispatchTableEntry.combinedState; 
+            })();
 
         update_current_regions();
     }
@@ -199,7 +208,10 @@ template <class RootState, class... OptionalParameters> class sm {
         bh::if_(
             hasRegions(rootState()),
             []() {},
-            [this]() { m_currentRegions = m_initial_states[currentParentState()].size(); })();
+            [this]() { 
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
+                m_currentRegions = m_initial_states[currentParentState()].size(); 
+            })();
     }
 
     auto current_regions() -> std::size_t
@@ -220,9 +232,9 @@ template <class RootState, class... OptionalParameters> class sm {
         return state<RootState> {};
     }
 
-    auto currentState(std::size_t region)
+    auto currentState(Region region)
     {
-        return calcStateIdx(nStates(rootState()), m_currentCombinedState[region]);
+        return calcStateIdx(nStates(rootState()), m_currentCombinedState.at(region));
     }
 
     auto currentParentState()
@@ -232,10 +244,11 @@ template <class RootState, class... OptionalParameters> class sm {
 
     void init_current_state()
     {
-        auto initialParentState = getParentStateIdx(rootState(), rootState());
+        const auto initialParentState = getParentStateIdx(rootState(), rootState());
 
-        for (std::size_t region = 0; region < m_initial_states[initialParentState].size();
+        for (Region region = 0; region < m_initial_states[initialParentState].size();
              region++) {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
             m_currentCombinedState[region] = calcCombinedStateIdx(
                 nStates(rootState()),
                 initialParentState,

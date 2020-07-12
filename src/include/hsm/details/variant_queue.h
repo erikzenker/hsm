@@ -28,11 +28,11 @@ public:
     variant_queue(const EventsTuple& events) : m_events(events){
     }
 
-    bool empty() const{
+    [[nodiscard]] auto empty() const -> bool{
         return m_queue.empty();
     }
 
-    std::size_t size() const {
+    [[nodiscard]] auto size() const -> std::size_t {
         return m_queue.size();    
     }
 

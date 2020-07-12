@@ -4,12 +4,14 @@
 using namespace hsm;
 
 
-int main()
+auto main() -> int
 {
     hsm::sm<ComplexStateMachine> sm;
 
+    const auto nRuns = 1'000'000;
+
     benchmark_execution_speed([&] {
-        for (auto i = 0; i < 1'000'000; ++i) {
+        for (auto i = 0; i < nRuns; ++i) {
             if (rand() % 2)
                 sm.process_event(e1());
             if (rand() % 2)

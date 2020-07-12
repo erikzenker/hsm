@@ -8,7 +8,7 @@ struct noAction {
 struct noGuard {
 };
 
-template <class Source> class state;
+template <class Source> struct state;
 
 template <class ParentState, class State> class PseudoState {
   public:

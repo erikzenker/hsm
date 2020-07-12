@@ -8,7 +8,7 @@ struct noAction {
 struct noGuard {
 };
 
-template <class Source> class state;
+template <class Source> struct state;
 
 template <class ParentState, class State> class PseudoState {
   public:
@@ -212,33 +212,33 @@ constexpr auto contains_dependency = [](const auto& parameters) { return bh::siz
 namespace hsm {
 namespace details {
 template <class Source, class Event, class Guard, class Action, class Target> struct Transition {
-    constexpr Transition(Source source, Event event, Guard guard, Action action, Target target)
+    constexpr Transition(Source, Event, Guard guard, Action action, Target)
         : m_guard(guard)
         , m_action(action)
     {
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }
@@ -249,23 +249,23 @@ template <class Source, class Event, class Guard, class Action, class Target> st
 };
 
 template <class Event, class Guard, class Action> struct InternalTransition {
-    constexpr InternalTransition(Event event, Guard guard, Action action)
+    constexpr InternalTransition(Event, Guard guard, Action action)
         : m_guard(guard)
         , m_action(action)
     {
     }
 
-    constexpr Event event() const
+    constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
@@ -278,45 +278,45 @@ template <class Event, class Guard, class Action> struct InternalTransition {
 template <class Parent, class Source, class Event, class Guard, class Action, class Target>
 struct ExtendedTransition {
     constexpr ExtendedTransition(
-        Parent parent, Source source, Event event, Guard guard, Action action, Target target)
+        Parent, Source, Event, Guard guard, Action action, Target)
         : m_guard(guard)
         , m_action(action)
     {
     }
 
-    constexpr Parent parent() const
+    [[nodiscard]] constexpr auto parent() const -> Parent
     {
         return Parent {};
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }
 
   private:
-    const Action m_action;
     const Guard m_guard;
+    const Action m_action;
 };
 
 constexpr auto transition
@@ -992,15 +992,16 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class T> auto& get(std::reference_wrapper<T> ref)
+template <class T> auto get(std::reference_wrapper<T> ref) -> auto&
 {
     return ref.get();
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)    
 template <class Event> struct IDispatchTableEntry {
     virtual ~IDispatchTableEntry() = default;
     virtual void executeAction(Event& event) = 0;
-    virtual bool executeGuard(Event& event) = 0;
+    virtual auto executeGuard(Event& event) -> bool = 0;
 };
 
 template <
@@ -1015,13 +1016,13 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     DispatchTableEntry(
         Action action,
         Guard guard,
-        const SourcePtr& source,
-        const TargetPtr& target,
+        SourcePtr  source,
+        TargetPtr  target,
         OptionalDependency optionalDependency)
         : m_action(action)
         , m_guard(guard)
-        , m_source(source)
-        , m_target(target)
+        , m_source(std::move(source))
+        , m_target(std::move(target))
         , m_optionalDependency(optionalDependency)
     {
     }
@@ -1045,7 +1046,7 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
         // clang-format on
     }
 
-    bool executeGuard(Event& event) override
+    auto executeGuard(Event& event) -> bool override
     {
         // clang-format off
         return bh::if_(
@@ -1091,9 +1092,9 @@ constexpr auto make_transition = [](auto action,
 };
 
 template <class Event> struct NextState {
-    StateIdx combinedState;
-    bool history;
-    bool defer;
+    StateIdx combinedState{};
+    bool history{};
+    bool defer{};
     bool valid = false;
     std::unique_ptr<IDispatchTableEntry<Event>> transition;
 };
@@ -1465,11 +1466,11 @@ public:
     variant_queue(const EventsTuple& events) : m_events(events){
     }
 
-    bool empty() const{
+    [[nodiscard]] auto empty() const -> bool{
         return m_queue.empty();
     }
 
-    std::size_t size() const {
+    [[nodiscard]] auto size() const -> std::size_t {
         return m_queue.size();    
     }
 
@@ -1507,6 +1508,7 @@ public:
 #include <cstdint>
 #include <sstream>
 #include <vector>
+#include <iostream>
 
 namespace hsm {
 
@@ -1522,7 +1524,7 @@ template <class RootState, class... OptionalParameters> class sm {
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
-    std::size_t m_currentRegions;
+    std::size_t m_currentRegions{};
     StatesMap m_statesMap;
 
   public:
@@ -1573,7 +1575,7 @@ template <class RootState, class... OptionalParameters> class sm {
     auto status() -> std::string
     {
         std::stringstream statusStream;
-        for (std::size_t region = 0; region < current_regions(); region++) {
+        for (Region region = 0; region < current_regions(); region++) {
             statusStream << "[" << region << "] "
                          << "combined: " << m_currentCombinedState[region] << " "
                          << "parent: " << currentParentState() << " "
@@ -1592,8 +1594,9 @@ template <class RootState, class... OptionalParameters> class sm {
     {
         bool allGuardsFailed = true;
 
-        for (std::size_t region = 0; region < current_regions(); region++) {
+        for (Region region = 0; region < current_regions(); region++) {
 
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
             if(result.defer){
@@ -1629,7 +1632,7 @@ template <class RootState, class... OptionalParameters> class sm {
             hasDeferedEvents(rootState()),
             [this]() {
                 if (!m_defer_queue.empty()) {
-                    m_defer_queue.visit([this](auto event) { process_event_internal(event); });
+                    m_defer_queue.visit([this](auto event) { this->process_event_internal(event); });
                 }
             },
             []() {})();
@@ -1642,9 +1645,10 @@ template <class RootState, class... OptionalParameters> class sm {
             [this]() {
                 while (true) {
 
-                    for (std::size_t region = 0; region < current_regions(); region++) {
+                    for (Region region = 0; region < current_regions(); region++) {
 
                         auto event = noneEvent {};
+                        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
                         auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
                         if (!result.valid) {
@@ -1663,27 +1667,33 @@ template <class RootState, class... OptionalParameters> class sm {
             []() {})();
     }
 
-    template <class Event> constexpr auto& dispatch_table_at(StateIdx index, const Event& /*event*/)
+    template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
         constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
         return DispatchTable<states, Event>::table[index];
     }
 
     template <class DispatchTableEntry>
-    void update_current_state(std::size_t region, const DispatchTableEntry& dispatchTableEntry)
+    void update_current_state(Region region, const DispatchTableEntry& dispatchTableEntry)
     {
         bh::if_(
             has_history(rootState()),
             [&, this]() {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                 m_history[currentParentState()][region] = m_currentCombinedState[region];
 
                 if (dispatchTableEntry.history) {
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                     m_currentCombinedState[region] = m_history[currentParentState()][region];
                 } else {
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                     m_currentCombinedState[region] = dispatchTableEntry.combinedState;
                 }
             },
-            [&, this]() { m_currentCombinedState[region] = dispatchTableEntry.combinedState; })();
+            [&, this]() { 
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
+                m_currentCombinedState[region] = dispatchTableEntry.combinedState; 
+            })();
 
         update_current_regions();
     }
@@ -1693,7 +1703,10 @@ template <class RootState, class... OptionalParameters> class sm {
         bh::if_(
             hasRegions(rootState()),
             []() {},
-            [this]() { m_currentRegions = m_initial_states[currentParentState()].size(); })();
+            [this]() { 
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
+                m_currentRegions = m_initial_states[currentParentState()].size(); 
+            })();
     }
 
     auto current_regions() -> std::size_t
@@ -1714,9 +1727,9 @@ template <class RootState, class... OptionalParameters> class sm {
         return state<RootState> {};
     }
 
-    auto currentState(std::size_t region)
+    auto currentState(Region region)
     {
-        return calcStateIdx(nStates(rootState()), m_currentCombinedState[region]);
+        return calcStateIdx(nStates(rootState()), m_currentCombinedState.at(region));
     }
 
     auto currentParentState()
@@ -1726,10 +1739,11 @@ template <class RootState, class... OptionalParameters> class sm {
 
     void init_current_state()
     {
-        auto initialParentState = getParentStateIdx(rootState(), rootState());
+        const auto initialParentState = getParentStateIdx(rootState(), rootState());
 
-        for (std::size_t region = 0; region < m_initial_states[initialParentState].size();
+        for (Region region = 0; region < m_initial_states[initialParentState].size();
              region++) {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
             m_currentCombinedState[region] = calcCombinedStateIdx(
                 nStates(rootState()),
                 initialParentState,
@@ -1785,6 +1799,7 @@ template <class Type> struct StateBase {
         return TransitionSG<Type, Guard> { guard };
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
@@ -1792,7 +1807,7 @@ template <class Type> struct StateBase {
     }
 
     template <class Source, class Event>
-    constexpr auto operator<=(const TransitionSE<Source, Event>& transitionSe)
+    constexpr auto operator<=(const TransitionSE<Source, Event>&)
     {
         return details::transition(
             state<Source> {}, Event {}, noGuard {}, noAction {}, state<Type> {});
@@ -1829,7 +1844,7 @@ template <class Type> struct StateBase {
             source, event<noneEvent> {}, noGuard {}, noAction {}, state<Type> {});
     }
 
-    template <class OtherState> bool operator==(OtherState)
+    template <class OtherState> auto operator==(OtherState) -> bool
     {
         return boost::hana::equal(
             boost::hana::type_c<typename OtherState::type>, boost::hana::type_c<Type>);
@@ -1943,6 +1958,7 @@ template <class Source, class Event, class Guard, class Action> class Transition
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, guard, action, target);
@@ -1959,6 +1975,7 @@ template <class Source, class Event, class Guard> class TransitionSEG {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, guard, noAction {}, target);
@@ -1974,6 +1991,7 @@ template <class Source, class Event, class Action> class TransitionSEA {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, noGuard {}, action, target);
@@ -1984,6 +2002,8 @@ template <class Source, class Event, class Action> class TransitionSEA {
 
 template <class Source, class Event> class TransitionSE {
   public:
+    
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, Event {}, noGuard {}, noAction {}, target);
@@ -1997,6 +2017,7 @@ template <class Source, class Action> class TransitionSA {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
@@ -2015,6 +2036,7 @@ template <class Source, class Guard, class Action> class TransitionSGA {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(state<Source> {}, event<noneEvent> {}, guard, action, target);
@@ -2032,6 +2054,7 @@ template <class Source, class Guard> class TransitionSG {
     {
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(

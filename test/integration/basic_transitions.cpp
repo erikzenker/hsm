@@ -186,3 +186,8 @@ TEST_F(BasicTransitionTests, should_self_transit)
     sm.process_event(e6 {});
     ASSERT_TRUE(sm.is(hsm::state<MainState> {}, hsm::state<S1> {}));
 }
+
+TEST_F(BasicTransitionTests, should_fail_when_access_invalid_region)
+{
+    ASSERT_THROW(sm.is(15, hsm::state<MainState> {}, hsm::state<S1> {}), std::out_of_range);
+}

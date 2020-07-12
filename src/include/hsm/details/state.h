@@ -42,6 +42,7 @@ template <class Type> struct StateBase {
         return TransitionSG<Type, Guard> { guard };
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
@@ -49,7 +50,7 @@ template <class Type> struct StateBase {
     }
 
     template <class Source, class Event>
-    constexpr auto operator<=(const TransitionSE<Source, Event>& transitionSe)
+    constexpr auto operator<=(const TransitionSE<Source, Event>&)
     {
         return details::transition(
             state<Source> {}, Event {}, noGuard {}, noAction {}, state<Type> {});
@@ -86,7 +87,7 @@ template <class Type> struct StateBase {
             source, event<noneEvent> {}, noGuard {}, noAction {}, state<Type> {});
     }
 
-    template <class OtherState> bool operator==(OtherState)
+    template <class OtherState> auto operator==(OtherState) -> bool
     {
         return boost::hana::equal(
             boost::hana::type_c<typename OtherState::type>, boost::hana::type_c<Type>);

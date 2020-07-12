@@ -5,33 +5,33 @@
 namespace hsm {
 namespace details {
 template <class Source, class Event, class Guard, class Action, class Target> struct Transition {
-    constexpr Transition(Source source, Event event, Guard guard, Action action, Target target)
+    constexpr Transition(Source, Event, Guard guard, Action action, Target)
         : m_guard(guard)
         , m_action(action)
     {
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }
@@ -42,23 +42,23 @@ template <class Source, class Event, class Guard, class Action, class Target> st
 };
 
 template <class Event, class Guard, class Action> struct InternalTransition {
-    constexpr InternalTransition(Event event, Guard guard, Action action)
+    constexpr InternalTransition(Event, Guard guard, Action action)
         : m_guard(guard)
         , m_action(action)
     {
     }
 
-    constexpr Event event() const
+    constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
@@ -71,45 +71,45 @@ template <class Event, class Guard, class Action> struct InternalTransition {
 template <class Parent, class Source, class Event, class Guard, class Action, class Target>
 struct ExtendedTransition {
     constexpr ExtendedTransition(
-        Parent parent, Source source, Event event, Guard guard, Action action, Target target)
+        Parent, Source, Event, Guard guard, Action action, Target)
         : m_guard(guard)
         , m_action(action)
     {
     }
 
-    constexpr Parent parent() const
+    [[nodiscard]] constexpr auto parent() const -> Parent
     {
         return Parent {};
     }
 
-    constexpr Source source() const
+    [[nodiscard]] constexpr auto source() const -> Source
     {
         return Source {};
     }
 
-    constexpr Event event() const
+    [[nodiscard]] constexpr auto event() const -> Event
     {
         return Event {};
     }
 
-    constexpr Action action() const
+    [[nodiscard]] constexpr auto action() const -> Action
     {
         return m_action;
     }
 
-    constexpr Guard guard() const
+    [[nodiscard]] constexpr auto guard() const -> Guard
     {
         return m_guard;
     }
 
-    constexpr Target target() const
+    [[nodiscard]] constexpr auto target() const -> Target
     {
         return Target {};
     }
 
   private:
-    const Action m_action;
     const Guard m_guard;
+    const Action m_action;
 };
 
 constexpr auto transition

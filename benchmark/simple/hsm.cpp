@@ -56,7 +56,7 @@ struct player {
     }
 };
 
-int main() {
+auto main() -> int{
   hsm::sm<player> sm;
 
   auto a = open_close{};  
@@ -65,9 +65,11 @@ int main() {
   auto d = pause2 {};
   auto e = stop{};
   auto f = end_pause{};
+  
+  const auto nRuns = 1'000'000;
 
   benchmark_execution_speed([&] {
-    for (auto i = 0; i < 1'000'000; ++i) {
+    for (auto i = 0; i < nRuns; ++i) {
       sm.process_event(a);
       sm.process_event(a);
       sm.process_event(b);
