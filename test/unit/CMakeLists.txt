@@ -26,6 +26,7 @@ add_executable(
           variant_queue_tests.cpp
           make_states_map_tests.cpp
           collect_initial_states_tests.cpp
+          for_each_tests.cpp
         )
 
 target_link_libraries(hsmUnitTests
