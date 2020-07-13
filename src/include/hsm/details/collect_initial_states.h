@@ -5,10 +5,9 @@
 #include "hsm/details/idx.h"
 
 #include <boost/hana/find.hpp>
-#include <boost/hana/fold.hpp>
-#include <boost/hana/max.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/transform.hpp>
+#include <boost/hana/maximum.hpp>
 
 #include <vector>
 
@@ -104,7 +103,6 @@ constexpr auto initialStateSizes = [](auto parentStateTypeids) {
  * Returns the maximal number of initial states
  */
 constexpr auto maxInitialStates = [](auto rootState) {
-    constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
-    return bh::fold(initialStateSizes(parentStateTypeids), bh::size_c<0>, bh::max);
+    return bh::maximum(initialStateSizes(collect_parent_state_typeids(rootState)));
 };
 }
