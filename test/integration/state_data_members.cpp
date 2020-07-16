@@ -39,7 +39,6 @@ const auto readDataAction = [](auto&& event, auto& source, auto& target) {
 const auto writeDataAction = [](auto&& event, auto& source, auto& target) {
     source.data = event.sourceData;
     target.data = event.targetData;
-    return true;
 };
 
 // Guard
