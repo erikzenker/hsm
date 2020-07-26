@@ -1,0 +1,24 @@
+name: Clang format
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '2'
+      
+    - name: Install Dependencies
+      run: | 
+        sudo apt install clang-format-9 
+        clang-format-9 --version
+
+    - name: Clang format
+      run: |
+        git clang-format-9 HEAD~1
+        git diff --exit-code
