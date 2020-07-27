@@ -74,8 +74,6 @@ const auto writeDataAction = [](auto&& event, auto& source, auto& target) {
     target.data = event.targetData;
 };
 
-const auto dummy = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
-
 // Guard
 const auto readDataGuard = [](auto&& event, auto& source, auto& target) {
     event.sourceData = source.data;
@@ -145,7 +143,7 @@ struct MainStateWithSubState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>{}       + hsm::event<enterSubState>{} / dummy         = hsm::state<SubState>{},
+            * hsm::state<S1>{}       + hsm::event<enterSubState>{}                 = hsm::state<SubState>{},
               hsm::state<S1>{}       + hsm::event<readEvent>{}    / readDataAction = hsm::state<SubState>{}, 
               hsm::state<SubState>{} + hsm::event<leaveSubState>{}                 = hsm::state<S1>{}
         );
@@ -160,8 +158,8 @@ struct MainStateWithEntry {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>{} + hsm::event<writeEvent>{} / dummy = hsm::state<S3>{},
-              hsm::state<S3>{} + hsm::event<readEvent>{}  / dummy = hsm::state<S1>{}
+            * hsm::state<S1>{} + hsm::event<writeEvent>{} = hsm::state<S3>{},
+              hsm::state<S3>{} + hsm::event<readEvent>{}  = hsm::state<S1>{}
         );
         // clang-format on
     }
@@ -227,7 +225,6 @@ class StateDataMembersEntryTests : public Test {
     hsm::sm<MainStateWithEntry> sm;
 };
 
-// Does only work when dummy action into state is provided see github #103
 TEST_F(StateDataMembersEntryTests, should_write_state_data_member_on_entry)
 {
     sm.process_event(writeEvent { "42", "42" });
@@ -246,7 +243,6 @@ class StateDataMembersSubStateTests : public Test {
     hsm::sm<MainStateWithSubState> sm;
 };
 
-// Does only work when dummy action into sub state is provided see github #103
 TEST_F(StateDataMembersSubStateTests, should_write_substate_data_member_on_entry)
 {
     sm.process_event(enterSubState { "42", "42" });
