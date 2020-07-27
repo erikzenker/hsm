@@ -5,6 +5,8 @@
 #include <boost/hana/bool.hpp>
 #include <boost/hana/equal.hpp>
 #include <boost/hana/functional/compose.hpp>
+#include <boost/hana/not.hpp>
+#include <boost/hana/or.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/type.hpp>
 
@@ -103,4 +105,16 @@ constexpr auto is_no_guard
 constexpr auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});
 
 constexpr auto contains_dependency = [](const auto& parameters) { return bh::size(parameters); };
+
+constexpr auto has_action = [](auto&& transition) {
+    return bh::or_(
+        bh::not_(is_no_action(transition.action())),
+        has_entry_action(transition.target()),
+        has_exit_action(transition.source()));
+};
+
+constexpr auto has_no_action = [](auto&& transition) {
+    return bh::and_(
+        is_no_action(transition.action()), bh::not_(has_entry_action(transition.target())));
+};
 }

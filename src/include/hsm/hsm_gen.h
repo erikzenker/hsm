@@ -107,6 +107,8 @@ template <class State> class Initial final : public InitialPseudoState {
 #include <boost/hana/bool.hpp>
 #include <boost/hana/equal.hpp>
 #include <boost/hana/functional/compose.hpp>
+#include <boost/hana/not.hpp>
+#include <boost/hana/or.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/type.hpp>
 
@@ -205,6 +207,18 @@ constexpr auto is_no_guard
 constexpr auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});
 
 constexpr auto contains_dependency = [](const auto& parameters) { return bh::size(parameters); };
+
+constexpr auto has_action = [](auto&& transition) {
+    return bh::or_(
+        bh::not_(is_no_action(transition.action())),
+        has_entry_action(transition.target()),
+        has_exit_action(transition.source()));
+};
+
+constexpr auto has_no_action = [](auto&& transition) {
+    return bh::and_(
+        is_no_action(transition.action()), bh::not_(has_entry_action(transition.target())));
+};
 }
 
 #include <type_traits>
@@ -1254,9 +1268,16 @@ constexpr auto resolveExitAction = [](auto&& transition) {
     // clang-format on
 };
 
+constexpr auto resolveNoAction = [](auto&& transition) {
+    return bh::if_(
+        is_no_action(transition.action()),
+        [](auto&&) { return [](auto&&...) {}; },
+        [](auto&& transition) { return transition.action(); })(transition);
+};
+
 constexpr auto resolveEntryExitAction = [](auto&& transition) {
     return [exitAction(resolveExitAction(transition)),
-            action(transition.action()),
+            action(resolveNoAction(transition)),
             entryAction(resolveEntryAction(transition))](auto&&... params) {
         exitAction(params...);
         action(params...);
@@ -1267,9 +1288,9 @@ constexpr auto resolveEntryExitAction = [](auto&& transition) {
 constexpr auto resolveAction = [](auto&& transition) {
     // clang-format off
     return bh::if_(
-        is_no_action(transition.action()),
-        [](auto&& transition) { return transition.action(); },
-        [](auto&& transition) { return resolveEntryExitAction(transition);})
+        has_action(transition),
+        [](auto&& transition) { return resolveEntryExitAction(transition);},
+        [](auto&& transition) { return transition.action(); })
         (transition);
     // clang-format on
 };
@@ -1297,10 +1318,10 @@ constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& tra
           const auto defer = false;
           const auto valid = true;
 
-          auto source2 = bh::find(statesMap, bh::typeid_(source)).value();
-          auto target2 = bh::find(statesMap, bh::typeid_(target)).value();
+          auto mappedSource = bh::find(statesMap, bh::typeid_(source)).value();
+          auto mappedTarget = bh::find(statesMap, bh::typeid_(target)).value();
 
-          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, source2, target2, optionalDependency)};
+          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, mappedSource, mappedTarget, optionalDependency)};
       };
 
 const auto addDispatchTableEntryOfSubMachineExits

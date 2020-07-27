@@ -126,9 +126,16 @@ constexpr auto resolveExitAction = [](auto&& transition) {
     // clang-format on
 };
 
+constexpr auto resolveNoAction = [](auto&& transition) {
+    return bh::if_(
+        is_no_action(transition.action()),
+        [](auto&&) { return [](auto&&...) {}; },
+        [](auto&& transition) { return transition.action(); })(transition);
+};
+
 constexpr auto resolveEntryExitAction = [](auto&& transition) {
     return [exitAction(resolveExitAction(transition)),
-            action(transition.action()),
+            action(resolveNoAction(transition)),
             entryAction(resolveEntryAction(transition))](auto&&... params) {
         exitAction(params...);
         action(params...);
@@ -139,9 +146,9 @@ constexpr auto resolveEntryExitAction = [](auto&& transition) {
 constexpr auto resolveAction = [](auto&& transition) {
     // clang-format off
     return bh::if_(
-        is_no_action(transition.action()),
-        [](auto&& transition) { return transition.action(); },
-        [](auto&& transition) { return resolveEntryExitAction(transition);})
+        has_action(transition),
+        [](auto&& transition) { return resolveEntryExitAction(transition);},
+        [](auto&& transition) { return transition.action(); })
         (transition);
     // clang-format on
 };
@@ -169,10 +176,10 @@ constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& tra
           const auto defer = false;
           const auto valid = true;
 
-          auto source2 = bh::find(statesMap, bh::typeid_(source)).value();
-          auto target2 = bh::find(statesMap, bh::typeid_(target)).value();
+          auto mappedSource = bh::find(statesMap, bh::typeid_(source)).value();
+          auto mappedTarget = bh::find(statesMap, bh::typeid_(target)).value();
 
-          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, source2, target2, optionalDependency)};
+          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, mappedSource, mappedTarget, optionalDependency)};
       };
 
 const auto addDispatchTableEntryOfSubMachineExits

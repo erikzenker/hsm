@@ -45,15 +45,12 @@ struct e3 {
     std::shared_ptr<std::promise<void>> called;
 };
 
-// Actions
-const auto a1 = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
-
 struct SubState {
     static constexpr auto make_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} + hsm::event<e1> {} / a1 =  hsm::state<S1> {}
+            * hsm::state<S1> {} + hsm::event<e1> {} =  hsm::state<S1> {}
         );
         // clang-format on
     }
@@ -74,7 +71,7 @@ struct SubState2 {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S2> {} + hsm::event<e1> {} / a1 =  hsm::state<S2> {}
+            * hsm::state<S2> {} + hsm::event<e1> {} =  hsm::state<S2> {}
         );
         // clang-format on
     }
@@ -85,11 +82,11 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {}       + hsm::event<e1> {} / a1 = hsm::state<S2> {},
-              hsm::state<S2> {}       + hsm::event<e1> {} / a1 = hsm::state<S1> {},
-              hsm::state<S1> {}       + hsm::event<e2> {} / a1 = hsm::state<SubState> {},
-              hsm::state<S1> {}       + hsm::event<e3> {} / a1 = hsm::state<SubState2> {},
-              hsm::state<SubState> {} + hsm::event<e2> {} / a1 = hsm::state<S1> {}
+            * hsm::state<S1> {}       + hsm::event<e1> {} = hsm::state<S2> {},
+              hsm::state<S2> {}       + hsm::event<e1> {} = hsm::state<S1> {},
+              hsm::state<S1> {}       + hsm::event<e2> {} = hsm::state<SubState> {},
+              hsm::state<S1> {}       + hsm::event<e3> {} = hsm::state<SubState2> {},
+              hsm::state<SubState> {} + hsm::event<e2> {} = hsm::state<S1> {}
         );
         // clang-format on
     }
