@@ -5,6 +5,7 @@
 #include "hsm/details/dispatch_table.h"
 #include "hsm/details/flatten_internal_transition_table.h"
 #include "hsm/details/for_each_idx.h"
+#include "hsm/details/has_action.h"
 #include "hsm/details/idx.h"
 #include "hsm/details/switch.h"
 #include "hsm/details/to_pairs.h"
@@ -114,6 +115,18 @@ constexpr auto resolveEntryAction = [](auto&& transition) {
     // clang-format on
 };
 
+constexpr auto resolveInitialStateEntryAction = [](auto&& transition) {
+    // clang-format off
+    return bh::apply([](auto&& target){
+        return bh::if_(has_substate_initial_state_entry_action(target)
+            , [](auto&& target) { return unwrap_typeid(bh::at_c<0>(collect_initial_states(target))).on_entry();}
+            , [](auto&&) { return [](auto...) {}; })
+            (target);    
+    },
+    transition.target());
+    // clang-format on
+};
+
 constexpr auto resolveExitAction = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src){
@@ -136,10 +149,12 @@ constexpr auto resolveNoAction = [](auto&& transition) {
 constexpr auto resolveEntryExitAction = [](auto&& transition) {
     return [exitAction(resolveExitAction(transition)),
             action(resolveNoAction(transition)),
-            entryAction(resolveEntryAction(transition))](auto&&... params) {
+            entryAction(resolveEntryAction(transition)),
+            initialStateEntryAction(resolveInitialStateEntryAction(transition))](auto&&... params) {
         exitAction(params...);
         action(params...);
         entryAction(params...);
+        initialStateEntryAction(params...);
     };
 };
 
