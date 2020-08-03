@@ -13,6 +13,12 @@
 
 namespace hsm {
 
+/**
+ * Collect the initial states for the parent states
+ *
+ * Returns: [[State]]
+ *
+ */
 constexpr auto collect_initial_states = [](auto parentState) {
     constexpr auto childStates = collect_child_states(parentState);
     constexpr auto initialStates = bh::filter(childStates, is_initial_state);

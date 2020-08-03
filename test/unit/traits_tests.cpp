@@ -1,3 +1,4 @@
+#include "hsm/details/has_action.h"
 #include "hsm/details/state.h"
 #include "hsm/details/traits.h"
 #include "hsm/details/transition_table.h"
@@ -131,6 +132,38 @@ TEST_F(TraitsTests, should_recognize_defered_events)
 
     auto result = bh::if_(
         hsm::has_deferred_events(hsm::state<S1> {}),
+        []() { return true; },
+        []() { return false; })();
+    ASSERT_TRUE(result);
+}
+
+TEST_F(TraitsTests, should_recognize_no_action)
+{
+    namespace bh = boost::hana;
+
+    auto result = bh::if_(
+        hsm::is_no_action(hsm::noAction {}), []() { return true; }, []() { return false; })();
+    ASSERT_TRUE(result);
+}
+
+TEST_F(TraitsTests, should_recognize_substate_initial_state_entry_action)
+{
+    namespace bh = boost::hana;
+
+    struct SubState {
+        static auto constexpr make_transition_table()
+        {
+            return hsm::transition_table(hsm::transition(
+                hsm::initial<S1> {},
+                hsm::event<e1> {},
+                hsm::noGuard {},
+                hsm::noAction {},
+                hsm::state<S1> {}));
+        }
+    };
+
+    auto result = bh::if_(
+        hsm::has_substate_initial_state_entry_action(hsm::state<SubState> {}),
         []() { return true; },
         []() { return false; })();
     ASSERT_TRUE(result);

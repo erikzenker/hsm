@@ -137,7 +137,7 @@ TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action_of_substate)
 }
 
 // Entry action of sub state initial state is not called see github #104
-TEST_F(EntryExitActionsTests, DISABLED_should_call_entry_action_of_substate_initial_state)
+TEST_F(EntryExitActionsTests, should_call_entry_action_of_substate_initial_state)
 {
     auto entryActionCalled = std::make_shared<std::promise<void>>();
 

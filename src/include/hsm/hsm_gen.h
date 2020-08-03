@@ -191,7 +191,6 @@ constexpr auto is_exit_state = bh::compose(details::is_exit_state, unwrap_typeid
 constexpr auto is_entry_state = bh::compose(details::is_entry_state, unwrap_typeid);
 constexpr auto is_direct_state = bh::compose(details::is_direct_state, unwrap_typeid);
 constexpr auto is_history_state = bh::compose(details::is_history_state, unwrap_typeid);
-// constexpr auto is_initial_state = bh::compose(details::is_initial_state, unwrap_typeid);
 constexpr auto is_initial_state = [](auto typeid_) {
     return bh::equal(
         bh::bool_c<std::is_base_of<InitialPseudoState, typename decltype(typeid_)::type>::value>,
@@ -206,19 +205,6 @@ constexpr auto is_no_guard
 
 constexpr auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});
 
-constexpr auto contains_dependency = [](const auto& parameters) { return bh::size(parameters); };
-
-constexpr auto has_action = [](auto&& transition) {
-    return bh::or_(
-        bh::not_(is_no_action(transition.action())),
-        has_entry_action(transition.target()),
-        has_exit_action(transition.source()));
-};
-
-constexpr auto has_no_action = [](auto&& transition) {
-    return bh::and_(
-        is_no_action(transition.action()), bh::not_(has_entry_action(transition.target())));
-};
 }
 
 #include <type_traits>
@@ -898,6 +884,12 @@ const auto get_unexpected_event_handler = [](auto rootState) {
 
 namespace hsm {
 
+/**
+ * Collect the initial states for the parent states
+ *
+ * Returns: [[State]]
+ *
+ */
 constexpr auto collect_initial_states = [](auto parentState) {
     constexpr auto childStates = collect_child_states(parentState);
     constexpr auto initialStates = bh::filter(childStates, is_initial_state);
@@ -1122,6 +1114,33 @@ template <StateIdx NStates, class Event>
 DispatchArray<NStates, Event> DispatchTable<NStates, Event>::table {};
 }
 
+#include <boost/hana/bool.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/not.hpp>
+#include <boost/hana/or.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+constexpr auto has_substate_initial_state_entry_action = [](auto&& target) {
+    return bh::if_(
+        has_transition_table(target),
+        [](auto&& target) { return has_entry_action(bh::at_c<0>(collect_initial_states(target))); },
+        [](auto&&) { return bh::false_c; })(target);
+};
+
+constexpr auto has_action = [](auto&& transition) {
+    return bh::or_(
+        bh::not_(is_no_action(transition.action())),
+        has_entry_action(transition.target()),
+        has_substate_initial_state_entry_action(transition.target()),
+        has_exit_action(transition.source()));
+};
+}
+
 #include <boost/hana/eval.hpp>
 #include <boost/hana/find_if.hpp>
 #include <boost/hana/functional/always.hpp>
@@ -1256,6 +1275,18 @@ constexpr auto resolveEntryAction = [](auto&& transition) {
     // clang-format on
 };
 
+constexpr auto resolveInitialStateEntryAction = [](auto&& transition) {
+    // clang-format off
+    return bh::apply([](auto&& target){
+        return bh::if_(has_substate_initial_state_entry_action(target)
+            , [](auto&& target) { return unwrap_typeid(bh::at_c<0>(collect_initial_states(target))).on_entry();}
+            , [](auto&&) { return [](auto...) {}; })
+            (target);    
+    },
+    transition.target());
+    // clang-format on
+};
+
 constexpr auto resolveExitAction = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src){
@@ -1278,10 +1309,12 @@ constexpr auto resolveNoAction = [](auto&& transition) {
 constexpr auto resolveEntryExitAction = [](auto&& transition) {
     return [exitAction(resolveExitAction(transition)),
             action(resolveNoAction(transition)),
-            entryAction(resolveEntryAction(transition))](auto&&... params) {
+            entryAction(resolveEntryAction(transition)),
+            initialStateEntryAction(resolveInitialStateEntryAction(transition))](auto&&... params) {
         exitAction(params...);
         action(params...);
         entryAction(params...);
+        initialStateEntryAction(params...);
     };
 };
 

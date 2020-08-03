@@ -89,7 +89,6 @@ constexpr auto is_exit_state = bh::compose(details::is_exit_state, unwrap_typeid
 constexpr auto is_entry_state = bh::compose(details::is_entry_state, unwrap_typeid);
 constexpr auto is_direct_state = bh::compose(details::is_direct_state, unwrap_typeid);
 constexpr auto is_history_state = bh::compose(details::is_history_state, unwrap_typeid);
-// constexpr auto is_initial_state = bh::compose(details::is_initial_state, unwrap_typeid);
 constexpr auto is_initial_state = [](auto typeid_) {
     return bh::equal(
         bh::bool_c<std::is_base_of<InitialPseudoState, typename decltype(typeid_)::type>::value>,
@@ -104,17 +103,4 @@ constexpr auto is_no_guard
 
 constexpr auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});
 
-constexpr auto contains_dependency = [](const auto& parameters) { return bh::size(parameters); };
-
-constexpr auto has_action = [](auto&& transition) {
-    return bh::or_(
-        bh::not_(is_no_action(transition.action())),
-        has_entry_action(transition.target()),
-        has_exit_action(transition.source()));
-};
-
-constexpr auto has_no_action = [](auto&& transition) {
-    return bh::and_(
-        is_no_action(transition.action()), bh::not_(has_entry_action(transition.target())));
-};
 }
