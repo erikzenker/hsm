@@ -141,9 +141,17 @@ A click on a particular feature check mark will forward to the feature documenta
     <td><center>✗</center></td>
     <td><center>✗</center></td>
   </tr>
+  <tr>
+    <td>Single amalgamation header</td>
+    <td><center><a href="src/include/hsm_gen.h">✓</a></center></td>
+    <td><center><a href="https://raw.githubusercontent.com/boost-ext/sml/master/include/boost/sml.hpp">✓</a></center></td>
+    <td><center>✗</center></td>
+    <td><center>✗</center></td>
+  </tr>
 </table> 
 
 ## Example 
+* Try it online: [https://godbolt.org/z/5eMzfv](https://godbolt.org/z/5eMzfv)
 ```c++
 #include "hsm/hsm.h"
 
@@ -269,6 +277,16 @@ The benchmark result are taken from the [state machine benchmark repository](htt
 * C++17
 * \>= g++-8
 * \>= clang-8
+
+## Play with it Online
+* Follow the link to the compiler explorer: [https://godbolt.org/z/P9b1dY](https://godbolt.org/z/P9b1dY)
+
+## Usage as Single Header
+* Download [amalgamation header](https://raw.githubusercontent.com/erikzenker/hsm/master/src/include/hsm/hsm_gen.h) and put it into your project src folder
+* Include amalgamation header:
+  ```c++
+  #include "path/to/amalgamation/header/hsm_gen.h"
+  ```
 
 ## Install with CMake
 ``` bash
