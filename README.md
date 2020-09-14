@@ -123,7 +123,7 @@ A click on a particular feature check mark will forward to the feature documenta
   <tr>
     <td>State data members</td>
     <td><center><a href="test/integration/state_data_members.cpp">✓</a></center></td>
-    <td><center>✗</center></td>
+    <td><center><a href="https://github.com/boost-ext/sml/blob/master/example/data.cpp">✓</a></center></td>
     <td><center>✓</center></td>
     <td><center><a href="https://www.boost.org/doc/libs/1_73_0/libs/statechart/doc/tutorial.html#StateLocalStorage">✓</a></center></td>
   </tr>
