@@ -3,17 +3,29 @@
 #include <boost/hana/type.hpp>
 #include <boost/hana/unpack.hpp>
 
+
+#if __cplusplus >= 201703L
+#include <variant>
+#define HAVE_VARIANT
+#else
+#include <boost/variant/variant.hpp>
+#endif
+
 #include <stdexcept>
 #include <queue>
-#include <variant>
 
 namespace hsm {
 
 namespace {
 template <class EventsTuple> auto constexpr make_variant_queue(EventsTuple events)
 {
+    #ifdef HAVE_VARIANT
     using Variant_t =
         typename decltype(boost::hana::unpack(events, boost::hana::template_<std::variant>))::type;
+    #else
+    using Variant_t =
+        typename decltype(boost::hana::unpack(events, boost::hana::template_<boost::variant>))::type;
+    #endif
     return std::queue<Variant_t> {};
 }
 }
@@ -55,10 +67,15 @@ public:
         auto frontElement = m_queue.front();
         m_queue.pop();
 
-        std::visit([&callable](auto&& arg){
+        auto visitor = [&callable](auto&& arg){
             callable(arg);    
-        }, frontElement);
-        
+        };  
+
+        #ifdef HAVE_VARIANT
+        std::visit(visitor, frontElement);
+        #else
+        boost::apply_visitor(visitor, frontElement);
+        #endif
     }
 };
 }

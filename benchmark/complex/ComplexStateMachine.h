@@ -100,10 +100,6 @@ struct e48 {
 };
 struct e49 {
 };
-struct e50 {
-};
-struct e51 {
-};
 
 auto guard = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
 auto action = [](auto /*event*/, auto /*source*/, auto /*target*/) {};
@@ -263,8 +259,6 @@ struct ComplexStateMachine {
             state<s45> {} + event<e46> {}[guard] / action = state<s46> {},
             state<s46> {} + event<e47> {}[guard] / action = state<s47> {},
             state<s47> {} + event<e48> {}[guard] / action = state<s48> {},
-            state<s48> {} + event<e49> {}[guard] / action = state<s49> {},
-            state<s49> {} + event<e50> {}[guard] / action = state<s50> {},
-            state<s50> {} + event<e51> {}[guard] / action = state<idle> {});
+            state<s48> {} + event<e49> {}[guard] / action = state<idle> {});
     }
 };

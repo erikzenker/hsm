@@ -110,8 +110,6 @@ auto main() -> int
                 sm.process_event(e48());
             if (rand() % 2)
                 sm.process_event(e49());
-            if (rand() % 2)
-                sm.process_event(e50());
         }
     });
     benchmark_memory_usage(sm);
