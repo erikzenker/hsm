@@ -7,6 +7,8 @@
 #include <boost/hana/experimental/printable.hpp>
 #include <gtest/gtest.h>
 
+#include <array>
+
 using namespace ::testing;
 namespace bh = boost::hana;
 
