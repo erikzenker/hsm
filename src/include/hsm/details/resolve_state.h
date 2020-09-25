@@ -86,54 +86,47 @@ template <class Transition> constexpr auto resolveSrcParent(Transition transitio
     }
 }
 
-template <class Transition> constexpr auto resolveEntryAction(Transition&& transition)
+template <class Transition> constexpr auto resolveEntryAction(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& dst){
-        return bh::if_(has_entry_action(dst)
-            , [](auto&& dst) { return get_entry_action(dst); }
-            , [](auto&&) { return [](auto...) {}; })
-            (dst);    
-    },
-    transition.target());
-    // clang-format on
+    if constexpr (transition.internal()) {
+        return [](auto...) {};
+    } else if constexpr (has_entry_action(transition.target())) {
+        return get_entry_action(transition.target());
+    } else {
+        return [](auto...) {};
+    }
 }
 
-template <class Transition> constexpr auto resolveInitialStateEntryAction(Transition&& transition)
+template <class Transition> constexpr auto resolveInitialStateEntryAction(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& target){
-        return bh::if_(has_substate_initial_state_entry_action(target)
-            , [](auto&& target) { return get_entry_action(bh::at_c<0>(collect_initial_states(target)));}
-            , [](auto&&) { return [](auto...) {}; })
-            (target);    
-    },
-    transition.target());
-    // clang-format on
+    if constexpr (has_substate_initial_state_entry_action(transition.target())) {
+        return get_entry_action(bh::at_c<0>(collect_initial_states(transition.target())));
+    } else {
+        return [](auto...) {};
+    }
 }
 
-template <class Transition> constexpr auto resolveExitAction(Transition&& transition)
+template <class Transition> constexpr auto resolveExitAction(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& src){
-        return bh::if_(has_exit_action(src)
-            , [](auto&& src) { return get_exit_action(src); }
-            , [](auto&&) { return [](auto...) {}; })
-            (src);
-    },
-    transition.source());
-    // clang-format on
+    if constexpr (transition.internal()) {
+        return [](auto...) {};
+    } else if constexpr (has_exit_action(transition.source())) {
+        return get_exit_action(transition.source());
+    } else {
+        return [](auto...) {};
+    }
 }
 
-template <class Transition> constexpr auto resolveNoAction(Transition&& transition)
+template <class Transition> constexpr auto resolveNoAction(Transition transition)
 {
-    return bh::if_(
-        is_no_action(transition.action()),
-        [](auto&&) { return [](auto&&...) {}; },
-        [](auto&& transition) { return transition.action(); })(transition);
+    if constexpr (is_no_action(transition.action())) {
+        return [](auto&&...) {};
+    } else {
+        return transition.action();
+    }
 }
 
-template <class Transition> constexpr auto resolveEntryExitAction(Transition&& transition)
+template <class Transition> constexpr auto resolveEntryExitAction(Transition transition)
 {
     return [exitAction(resolveExitAction(transition)),
             action(resolveNoAction(transition)),
@@ -146,27 +139,21 @@ template <class Transition> constexpr auto resolveEntryExitAction(Transition&& t
     };
 }
 
-template <class Transition> constexpr auto resolveAction(Transition&& transition)
+template <class Transition> constexpr auto resolveAction(Transition transition)
 {
-    // clang-format off
-    return bh::if_(
-        has_action(transition),
-        [](auto&& transition) { return resolveEntryExitAction(transition);},
-        [](auto&& transition) { return transition.action(); })
-        (transition);
-    // clang-format on
+    if constexpr (has_action(transition)) {
+        return resolveEntryExitAction(transition);
+    } else {
+        return transition.action();
+    }
 }
 
-template <class Transition> constexpr auto resolveHistory(Transition&& transition)
+template <class Transition> constexpr auto resolveHistory(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& dst){
-        return bh::if_(is_history_state(dst)
-            , [](auto&&) { return true; }
-            , [](auto&&) { return false; })
-            (dst);
-    }, 
-    transition.target());
-    // clang-format on                   
+    if constexpr (is_history_state(transition.target())) {
+        return true;
+    } else {
+        return false;
+    }
 }
 }

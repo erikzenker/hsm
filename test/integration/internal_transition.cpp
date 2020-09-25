@@ -14,10 +14,20 @@ namespace {
 struct S1 {
 };
 struct S2 {
+    static constexpr auto on_entry()
+    {
+        return [](auto event, auto...) { (void)event.name; };
+    }
+
+    static constexpr auto on_exit()
+    {
+        return [](auto event, auto...) { (void)event.name; };
+    }
 };
 
 // Events
 struct e1 {
+    std::string name = "e1";
 };
 struct e2 {
     e2(const std::shared_ptr<std::promise<void>>& called)
@@ -25,6 +35,7 @@ struct e2 {
     {
     }
     std::shared_ptr<std::promise<void>> called;
+    std::string name = "e2";
 };
 struct e3 {
 };
@@ -36,6 +47,9 @@ struct e4 {
     std::shared_ptr<std::promise<void>> called;
 };
 struct e5 {
+};
+struct e6 {
+    std::string name = "e2";
 };
 
 // Guards
@@ -72,9 +86,10 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> + hsm::event<e1> = hsm::state<S2>,
-              hsm::state<S1> + hsm::event<e2> = hsm::state<S2>,
-              hsm::state<S1> + hsm::event<e3> = hsm::state<SubState>
+            * hsm::state<S1> + hsm::event<e1> = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e2> = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e3> = hsm::state<SubState>
+            , hsm::state<S2> + hsm::event<e6> = hsm::state<S1>
         );
         // clang-format on
     }

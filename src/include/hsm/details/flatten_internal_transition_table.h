@@ -52,7 +52,7 @@ template <class Transition, class States>
 constexpr auto extend_internal_transition(Transition internalTransition, States states)
 {
     return bh::transform(states, [internalTransition](auto state) {
-        return details::extended_transition(
+        return details::internal_extended_transition(
             internalTransition.parent(),
             details::transition(
                 state,

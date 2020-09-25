@@ -1,8 +1,6 @@
 #pragma once
 
-#include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/for_each.hpp>
-#include <boost/hana/unpack.hpp>
+#include <tuple>
 
 namespace hsm {
 
@@ -12,14 +10,8 @@ namespace hsm {
  * @param[in] actions actions that will be chained
  */
 constexpr auto chain_actions = [](auto... actions) {
-    constexpr auto actionsTpl = boost::hana::make_basic_tuple(actions...);
-
-    return [actions(actionsTpl)](auto... args) {
-        auto argsTpl = boost::hana::make_basic_tuple(args...);
-
-        boost::hana::for_each(actions, [args(argsTpl)](auto action) {
-            boost::hana::unpack(args, [action(action)](auto... args) { action(args...); });
-        });
+    return [=](auto&&... args) {
+        return std::apply([&](auto... f) { (f(args...), ...); }, std::tie(actions...));
     };
 };
 
@@ -27,18 +19,6 @@ constexpr auto chain_actions = [](auto... actions) {
  * Shortcut for chain_actions
  */
 constexpr auto chain = chain_actions;
-}
-
-#include <boost/hana/experimental/printable.hpp>
-#include <iostream>
-
-namespace hsm {
-
-constexpr auto log = [](auto event, auto source, auto target) {
-    std::cout << boost::hana::experimental::print(boost::hana::typeid_(source)) << " + "
-              << boost::hana::experimental::print(boost::hana::typeid_(event)) << " = "
-              << boost::hana::experimental::print(boost::hana::typeid_(target)) << std::endl;
-};
 }
 
 namespace hsm {
@@ -64,6 +44,18 @@ template <class StateFactory> constexpr auto create_state(StateFactory stateFact
 {
     return CreateState<StateFactory> { stateFactory };
 }
+}
+
+#include <boost/hana/experimental/printable.hpp>
+#include <iostream>
+
+namespace hsm {
+
+constexpr auto log = [](auto event, auto source, auto target) {
+    std::cout << boost::hana::experimental::print(boost::hana::typeid_(source)) << " + "
+              << boost::hana::experimental::print(boost::hana::typeid_(event)) << " = "
+              << boost::hana::experimental::print(boost::hana::typeid_(target)) << std::endl;
+};
 }
 
 namespace hsm {
@@ -515,7 +507,14 @@ template <class Event, class Guard, class Action> struct InternalTransition {
     const Action m_action;
 };
 
-template <class Parent, class Source, class Event, class Guard, class Action, class Target>
+template <
+    class Parent,
+    class Source,
+    class Event,
+    class Guard,
+    class Action,
+    class Target,
+    bool Internal>
 struct ExtendedTransition {
     constexpr ExtendedTransition(
         Parent, Source, Event, Guard guard, Action action, Target)
@@ -554,6 +553,11 @@ struct ExtendedTransition {
         return Target {};
     }
 
+    [[nodiscard]] constexpr auto internal() const -> bool
+    {
+        return Internal;
+    }
+
   private:
     const Guard m_guard;
     const Action m_action;
@@ -565,19 +569,36 @@ constexpr auto transition
 constexpr auto internal_transition
     = [](auto&&... xs) { return InternalTransition<std::decay_t<decltype(xs)>...> { xs... }; };
 
-constexpr auto extended_transition = [](auto&& parent, auto&& transition) {
+constexpr auto extended_transition = [](auto parent, auto transition) {
     return ExtendedTransition<
         std::decay_t<decltype(parent)>,
         std::decay_t<decltype(transition.source())>,
         std::decay_t<decltype(transition.event())>,
         std::decay_t<decltype(transition.guard())>,
         std::decay_t<decltype(transition.action())>,
-        std::decay_t<decltype(transition.target())>> { parent,
-                                                       transition.source(),
-                                                       transition.event(),
-                                                       transition.guard(),
-                                                       transition.action(),
-                                                       transition.target() };
+        std::decay_t<decltype(transition.target())>,
+        false> { parent,
+                 transition.source(),
+                 transition.event(),
+                 transition.guard(),
+                 transition.action(),
+                 transition.target() };
+};
+
+constexpr auto internal_extended_transition = [](auto parent, auto transition) {
+    return ExtendedTransition<
+        std::decay_t<decltype(parent)>,
+        std::decay_t<decltype(transition.source())>,
+        std::decay_t<decltype(transition.event())>,
+        std::decay_t<decltype(transition.guard())>,
+        std::decay_t<decltype(transition.action())>,
+        std::decay_t<decltype(transition.target())>,
+        true> { parent,
+                transition.source(),
+                transition.event(),
+                transition.guard(),
+                transition.action(),
+                transition.target() };
 };
 }
 }
@@ -896,14 +917,16 @@ namespace bh {
 using namespace boost::hana;
 }
 
-constexpr auto has_substate_initial_state_entry_action = [](auto&& target) {
-    return bh::if_(
-        has_transition_table(target),
-        [](auto&& target) { return has_entry_action(bh::at_c<0>(collect_initial_states(target))); },
-        [](auto&&) { return bh::false_c; })(target);
+constexpr auto has_substate_initial_state_entry_action = [](auto target) {
+    if constexpr(has_transition_table(target)){
+        return has_entry_action(bh::at_c<0>(collect_initial_states(target)));
+    }
+    else {
+        return bh::false_c;
+    }
 };
 
-constexpr auto has_action = [](auto&& transition) {
+constexpr auto has_action = [](auto transition) {
     return bh::or_(
         bh::not_(is_no_action(transition.action())),
         has_entry_action(transition.target()),
@@ -996,54 +1019,47 @@ template <class Transition> constexpr auto resolveSrcParent(Transition transitio
     }
 }
 
-template <class Transition> constexpr auto resolveEntryAction(Transition&& transition)
+template <class Transition> constexpr auto resolveEntryAction(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& dst){
-        return bh::if_(has_entry_action(dst)
-            , [](auto&& dst) { return get_entry_action(dst); }
-            , [](auto&&) { return [](auto...) {}; })
-            (dst);    
-    },
-    transition.target());
-    // clang-format on
+    if constexpr (transition.internal()) {
+        return [](auto...) {};
+    } else if constexpr (has_entry_action(transition.target())) {
+        return get_entry_action(transition.target());
+    } else {
+        return [](auto...) {};
+    }
 }
 
-template <class Transition> constexpr auto resolveInitialStateEntryAction(Transition&& transition)
+template <class Transition> constexpr auto resolveInitialStateEntryAction(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& target){
-        return bh::if_(has_substate_initial_state_entry_action(target)
-            , [](auto&& target) { return get_entry_action(bh::at_c<0>(collect_initial_states(target)));}
-            , [](auto&&) { return [](auto...) {}; })
-            (target);    
-    },
-    transition.target());
-    // clang-format on
+    if constexpr (has_substate_initial_state_entry_action(transition.target())) {
+        return get_entry_action(bh::at_c<0>(collect_initial_states(transition.target())));
+    } else {
+        return [](auto...) {};
+    }
 }
 
-template <class Transition> constexpr auto resolveExitAction(Transition&& transition)
+template <class Transition> constexpr auto resolveExitAction(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& src){
-        return bh::if_(has_exit_action(src)
-            , [](auto&& src) { return get_exit_action(src); }
-            , [](auto&&) { return [](auto...) {}; })
-            (src);
-    },
-    transition.source());
-    // clang-format on
+    if constexpr (transition.internal()) {
+        return [](auto...) {};
+    } else if constexpr (has_exit_action(transition.source())) {
+        return get_exit_action(transition.source());
+    } else {
+        return [](auto...) {};
+    }
 }
 
-template <class Transition> constexpr auto resolveNoAction(Transition&& transition)
+template <class Transition> constexpr auto resolveNoAction(Transition transition)
 {
-    return bh::if_(
-        is_no_action(transition.action()),
-        [](auto&&) { return [](auto&&...) {}; },
-        [](auto&& transition) { return transition.action(); })(transition);
+    if constexpr (is_no_action(transition.action())) {
+        return [](auto&&...) {};
+    } else {
+        return transition.action();
+    }
 }
 
-template <class Transition> constexpr auto resolveEntryExitAction(Transition&& transition)
+template <class Transition> constexpr auto resolveEntryExitAction(Transition transition)
 {
     return [exitAction(resolveExitAction(transition)),
             action(resolveNoAction(transition)),
@@ -1056,28 +1072,22 @@ template <class Transition> constexpr auto resolveEntryExitAction(Transition&& t
     };
 }
 
-template <class Transition> constexpr auto resolveAction(Transition&& transition)
+template <class Transition> constexpr auto resolveAction(Transition transition)
 {
-    // clang-format off
-    return bh::if_(
-        has_action(transition),
-        [](auto&& transition) { return resolveEntryExitAction(transition);},
-        [](auto&& transition) { return transition.action(); })
-        (transition);
-    // clang-format on
+    if constexpr (has_action(transition)) {
+        return resolveEntryExitAction(transition);
+    } else {
+        return transition.action();
+    }
 }
 
-template <class Transition> constexpr auto resolveHistory(Transition&& transition)
+template <class Transition> constexpr auto resolveHistory(Transition transition)
 {
-    // clang-format off
-    return bh::apply([](auto&& dst){
-        return bh::if_(is_history_state(dst)
-            , [](auto&&) { return true; }
-            , [](auto&&) { return false; })
-            (dst);
-    }, 
-    transition.target());
-    // clang-format on                   
+    if constexpr (is_history_state(transition.target())) {
+        return true;
+    } else {
+        return false;
+    }
 }
 }
 
@@ -1292,7 +1302,7 @@ template <class Transition, class States>
 constexpr auto extend_internal_transition(Transition internalTransition, States states)
 {
     return bh::transform(states, [internalTransition](auto state) {
-        return details::extended_transition(
+        return details::internal_extended_transition(
             internalTransition.parent(),
             details::transition(
                 state,
@@ -1757,6 +1767,36 @@ template <class State> constexpr auto make_states_map(State&& parentState)
 }
 }
 
+#include <boost/hana/filter.hpp>
+#include <boost/hana/size.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+const auto is_anonymous_transition
+    = [](auto transition) { return bh::typeid_(transition.event()) == bh::typeid_(none {}); };
+
+const auto is_history_transition
+    = [](auto transition) { return is_history_state(transition.target()); };
+
+template <class State> constexpr auto has_anonymous_transition(State rootState)
+{
+    auto transitions = flatten_transition_table(rootState);
+    auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
+    return bh::size(anonymousTransition);
+}
+
+template <class State> constexpr auto has_history(State rootState)
+{
+    auto transitions = flatten_transition_table(rootState);
+    auto historyTransitions = bh::filter(transitions, is_history_transition);
+    return bh::size(historyTransitions);
+}
+}
+
 #include <boost/hana/type.hpp>
 #include <boost/hana/unpack.hpp>
 
@@ -1818,36 +1858,6 @@ public:
         
     }
 };
-}
-
-#include <boost/hana/size.hpp>
-#include <boost/hana/filter.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-const auto is_anonymous_transition
-    = [](auto transition) { return bh::typeid_(transition.event()) == bh::typeid_(none {}); };
-
-const auto is_history_transition
-    = [](auto transition) { return is_history_state(transition.target()); };
-
-template <class State> constexpr auto has_anonymous_transition(State rootState)
-{
-    auto transitions = flatten_transition_table(rootState);
-    auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
-    return bh::size(anonymousTransition);
-}
-
-template <class State> constexpr auto has_history(State rootState)
-{
-    auto transitions = flatten_transition_table(rootState);
-    auto historyTransitions = bh::filter(transitions, is_history_transition);
-    return bh::size(historyTransitions);
-}
 }
 
 #include <boost/hana/basic_tuple.hpp>
@@ -1971,8 +1981,8 @@ template <class RootState, class... OptionalParameters> class sm {
             result.transition->executeAction(event);
         }
 
-        if (allTransitionsInvalid){
-            return false;    
+        if (allTransitionsInvalid) {
+            return false;
         }
 
         if (allGuardsFailed) {

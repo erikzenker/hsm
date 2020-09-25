@@ -68,7 +68,14 @@ template <class Event, class Guard, class Action> struct InternalTransition {
     const Action m_action;
 };
 
-template <class Parent, class Source, class Event, class Guard, class Action, class Target>
+template <
+    class Parent,
+    class Source,
+    class Event,
+    class Guard,
+    class Action,
+    class Target,
+    bool Internal>
 struct ExtendedTransition {
     constexpr ExtendedTransition(
         Parent, Source, Event, Guard guard, Action action, Target)
@@ -107,6 +114,11 @@ struct ExtendedTransition {
         return Target {};
     }
 
+    [[nodiscard]] constexpr auto internal() const -> bool
+    {
+        return Internal;
+    }
+
   private:
     const Guard m_guard;
     const Action m_action;
@@ -118,19 +130,36 @@ constexpr auto transition
 constexpr auto internal_transition
     = [](auto&&... xs) { return InternalTransition<std::decay_t<decltype(xs)>...> { xs... }; };
 
-constexpr auto extended_transition = [](auto&& parent, auto&& transition) {
+constexpr auto extended_transition = [](auto parent, auto transition) {
     return ExtendedTransition<
         std::decay_t<decltype(parent)>,
         std::decay_t<decltype(transition.source())>,
         std::decay_t<decltype(transition.event())>,
         std::decay_t<decltype(transition.guard())>,
         std::decay_t<decltype(transition.action())>,
-        std::decay_t<decltype(transition.target())>> { parent,
-                                                       transition.source(),
-                                                       transition.event(),
-                                                       transition.guard(),
-                                                       transition.action(),
-                                                       transition.target() };
+        std::decay_t<decltype(transition.target())>,
+        false> { parent,
+                 transition.source(),
+                 transition.event(),
+                 transition.guard(),
+                 transition.action(),
+                 transition.target() };
+};
+
+constexpr auto internal_extended_transition = [](auto parent, auto transition) {
+    return ExtendedTransition<
+        std::decay_t<decltype(parent)>,
+        std::decay_t<decltype(transition.source())>,
+        std::decay_t<decltype(transition.event())>,
+        std::decay_t<decltype(transition.guard())>,
+        std::decay_t<decltype(transition.action())>,
+        std::decay_t<decltype(transition.target())>,
+        true> { parent,
+                transition.source(),
+                transition.event(),
+                transition.guard(),
+                transition.action(),
+                transition.target() };
 };
 }
 }
