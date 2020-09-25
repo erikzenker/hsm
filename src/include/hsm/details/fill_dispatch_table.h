@@ -277,7 +277,7 @@ fill_dispatch_table_with_deferred_events(RootState rootState, OptionalDependency
         const auto deferredEvents = unwrap_typeid(resolveExtentedInitialState(transition)).defer_events();
 
         bh::for_each(deferredEvents, [&](auto event) {
-            using Event = decltype(event);
+            using Event = typename decltype(event)::type;
 
             auto& dispatchTable = DispatchTable<states, Event>::table;
             const auto from = getCombinedStateIdx(

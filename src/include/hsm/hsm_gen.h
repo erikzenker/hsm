@@ -1437,7 +1437,7 @@ fill_dispatch_table_with_deferred_events(RootState rootState, OptionalDependency
         const auto deferredEvents = unwrap_typeid(resolveExtentedInitialState(transition)).defer_events();
 
         bh::for_each(deferredEvents, [&](auto event) {
-            using Event = decltype(event);
+            using Event = typename decltype(event)::type;
 
             auto& dispatchTable = DispatchTable<states, Event>::table;
             const auto from = getCombinedStateIdx(
@@ -1932,14 +1932,15 @@ template <class Parent> struct history : public StateBase<History<state<Parent>>
 };
 }
 
-#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/tuple.hpp>
 
 namespace hsm {
 namespace bh {
 using namespace boost::hana;
 }
 constexpr auto transition_table = bh::make_basic_tuple;
-constexpr auto events = bh::make_basic_tuple;
+
+template <class... Events> constexpr auto events = bh::tuple_t<Events...>;
 }
 
 #include <boost/hana/bool.hpp>
