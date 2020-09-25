@@ -36,7 +36,7 @@ struct e1 {
 struct Defer {
     constexpr auto defer_events()
     {
-        return hsm::events(e1{});
+        return hsm::events<e1>;
     }    
 };
 

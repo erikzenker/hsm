@@ -33,6 +33,11 @@ struct S4 {
 
 // Events
 struct e1 {
+    e1(int i)
+        : i(i)
+    {
+    }
+    int i;
 };
 
 // Guards
@@ -44,7 +49,7 @@ const auto a1 = [](auto /*event*/) {};
 struct Defer {
     constexpr auto defer_events()
     {
-        return hsm::events(e1{});
+        return hsm::events<e1>;
     }    
 };
 
