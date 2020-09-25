@@ -47,7 +47,7 @@ const auto g1 = [](auto) { return true; };
 const auto a1 = [](auto /*event*/) {};
 
 struct Defer {
-    constexpr auto defer_events()
+    static constexpr auto defer_events()
     {
         return hsm::events<e1>;
     }    
@@ -55,11 +55,11 @@ struct Defer {
 
 struct S {
 
-    constexpr auto on_entry()
+    static constexpr auto on_entry()
     {
         return [](auto counter) { (*counter)++; };
     }
-    constexpr auto on_exit()
+    static constexpr auto on_exit()
     {
         return [](auto counter) { (*counter)++; };
     }
@@ -110,7 +110,7 @@ struct MainState {
 TEST_F(CollectStatesTests, should_collect_child_states_typeids)
 {
     struct S {
-        auto make_transition_table()
+        static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
                 hsm::transition(hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<S1> {}),

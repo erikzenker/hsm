@@ -57,7 +57,7 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto make_internal_transition_table()
+    static constexpr auto make_internal_transition_table()
     {
         // clang-format off
         return hsm::transition_table(
@@ -79,7 +79,7 @@ struct MainState {
         // clang-format on
     }
 
-    constexpr auto make_internal_transition_table()
+    static constexpr auto make_internal_transition_table()
     {
         // clang-format off
         return hsm::transition_table(

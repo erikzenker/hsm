@@ -27,8 +27,7 @@ constexpr auto get_internal_transition_table = [](auto state) {
     return bh::if_(
         has_internal_transition_table(state),
         [](auto parentState) {
-            auto internalTransitionTable
-                = unwrap_typeid(parentState).make_internal_transition_table();
+            auto internalTransitionTable = make_internal_transition_table(parentState);
             return bh::transform(internalTransitionTable, [parentState](auto internalTransition) {
                 return details::extended_transition(
                     parentState,

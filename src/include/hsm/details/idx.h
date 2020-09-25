@@ -98,11 +98,4 @@ const auto has_history = [](auto rootState) {
     auto historyTransitions = bh::filter(transitions, is_history_transition);
     return bh::size(historyTransitions);
 };
-
-const auto get_unexpected_event_handler = [](auto rootState) {
-    return bh::if_(
-        has_unexpected_event_handler(rootState),
-        [](auto rootState) { return unwrap_typeid(rootState).on_unexpected_event(); },
-        [](auto) { return [](auto /*event*/) {}; })(rootState);
-};
 }

@@ -23,14 +23,14 @@ namespace {
 constexpr auto resolveInitialState = [](auto transition) {
     return bh::if_(
         is_initial_state(transition.source()),
-        [](auto initial) { return unwrap_typeid(initial).get_state(); },
+        [](auto initial) { return get_state(initial); },
         [](auto source) { return source; })(transition.source());
 };
 
 constexpr auto resolveExtentedInitialState = [](auto transition) {
     return bh::if_(
         is_initial_state(transition.source()),
-        [](auto initial) { return unwrap_typeid(initial).get_state(); },
+        [](auto initial) { return get_state(initial); },
         [](auto source) { return source; })(transition.source());
 };
 
@@ -76,7 +76,7 @@ constexpr auto collect_states_recursive = [](auto&& parentState) {
 };
 
 const auto collect_child_state_typeids = [](auto&& state) {
-    auto transitions = unwrap_typeid(state).make_transition_table();
+    auto transitions = make_transition_table2(state);
     auto collectedStates = bh::flatten(bh::transform(transitions, extractStateTypeids));
 
     return remove_duplicate_typeids(collectedStates);
