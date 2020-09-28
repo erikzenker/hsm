@@ -9,9 +9,9 @@ namespace hsm {
 template <class Type> struct StateBase {
     using type = Type;
 
-    template <class Event> constexpr auto operator+(const event<Event>&)
+    template <class Event> constexpr auto operator+(const event_t<Event>&)
     {
-        return TransitionSE<Type, event<Event>> {};
+        return TransitionSE<Type, event_t<Event>> {};
     }
 
     template <class Event, class Guard>
@@ -46,45 +46,45 @@ template <class Type> struct StateBase {
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
-            state<Type> {}, event<noneEvent> {}, noGuard {}, noAction {}, target);
+            state_t<Type> {}, event_t<noneEvent> {}, noGuard {}, noAction {}, target);
     }
 
     template <class Source, class Event>
     constexpr auto operator<=(const TransitionSE<Source, Event>&)
     {
         return details::transition(
-            state<Source> {}, Event {}, noGuard {}, noAction {}, state<Type> {});
+            state_t<Source> {}, Event {}, noGuard {}, noAction {}, state_t<Type> {});
     }
 
     template <class Source, class Event, class Guard>
     constexpr auto operator<=(const TransitionSEG<Source, Event, Guard>& transitionSeg)
     {
         return details::transition(
-            state<Source> {}, Event {}, transitionSeg.guard, noAction {}, state<Type> {});
+            state_t<Source> {}, Event {}, transitionSeg.guard, noAction {}, state_t<Type> {});
     }
 
     template <class Source, class Event, class Action>
     constexpr auto operator<=(const TransitionSEA<Source, Event, Action>& transitionSea)
     {
         return details::transition(
-            state<Source> {}, Event {}, noGuard {}, transitionSea.action, state<Type> {});
+            state_t<Source> {}, Event {}, noGuard {}, transitionSea.action, state_t<Type> {});
     }
 
     template <class Source, class Event, class Guard, class Action>
     constexpr auto operator<=(const TransitionSEGA<Source, Event, Guard, Action>& transitionSega)
     {
         return details::transition(
-            state<Source> {},
+            state_t<Source> {},
             Event {},
             transitionSega.guard,
             transitionSega.action,
-            state<Type> {});
+            state_t<Type> {});
     }
 
-    template <class Source> constexpr auto operator<=(const state<Source>& source)
+    template <class Source> constexpr auto operator<=(const state_t<Source>& source)
     {
         return details::transition(
-            source, event<noneEvent> {}, noGuard {}, noAction {}, state<Type> {});
+            source, event_t<noneEvent> {}, noGuard {}, noAction {}, state_t<Type> {});
     }
 
     template <class OtherState> auto operator==(OtherState) -> bool
@@ -94,31 +94,41 @@ template <class Type> struct StateBase {
     }
 };
 
-template <class Source> struct state : public StateBase<Source> {
+template <class Source> struct state_t : public StateBase<Source> {
     using StateBase<Source>::operator=;
 
     constexpr auto operator*()
     {
-        return initial<Source> {};
+        return initial_t<Source> {};
     }
 };
+template <class Source> state_t<Source> state {};
 
-template <class Source> struct initial : public StateBase<Initial<state<Source>>> {
-    using StateBase<Initial<state<Source>>>::operator=;
+template <class Source> struct initial_t : public StateBase<Initial<state_t<Source>>> {
+    using StateBase<Initial<state_t<Source>>>::operator=;
 };
+template <class Source> initial_t<Source> initial {};
+
 template <class Parent, class State>
-struct direct : public StateBase<Direct<state<Parent>, state<State>>> {
-    using StateBase<Direct<state<Parent>, state<State>>>::operator=;
+struct direct_t : public StateBase<Direct<state_t<Parent>, state_t<State>>> {
+    using StateBase<Direct<state_t<Parent>, state_t<State>>>::operator=;
 };
+template <class Parent, class State> direct_t<Parent, State> direct {};
+
 template <class Parent, class State>
-struct entry : public StateBase<Entry<state<Parent>, state<State>>> {
-    using StateBase<Entry<state<Parent>, state<State>>>::operator=;
+struct entry_t : public StateBase<Entry<state_t<Parent>, state_t<State>>> {
+    using StateBase<Entry<state_t<Parent>, state_t<State>>>::operator=;
 };
+template <class Parent, class State> entry_t<Parent, State> entry {};
+
 template <class Parent, class State>
-struct exit : public StateBase<Exit<state<Parent>, state<State>>> {
-    using StateBase<Exit<state<Parent>, state<State>>>::operator=;
+struct exit_t : public StateBase<Exit<state_t<Parent>, state_t<State>>> {
+    using StateBase<Exit<state_t<Parent>, state_t<State>>>::operator=;
 };
-template <class Parent> struct history : public StateBase<History<state<Parent>>> {
-    using StateBase<History<state<Parent>>>::operator=;
+template <class Parent, class State> exit_t<Parent, State> exit {};
+
+template <class Parent> struct history_t : public StateBase<History<state_t<Parent>>> {
+    using StateBase<History<state_t<Parent>>>::operator=;
 };
+template <class Parent> history_t<Parent> history {};
 }

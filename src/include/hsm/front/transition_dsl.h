@@ -76,7 +76,7 @@ template <class Source, class Event, class Guard, class Action> class Transition
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, guard, action, target);
+        return details::transition(state_t<Source> {}, Event {}, guard, action, target);
     }
 
     const Guard guard;
@@ -93,7 +93,7 @@ template <class Source, class Event, class Guard> class TransitionSEG {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, guard, noAction {}, target);
+        return details::transition(state_t<Source> {}, Event {}, guard, noAction {}, target);
     }
 
     const Guard guard;
@@ -109,7 +109,7 @@ template <class Source, class Event, class Action> class TransitionSEA {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, noGuard {}, action, target);
+        return details::transition(state_t<Source> {}, Event {}, noGuard {}, action, target);
     }
 
     const Action action;
@@ -121,7 +121,7 @@ template <class Source, class Event> class TransitionSE {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, noGuard {}, noAction {}, target);
+        return details::transition(state_t<Source> {}, Event {}, noGuard {}, noAction {}, target);
     }
 };
 
@@ -136,7 +136,7 @@ template <class Source, class Action> class TransitionSA {
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
-            state<Source> {}, event<noneEvent> {}, noGuard {}, action, target);
+            state_t<Source> {}, event_t<noneEvent> {}, noGuard {}, action, target);
     }
 
   private:
@@ -154,7 +154,8 @@ template <class Source, class Guard, class Action> class TransitionSGA {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, event<noneEvent> {}, guard, action, target);
+        return details::transition(
+            state_t<Source> {}, event_t<noneEvent> {}, guard, action, target);
     }
 
   private:
@@ -173,7 +174,7 @@ template <class Source, class Guard> class TransitionSG {
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
-            state<Source> {}, event<noneEvent> {}, guard, noAction {}, target);
+            state_t<Source> {}, event_t<noneEvent> {}, guard, noAction {}, target);
     }
 
     template <class Action> constexpr auto operator/(const Action& action)

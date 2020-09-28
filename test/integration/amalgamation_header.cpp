@@ -17,7 +17,7 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S1> {}
+            * hsm::state<S1> + hsm::event<e1> = hsm::state<S1>
         );
         // clang-format on
     }
@@ -33,5 +33,5 @@ class AmalgamationHeaderTests : public Test {
 
 TEST_F(AmalgamationHeaderTests, should_start_in_initial_state)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
 }

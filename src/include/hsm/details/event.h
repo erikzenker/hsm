@@ -13,28 +13,29 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class Event> struct event {
+template <class Event> struct event_t {
     static constexpr bh::type<Event> typeid_ {};
 
     constexpr auto operator+()
     {
-        return details::internal_transition(event<Event> {}, noGuard {}, noAction {});
+        return details::internal_transition(event_t<Event> {}, noGuard {}, noAction {});
     }
 
     template <class Guard> constexpr auto operator[](const Guard& guard)
     {
-        return TransitionEG<event<Event>, Guard> { guard };
+        return TransitionEG<event_t<Event>, Guard> { guard };
     }
 
     template <class Action> constexpr auto operator/(const Action& guard)
     {
-        return TransitionEA<event<Event>, Action> { guard };
+        return TransitionEA<event_t<Event>, Action> { guard };
     }
 };
+
+template <class Event> event_t<Event> event {};
 
 struct noneEvent {
 };
 
-using none = event<noneEvent>;
-
+using none = event_t<noneEvent>;
 }

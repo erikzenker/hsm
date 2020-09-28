@@ -40,13 +40,13 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            //   Target      <=   Source           + Event            [Guard] / Action
-            hsm::state<S2>{} <= * hsm::state<S1>{} + hsm::event<e1>{},
-            hsm::state<S3>{} <=   hsm::state<S1>{} + hsm::event<e4>{},
-            hsm::state<S2>{} <=   hsm::state<S1>{} + hsm::event<e2>{} [guard],
-            hsm::state<S2>{} <=   hsm::state<S1>{} + hsm::event<e3>{} [guard] / action,
-            hsm::state<S2>{} <=   hsm::state<S1>{} + hsm::event<e3>{}         / action,
-            hsm::state<S1>{} <=   hsm::state<S3>{}
+            //   Target    <=   Source         + Event          [Guard] / Action
+            hsm::state<S2> <= * hsm::state<S1> + hsm::event<e1>,
+            hsm::state<S3> <=   hsm::state<S1> + hsm::event<e4>,
+            hsm::state<S2> <=   hsm::state<S1> + hsm::event<e2> [guard],
+            hsm::state<S2> <=   hsm::state<S1> + hsm::event<e3> [guard] / action,
+            hsm::state<S2> <=   hsm::state<S1> + hsm::event<e3>         / action,
+            hsm::state<S1> <=   hsm::state<S3>
         );
         // clang-format on
     }
@@ -60,28 +60,28 @@ class TransitionPrefixDslTests : public Test {
 
 TEST_F(TransitionPrefixDslTests, should_use_transition_dsl)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(hsm::state<S2> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }
 
 TEST_F(TransitionPrefixDslTests, should_use_transition_dsl_with_anonymous_event)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
     sm.process_event(e4 {});
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
 }
 
 TEST_F(TransitionPrefixDslTests, should_use_transition_dsl_with_guard)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
     sm.process_event(e2 {});
-    ASSERT_TRUE(sm.is(hsm::state<S2> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }
 
 TEST_F(TransitionPrefixDslTests, should_use_transition_dsl_with_guard_and_action)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
     sm.process_event(e3 {});
-    ASSERT_TRUE(sm.is(hsm::state<S2> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }

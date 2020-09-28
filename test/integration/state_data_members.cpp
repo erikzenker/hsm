@@ -92,7 +92,7 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S3> {} + hsm::event<readEvent> {} / readDataAction =  hsm::state<S3> {}
+            * hsm::state<S3> + hsm::event<readEvent> / readDataAction =  hsm::state<S3>
         );
         // clang-format on
     }
@@ -113,9 +113,9 @@ struct MainStateWithActions {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>{} + hsm::event<readEvent>{}   / readDataAction  = hsm::state<S2>{},
-              hsm::state<S1>{} + hsm::event<writeEvent>{}  / writeDataAction = hsm::state<S2>{},
-              hsm::state<S2>{} + hsm::event<resetEvent>{}                    = hsm::state<S1>{}
+            * hsm::state<S1> + hsm::event<readEvent>   / readDataAction  = hsm::state<S2>,
+              hsm::state<S1> + hsm::event<writeEvent>  / writeDataAction = hsm::state<S2>,
+              hsm::state<S2> + hsm::event<resetEvent>                    = hsm::state<S1>
         );
         // clang-format on
     }
@@ -128,9 +128,9 @@ struct MainStateWithGuards {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>{} + hsm::event<readEvent>{}   [readDataGuard]  = hsm::state<S2>{},
-              hsm::state<S1>{} + hsm::event<writeEvent>{}  [writeDataGuard] = hsm::state<S2>{},
-              hsm::state<S2>{} + hsm::event<resetEvent>{}                   = hsm::state<S1>{}
+            * hsm::state<S1> + hsm::event<readEvent>   [readDataGuard]  = hsm::state<S2>,
+              hsm::state<S1> + hsm::event<writeEvent>  [writeDataGuard] = hsm::state<S2>,
+              hsm::state<S2> + hsm::event<resetEvent>                   = hsm::state<S1>
         );
         // clang-format on
     }
@@ -143,9 +143,9 @@ struct MainStateWithSubState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>{}       + hsm::event<enterSubState>{}                 = hsm::state<SubState>{},
-              hsm::state<S1>{}       + hsm::event<readEvent>{}    / readDataAction = hsm::state<SubState>{}, 
-              hsm::state<SubState>{} + hsm::event<leaveSubState>{}                 = hsm::state<S1>{}
+            * hsm::state<S1>       + hsm::event<enterSubState>                 = hsm::state<SubState>,
+              hsm::state<S1>       + hsm::event<readEvent>    / readDataAction = hsm::state<SubState>, 
+              hsm::state<SubState> + hsm::event<leaveSubState>                 = hsm::state<S1>
         );
         // clang-format on
     }
@@ -158,8 +158,8 @@ struct MainStateWithEntry {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>{} + hsm::event<writeEvent>{} = hsm::state<S3>{},
-              hsm::state<S3>{} + hsm::event<readEvent>{}  = hsm::state<S1>{}
+            * hsm::state<S1> + hsm::event<writeEvent> = hsm::state<S3>,
+              hsm::state<S3> + hsm::event<readEvent>  = hsm::state<S1>
         );
         // clang-format on
     }
@@ -228,11 +228,11 @@ class StateDataMembersEntryTests : public Test {
 TEST_F(StateDataMembersEntryTests, should_write_state_data_member_on_entry)
 {
     sm.process_event(writeEvent { "42", "42" });
-    ASSERT_TRUE(sm.is(hsm::state<S3> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S3>));
 
     auto event = readEvent { "", "" };
     sm.process_event(event);
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
 
     ASSERT_EQ("42", event.sourceData);
     ASSERT_EQ("42", event.targetData);

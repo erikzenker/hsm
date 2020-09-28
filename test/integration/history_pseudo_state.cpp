@@ -32,7 +32,7 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {}
+            * hsm::state<S1> + hsm::event<e1> = hsm::state<S2>
         );
         // clang-format on
     }
@@ -43,9 +43,9 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {}       + hsm::event<e1> {} = hsm::state<SubState> {},
-              hsm::state<SubState> {} + hsm::event<e3> {} = hsm::state<S2> {},
-              hsm::state<SubState> {} + hsm::event<e2> {} = hsm::history<SubState> {}
+            * hsm::state<S1>       + hsm::event<e1> = hsm::state<SubState>,
+              hsm::state<SubState> + hsm::event<e3> = hsm::state<S2>,
+              hsm::state<SubState> + hsm::event<e2> = hsm::history<SubState>
         );
         // clang-format on
     }
@@ -59,11 +59,11 @@ class HistoryPseudoStateTests : public Test {
 
 TEST_F(HistoryPseudoStateTests, should_reentry_substate_in_history_state)
 {
-    ASSERT_TRUE(sm.is(hsm::state<MainState> {}, hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<MainState>, hsm::state<S1>));
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(hsm::state<SubState> {}, hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S1>));
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(hsm::state<SubState> {}, hsm::state<S2> {}));
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S2>));
     sm.process_event(e2 {});
-    ASSERT_TRUE(sm.is(hsm::state<SubState> {}, hsm::state<S2> {}));
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S2>));
 }

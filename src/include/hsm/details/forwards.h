@@ -1,7 +1,7 @@
 #pragma once
 
 namespace hsm {
-template <class Event> struct event;
+template <class Event> struct event_t;
 struct noneEvent;
 struct noAction;
 struct noGuard;
@@ -16,5 +16,5 @@ template <class Source, class Event, class Guard> class TransitionSEG;
 template <class Source, class Event, class Action> class TransitionSEA;
 template <class Source, class Event, class Guard, class Action> class TransitionSEGA;
 
-template <class Source> struct initial;
+template <class Source> struct initial_t;
 }

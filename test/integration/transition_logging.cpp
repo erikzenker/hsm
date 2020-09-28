@@ -31,7 +31,7 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} + hsm::event<e1> {} / log = hsm::state<S2> {}
+            * hsm::state<S1> + hsm::event<e1> / log = hsm::state<S2>
         );
         // clang-format on
     }
@@ -46,5 +46,5 @@ class TransitionLoggingTests : public Test {
 
 TEST_F(TransitionLoggingTests, should_log_transition)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
 }

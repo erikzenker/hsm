@@ -39,18 +39,18 @@ struct player {
     {
         // clang-format off
     return transition_table(
-          state<Stopped> {} + event<play>{}        /  start_playback  = state<Playing> {},
-          state<Pause> {}   + event<end_pause>{}   /  resume_playback = state<Playing> {},
-          state<Open> {}    + event<open_close>{}  /  close_drawer    = state<Empty> {},
-        * state<Empty> {}   + event<open_close>{}  /  open_drawer     = state<Open> {},
-          state<Pause> {}   + event<open_close>{}  /  stop_and_open   = state<Open> {},
-          state<Stopped> {} + event<open_close>{}  /  open_drawer     = state<Open> {},
-          state<Playing> {} + event<open_close>{}  /  stop_and_open   = state<Open> {},
-          state<Playing> {} + event<pause2>{}      /  pause_playback  = state<Pause> {},
-          state<Playing> {} + event<stop>{}        /  stop_playback   = state<Stopped> {},
-          state<Pause> {}   + event<stop>{}        /  stop_playback   = state<Stopped> {},
-          state<Empty> {}   + event<cd_detected>{} /  store_cd_info   = state<Stopped> {},
-          state<Stopped> {} + event<stop>{}        /  stopped_again   = state<Stopped> {}
+          state<Stopped> + event<play>        /  start_playback  = state<Playing>,
+          state<Pause>   + event<end_pause>   /  resume_playback = state<Playing>,
+          state<Open>    + event<open_close>  /  close_drawer    = state<Empty>,
+        * state<Empty>   + event<open_close>  /  open_drawer     = state<Open>,
+          state<Pause>   + event<open_close>  /  stop_and_open   = state<Open>,
+          state<Stopped> + event<open_close>  /  open_drawer     = state<Open>,
+          state<Playing> + event<open_close>  /  stop_and_open   = state<Open>,
+          state<Playing> + event<pause2>      /  pause_playback  = state<Pause>,
+          state<Playing> + event<stop>        /  stop_playback   = state<Stopped>,
+          state<Pause>   + event<stop>        /  stop_playback   = state<Stopped>,
+          state<Empty>   + event<cd_detected> /  store_cd_info   = state<Stopped>,
+          state<Stopped> + event<stop>        /  stopped_again   = state<Stopped>
     );
         // clang-format on
     }

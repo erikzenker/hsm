@@ -5,7 +5,7 @@
 
 int main()
 {
-    flatten_transition_table(hsm::state<ComplexStateMachine> {});
+    flatten_transition_table(hsm::state<ComplexStateMachine>);
 
     return 0;
 }

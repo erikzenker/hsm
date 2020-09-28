@@ -58,7 +58,7 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            * hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {}
+            * hsm::state_t<S1> {} + hsm::event_t<e1> {} = hsm::state_t<S2> {}
         );
         // clang-format on
     }
@@ -70,10 +70,10 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            * hsm::state<S1> {} + hsm::event<e1> {} = hsm::state<S2> {},
-              hsm::state<S2> {} + hsm::event<e1> {} = hsm::state<SubState> {},
+            * hsm::state_t<S1> {} + hsm::event_t<e1> {} = hsm::state_t<S2> {},
+              hsm::state_t<S2> {} + hsm::event_t<e1> {} = hsm::state_t<SubState> {},
             // Region 1
-            * hsm::state<S3> {} + hsm::event<e1> {} = hsm::state<S4> {}
+            * hsm::state_t<S3> {} + hsm::event_t<e1> {} = hsm::state_t<S4> {}
         );
         // clang-format on
     }
@@ -83,9 +83,9 @@ struct MainState {
 TEST(ResolveHistoryTests, should_resolve_history_state)
 {
     constexpr auto historyTransition
-        = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, hsm::history<S> {}));
+        = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, hsm::history_t<S> {}));
     constexpr auto noHistoryTransition
-        = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, hsm::state<S> {}));
+        = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, hsm::state_t<S> {}));
 
     ASSERT_TRUE(hsm::resolveHistory(historyTransition));
     ASSERT_FALSE(hsm::resolveHistory(noHistoryTransition));
@@ -93,7 +93,7 @@ TEST(ResolveHistoryTests, should_resolve_history_state)
 
 TEST(ResolveDestinationTests, should_resolve_destination)
 {
-    auto dst = hsm::state<S1> {};
+    auto dst = hsm::state_t<S1> {};
     auto transition = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, dst));
     ASSERT_TRUE(dst == hsm::resolveDst(transition));
 }
@@ -101,14 +101,14 @@ TEST(ResolveDestinationTests, should_resolve_destination)
 TEST(ResolveDestinationTests, should_resolve_submachine_destination)
 {
     auto transition = hsm::details::extended_transition(
-        0, hsm::transition(1, 2, 3, 4, hsm::state<SubState> {}));
-    ASSERT_TRUE(hsm::state<S1> {} == hsm::resolveDst(transition));
+        0, hsm::transition(1, 2, 3, 4, hsm::state_t<SubState> {}));
+    ASSERT_TRUE(hsm::state_t<S1> {} == hsm::resolveDst(transition));
 }
 
 TEST(ResolveParentDestinationTests, should_resolve_destination_parent)
 {
-    auto dst = hsm::state<S1> {};
-    auto srcParent = hsm::state<S2> {};
+    auto dst = hsm::state_t<S1> {};
+    auto srcParent = hsm::state_t<S2> {};
     auto transition
         = hsm::details::extended_transition(srcParent, hsm::transition(1, 2, 3, 4, dst));
     ASSERT_TRUE(srcParent == hsm::resolveDstParent(transition));
@@ -116,22 +116,22 @@ TEST(ResolveParentDestinationTests, should_resolve_destination_parent)
 
 TEST(ResolveParentDestinationTests, should_resolve_submachine_destination_parent)
 {
-    auto dst = hsm::state<SubState> {};
+    auto dst = hsm::state_t<SubState> {};
     auto transition = hsm::details::extended_transition(0, hsm::transition(1, 2, 3, 4, dst));
     ASSERT_TRUE(dst == hsm::resolveDstParent(transition));
 }
 
 TEST(ResolveSourceTests, should_resolve_source)
 {
-    auto src = hsm::state<S1> {};
+    auto src = hsm::state_t<S1> {};
     auto transition = hsm::details::extended_transition(0, hsm::transition(src, 2, 3, 4, 5));
     ASSERT_TRUE(src == hsm::resolveSrc(transition));
 }
 
 TEST(ResolveSourceParentTests, should_resolve_source)
 {
-    auto srcParent = hsm::state<S2> {};
+    auto srcParent = hsm::state_t<S2> {};
     auto transition = hsm::details::extended_transition(
-        srcParent, hsm::transition(hsm::state<S1> {}, 2, 3, 4, 5));
+        srcParent, hsm::transition(hsm::state_t<S1> {}, 2, 3, 4, 5));
     ASSERT_TRUE(srcParent == hsm::resolveSrcParent(transition));
 }
