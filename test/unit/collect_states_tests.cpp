@@ -71,7 +71,7 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(hsm::initial<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
+            hsm::transition(hsm::initial_t<S1> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S2> {})
         );
         // clang-format on
     }
@@ -83,10 +83,10 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(hsm::initial<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
-            hsm::transition(hsm::state<S2> {}, hsm::event<e1> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(hsm::initial_t<S1> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S2> {}),
+            hsm::transition(hsm::state_t<S2> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<SubState> {}),
             // Region 1
-            hsm::transition(hsm::initial<S3> {}, hsm::event<e1> {}, g1, a1, hsm::state<S4> {})
+            hsm::transition(hsm::initial_t<S3> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S4> {})
         );
         // clang-format on
     }
@@ -100,14 +100,14 @@ TEST_F(CollectStatesTests, should_collect_child_states_typeids)
         auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
-                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<S1> {}),
+                hsm::transition(hsm::state_t<S2> {}, 0, 0, 0, hsm::state_t<S2> {}));
         }
     };
 
-    auto collectedStates = hsm::collect_child_state_typeids(hsm::state<S> {});
+    auto collectedStates = hsm::collect_child_state_typeids(hsm::state_t<S> {});
     auto expectedStates
-        = bh::make_tuple(bh::typeid_(hsm::state<S1> {}), bh::typeid_(hsm::state<S2> {}));
+        = bh::make_tuple(bh::typeid_(hsm::state_t<S1> {}), bh::typeid_(hsm::state_t<S2> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -118,12 +118,12 @@ TEST_F(CollectStatesTests, should_resolve_initial_state_on_collect_child_state_t
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(*hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}));
+                hsm::transition(*hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<S1> {}));
         }
     };
 
-    auto collectedStates = hsm::collect_child_state_typeids(hsm::state<S> {});
-    auto expectedStates = bh::make_tuple(bh::typeid_(hsm::state<S1> {}));
+    auto collectedStates = hsm::collect_child_state_typeids(hsm::state_t<S> {});
+    auto expectedStates = bh::make_tuple(bh::typeid_(hsm::state_t<S1> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -134,14 +134,15 @@ TEST_F(CollectStatesTests, should_collect_child_states)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
-                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<S1> {}),
+                hsm::transition(hsm::state_t<S2> {}, 0, 0, 0, hsm::state_t<S2> {}));
         }
     };
 
-    auto collectedStates = bh::transform(hsm::collect_child_states(hsm::state<S> {}), bh::typeid_);
+    auto collectedStates
+        = bh::transform(hsm::collect_child_states(hsm::state_t<S> {}), bh::typeid_);
     auto expectedStates
-        = bh::make_tuple(bh::typeid_(hsm::state<S1> {}), bh::typeid_(hsm::state<S2> {}));
+        = bh::make_tuple(bh::typeid_(hsm::state_t<S1> {}), bh::typeid_(hsm::state_t<S2> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -155,7 +156,7 @@ TEST_F(CollectStatesTests, should_collect_empty_child_state_recursive)
         }
     };
 
-    auto collectedStates = hsm::collect_child_state_typeids_recursive(hsm::state<S> {});
+    auto collectedStates = hsm::collect_child_state_typeids_recursive(hsm::state_t<S> {});
     auto expectedStates = bh::make_tuple();
 
     ASSERT_EQ(expectedStates, collectedStates);
@@ -167,14 +168,14 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive_on_top_l
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<S1> {}),
-                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<S1> {}),
+                hsm::transition(hsm::state_t<S2> {}, 0, 0, 0, hsm::state_t<S2> {}));
         }
     };
 
-    auto collectedStates = hsm::collect_child_state_typeids_recursive(hsm::state<S> {});
+    auto collectedStates = hsm::collect_child_state_typeids_recursive(hsm::state_t<S> {});
     auto expectedStates
-        = bh::make_tuple(bh::typeid_(hsm::state<S1> {}), bh::typeid_(hsm::state<S2> {}));
+        = bh::make_tuple(bh::typeid_(hsm::state_t<S1> {}), bh::typeid_(hsm::state_t<S2> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -185,7 +186,7 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+                hsm::transition(hsm::state_t<S2> {}, 0, 0, 0, hsm::state_t<S2> {}));
         }
     };
 
@@ -193,15 +194,15 @@ TEST_F(CollectStatesTests, should_collect_child_state_typeids_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<P> {}));
         }
     };
 
-    auto collectedStates = hsm::collect_child_state_typeids_recursive(hsm::state<S> {});
+    auto collectedStates = hsm::collect_child_state_typeids_recursive(hsm::state_t<S> {});
     auto expectedStates = bh::make_tuple(
-        bh::typeid_(hsm::state<S1> {}),
-        bh::typeid_(hsm::state<P> {}),
-        bh::typeid_(hsm::state<S2> {}));
+        bh::typeid_(hsm::state_t<S1> {}),
+        bh::typeid_(hsm::state_t<P> {}),
+        bh::typeid_(hsm::state_t<S2> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -215,8 +216,8 @@ TEST_F(CollectStatesTests, should_collect_at_least_parent_state)
         }
     };
 
-    auto collectedStates = hsm::collect_state_typeids_recursive(hsm::state<S> {});
-    auto expectedStates = bh::make_tuple(bh::typeid_(hsm::state<S> {}));
+    auto collectedStates = hsm::collect_state_typeids_recursive(hsm::state_t<S> {});
+    auto expectedStates = bh::make_tuple(bh::typeid_(hsm::state_t<S> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -227,7 +228,7 @@ TEST_F(CollectStatesTests, should_collect_state_typeids_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+                hsm::transition(hsm::state_t<S2> {}, 0, 0, 0, hsm::state_t<S2> {}));
         }
     };
 
@@ -235,16 +236,16 @@ TEST_F(CollectStatesTests, should_collect_state_typeids_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<P> {}));
         }
     };
 
-    auto collectedStates = hsm::collect_state_typeids_recursive(hsm::state<S> {});
+    auto collectedStates = hsm::collect_state_typeids_recursive(hsm::state_t<S> {});
     auto expectedStates = bh::make_tuple(
-        bh::typeid_(hsm::state<S1> {}),
-        bh::typeid_(hsm::state<P> {}),
-        bh::typeid_(hsm::state<S2> {}),
-        bh::typeid_(hsm::state<S> {}));
+        bh::typeid_(hsm::state_t<S1> {}),
+        bh::typeid_(hsm::state_t<P> {}),
+        bh::typeid_(hsm::state_t<S2> {}),
+        bh::typeid_(hsm::state_t<S> {}));
 
     ASSERT_EQ(expectedStates, collectedStates);
 }
@@ -255,7 +256,7 @@ TEST_F(CollectStatesTests, should_collect_states_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S2> {}, 0, 0, 0, hsm::state<S2> {}));
+                hsm::transition(hsm::state_t<S2> {}, 0, 0, 0, hsm::state_t<S2> {}));
         }
     };
 
@@ -263,20 +264,21 @@ TEST_F(CollectStatesTests, should_collect_states_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, 0, hsm::state<P> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, 0, hsm::state_t<P> {}));
         }
     };
 
-    auto collectedStates = hsm::collect_states_recursive(hsm::state<S> {});
+    auto collectedStates = hsm::collect_states_recursive(hsm::state_t<S> {});
 
     ASSERT_EQ(bh::size_c<4>, bh::size(collectedStates));
 }
 
 TEST_F(CollectStatesTests, should_collect_parent_state_typeids)
 {
-    auto collectedParentStates = hsm::collect_parent_state_typeids(hsm::state<MainState> {});
+    auto collectedParentStates = hsm::collect_parent_state_typeids(hsm::state_t<MainState> {});
     ASSERT_EQ(
-        bh::make_tuple(bh::typeid_(hsm::state<MainState> {}), bh::typeid_(hsm::state<SubState> {})),
+        bh::make_tuple(
+            bh::typeid_(hsm::state_t<MainState> {}), bh::typeid_(hsm::state_t<SubState> {})),
         collectedParentStates);
     ASSERT_EQ(bh::size_c<2>, bh::size(collectedParentStates));
 }

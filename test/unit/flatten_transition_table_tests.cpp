@@ -36,7 +36,7 @@ struct T {
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(hsm::transition(
-                state<T> {}, hsm::event<event> {}, guard {}, action {}, state<T> {}));
+                state_t<T> {}, hsm::event_t<event> {}, guard {}, action {}, state_t<T> {}));
         }
 
         // Non constexpr data member
@@ -47,7 +47,7 @@ struct T {
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(hsm::transition(
-                state<T> {}, hsm::event<event> {}, guard {}, action {}, state<P> {}));
+                state_t<T> {}, hsm::event_t<event> {}, guard {}, action {}, state_t<P> {}));
         }
 
         // Non constexpr data member
@@ -60,7 +60,7 @@ class FlattenTransitionTableTests : public Test {
 
 TEST_F(FlattenTransitionTableTests, should_flatten_with_parent_state)
 {
-    constexpr auto transitions = flatten_transition_table(state<S> {});
+    constexpr auto transitions = flatten_transition_table(state_t<S> {});
 
     ASSERT_EQ(size_c<2>, size(transitions));
 }

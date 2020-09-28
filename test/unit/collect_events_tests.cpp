@@ -35,12 +35,12 @@ struct P {
     static constexpr auto make_transition_table()
     {
         return hsm::transition_table(
-            hsm::transition(hsm::state<S1> {}, hsm::event<E2> {}, 0, 0, hsm::state<S1> {}));
+            hsm::transition(hsm::state_t<S1> {}, hsm::event_t<E2> {}, 0, 0, hsm::state_t<S1> {}));
     }
 
     static constexpr auto make_internal_transition_table()
     {
-        return hsm::transition_table(hsm::internal_transition(hsm::event<E4> {}, 0, 0));
+        return hsm::transition_table(hsm::internal_transition(hsm::event_t<E4> {}, 0, 0));
     }
 };
 
@@ -48,19 +48,19 @@ struct S {
     static constexpr auto make_transition_table()
     {
         return hsm::transition_table(
-            hsm::transition(hsm::state<S1> {}, hsm::event<E1> {}, 0, 0, hsm::state<P> {}));
+            hsm::transition(hsm::state_t<S1> {}, hsm::event_t<E1> {}, 0, 0, hsm::state_t<P> {}));
     }
 
     static constexpr auto make_internal_transition_table()
     {
-        return hsm::transition_table(hsm::internal_transition(hsm::event<E3> {}, 0, 0));
+        return hsm::transition_table(hsm::internal_transition(hsm::event_t<E3> {}, 0, 0));
     }
 };
 }
 
 TEST_F(CollectEventsTests, should_collect_event_typeids_recursive)
 {
-    auto collectedEvents = hsm::collect_event_typeids_recursive(hsm::state<S> {});
+    auto collectedEvents = hsm::collect_event_typeids_recursive(hsm::state_t<S> {});
     auto expectedEvents = bh::make_basic_tuple(
         bh::typeid_(E1 {}), bh::typeid_(E2 {}), bh::typeid_(E4 {}), bh::typeid_(E3 {}));
 
@@ -71,7 +71,7 @@ TEST_F(CollectEventsTests, should_collect_event_typeids_recursive)
 TEST_F(CollectEventsTests, should_collect_events_recursive)
 {
     auto collectedEvents
-        = bh::transform(hsm::collect_events_recursive(hsm::state<S> {}), bh::typeid_);
+        = bh::transform(hsm::collect_events_recursive(hsm::state_t<S> {}), bh::typeid_);
     auto expectedEvents = bh::make_basic_tuple(
         bh::typeid_(E1 {}), bh::typeid_(E2 {}), bh::typeid_(E4 {}), bh::typeid_(E3 {}));
 

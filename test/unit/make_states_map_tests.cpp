@@ -47,7 +47,7 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(*hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {})
+            hsm::transition(*hsm::state_t<S1> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S2> {})
         );
         // clang-format on
     }
@@ -59,10 +59,10 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             // Region 0    
-            hsm::transition(*hsm::state<S1> {}, hsm::event<e1> {}, g1, a1, hsm::state<S2> {}),
-            hsm::transition(hsm::state<S2> {}, hsm::event<e1> {}, g1, a1, hsm::state<SubState> {}),
+            hsm::transition(*hsm::state_t<S1> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S2> {}),
+            hsm::transition(hsm::state_t<S2> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<SubState> {}),
             // Region 1
-            hsm::transition(*hsm::state<S3> {}, hsm::event<e1> {}, g1, a1, hsm::state<S4> {})
+            hsm::transition(*hsm::state_t<S3> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S4> {})
         );
         // clang-format on
     }
@@ -72,35 +72,35 @@ struct MainState {
 
 TEST_F(MakeStatesMapTests, should_make_states_map)
 {
-    auto statesMap = hsm::make_states_map(hsm::state<MainState> {});
+    auto statesMap = hsm::make_states_map(hsm::state_t<MainState> {});
 
     ASSERT_EQ(bh::size_c<6>, bh::size(statesMap));
 
     ASSERT_EQ(
         bh::typeid_(std::shared_ptr<S1> {}),
-        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state<S1> {})).value()));
+        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state_t<S1> {})).value()));
     ASSERT_EQ(
         bh::typeid_(std::shared_ptr<S2> {}),
-        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state<S2> {})).value()));
+        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state_t<S2> {})).value()));
     ASSERT_EQ(
         bh::typeid_(std::shared_ptr<S3> {}),
-        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state<S3> {})).value()));
+        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state_t<S3> {})).value()));
     ASSERT_EQ(
         bh::typeid_(std::shared_ptr<S4> {}),
-        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state<S4> {})).value()));
+        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state_t<S4> {})).value()));
     ASSERT_EQ(
         bh::typeid_(std::shared_ptr<MainState> {}),
-        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state<MainState> {})).value()));
+        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state_t<MainState> {})).value()));
     ASSERT_EQ(
         bh::typeid_(std::shared_ptr<SubState> {}),
-        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state<SubState> {})).value()));
+        bh::typeid_(bh::find(statesMap, bh::typeid_(hsm::state_t<SubState> {})).value()));
 }
 
 TEST_F(MakeStatesMapTests, should_return_same_instance)
 {
-    auto statesMap = hsm::make_states_map(hsm::state<MainState> {});
+    auto statesMap = hsm::make_states_map(hsm::state_t<MainState> {});
 
-    auto s1 = bh::find(statesMap, bh::typeid_(hsm::state<S1> {})).value();
+    auto s1 = bh::find(statesMap, bh::typeid_(hsm::state_t<S1> {})).value();
     s1->data = std::string("42");
-    ASSERT_EQ("42", bh::find(statesMap, bh::typeid_(hsm::state<S1> {})).value()->data);
+    ASSERT_EQ("42", bh::find(statesMap, bh::typeid_(hsm::state_t<S1> {})).value()->data);
 }

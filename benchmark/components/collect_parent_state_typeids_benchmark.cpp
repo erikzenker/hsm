@@ -6,6 +6,6 @@ using namespace hsm;
 
 int main()
 {
-    const auto a = collect_parent_state_typeids(hsm::state<ComplexStateMachine> {});
+    const auto a = collect_parent_state_typeids(hsm::state_t<ComplexStateMachine> {});
     return boost::hana::size(a);
 }

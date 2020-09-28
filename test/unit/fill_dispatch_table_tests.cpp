@@ -35,7 +35,7 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            hsm::transition(hsm::initial<S1>{}, hsm::event<e1>{}, hsm::noGuard {}, hsm::noAction {}, hsm::state<S2>{})
+            hsm::transition(hsm::initial_t<S1>{}, hsm::event_t<e1>{}, hsm::noGuard {}, hsm::noAction {}, hsm::state_t<S2>{})
         );
         // clang-format on
     }
@@ -44,7 +44,7 @@ struct MainState {
 
 TEST_F(FillDispatchTableTests, should_will_dispatch_table_with_external_transitions)
 {
-    constexpr auto rootState = hsm::state<MainState> {};
+    constexpr auto rootState = hsm::state_t<MainState> {};
     constexpr auto transitions = hsm::flatten_transition_table(rootState);
     auto statesMap = hsm::make_states_map(rootState);
 

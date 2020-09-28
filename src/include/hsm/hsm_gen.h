@@ -8,7 +8,7 @@ struct noAction {
 struct noGuard {
 };
 
-template <class Source> struct state;
+template <class Source> struct state_t;
 
 template <class ParentState, class State> class PseudoState {
   public:
@@ -676,7 +676,7 @@ constexpr auto collect_parent_state_typeids = [](auto state) {
 }
 
 namespace hsm {
-template <class Event> struct event;
+template <class Event> struct event_t;
 struct noneEvent;
 struct noAction;
 struct noGuard;
@@ -691,7 +691,7 @@ template <class Source, class Event, class Guard> class TransitionSEG;
 template <class Source, class Event, class Action> class TransitionSEA;
 template <class Source, class Event, class Guard, class Action> class TransitionSEGA;
 
-template <class Source> struct initial;
+template <class Source> struct initial_t;
 }
 
 #include <boost/hana/basic_tuple.hpp>
@@ -703,30 +703,31 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class Event> struct event {
+template <class Event> struct event_t {
     static constexpr bh::type<Event> typeid_ {};
 
     constexpr auto operator+()
     {
-        return details::internal_transition(event<Event> {}, noGuard {}, noAction {});
+        return details::internal_transition(event_t<Event> {}, noGuard {}, noAction {});
     }
 
     template <class Guard> constexpr auto operator[](const Guard& guard)
     {
-        return TransitionEG<event<Event>, Guard> { guard };
+        return TransitionEG<event_t<Event>, Guard> { guard };
     }
 
     template <class Action> constexpr auto operator/(const Action& guard)
     {
-        return TransitionEA<event<Event>, Action> { guard };
+        return TransitionEA<event_t<Event>, Action> { guard };
     }
 };
+
+template <class Event> event_t<Event> event {};
 
 struct noneEvent {
 };
 
-using none = event<noneEvent>;
-
+using none = event_t<noneEvent>;
 }
 
 #include <boost/hana/drop_while.hpp>
@@ -1570,19 +1571,19 @@ using namespace boost::hana;
 
 template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
-    using Events = decltype(collect_events_recursive(state<RootState> {}));
-    using StatesMap = decltype(make_states_map(state<RootState> {}));
-    std::array<StateIdx, maxInitialStates(state<RootState> {})> m_currentCombinedState;
-    std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
-    std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
+    using Events = decltype(collect_events_recursive(state_t<RootState> {}));
+    using StatesMap = decltype(make_states_map(state_t<RootState> {}));
+    std::array<StateIdx, maxInitialStates(state_t<RootState> {})> m_currentCombinedState;
+    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_initial_states;
+    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
     std::size_t m_currentRegions{};
     StatesMap m_statesMap;
 
   public:
     sm(OptionalParameters&... optionalParameters)
-        : m_defer_queue(collect_events_recursive(state<RootState> {}))
-        , m_statesMap(make_states_map(state<RootState> {}))
+        : m_defer_queue(collect_events_recursive(state_t<RootState> {}))
+        , m_statesMap(make_states_map(state_t<RootState> {}))
     {
         fill_dispatch_table(optionalParameters...);
         fill_initial_state_table(rootState(), m_initial_states);
@@ -1721,7 +1722,8 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
-        constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
+        constexpr auto states
+            = nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {});
         return DispatchTable<states, Event>::table[index];
     }
 
@@ -1776,7 +1778,7 @@ template <class RootState, class... OptionalParameters> class sm {
 
     constexpr auto rootState()
     {
-        return state<RootState> {};
+        return state_t<RootState> {};
     }
 
     auto currentState(Region region)
@@ -1818,9 +1820,9 @@ namespace hsm {
 template <class Type> struct StateBase {
     using type = Type;
 
-    template <class Event> constexpr auto operator+(const event<Event>&)
+    template <class Event> constexpr auto operator+(const event_t<Event>&)
     {
-        return TransitionSE<Type, event<Event>> {};
+        return TransitionSE<Type, event_t<Event>> {};
     }
 
     template <class Event, class Guard>
@@ -1855,45 +1857,45 @@ template <class Type> struct StateBase {
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
-            state<Type> {}, event<noneEvent> {}, noGuard {}, noAction {}, target);
+            state_t<Type> {}, event_t<noneEvent> {}, noGuard {}, noAction {}, target);
     }
 
     template <class Source, class Event>
     constexpr auto operator<=(const TransitionSE<Source, Event>&)
     {
         return details::transition(
-            state<Source> {}, Event {}, noGuard {}, noAction {}, state<Type> {});
+            state_t<Source> {}, Event {}, noGuard {}, noAction {}, state_t<Type> {});
     }
 
     template <class Source, class Event, class Guard>
     constexpr auto operator<=(const TransitionSEG<Source, Event, Guard>& transitionSeg)
     {
         return details::transition(
-            state<Source> {}, Event {}, transitionSeg.guard, noAction {}, state<Type> {});
+            state_t<Source> {}, Event {}, transitionSeg.guard, noAction {}, state_t<Type> {});
     }
 
     template <class Source, class Event, class Action>
     constexpr auto operator<=(const TransitionSEA<Source, Event, Action>& transitionSea)
     {
         return details::transition(
-            state<Source> {}, Event {}, noGuard {}, transitionSea.action, state<Type> {});
+            state_t<Source> {}, Event {}, noGuard {}, transitionSea.action, state_t<Type> {});
     }
 
     template <class Source, class Event, class Guard, class Action>
     constexpr auto operator<=(const TransitionSEGA<Source, Event, Guard, Action>& transitionSega)
     {
         return details::transition(
-            state<Source> {},
+            state_t<Source> {},
             Event {},
             transitionSega.guard,
             transitionSega.action,
-            state<Type> {});
+            state_t<Type> {});
     }
 
-    template <class Source> constexpr auto operator<=(const state<Source>& source)
+    template <class Source> constexpr auto operator<=(const state_t<Source>& source)
     {
         return details::transition(
-            source, event<noneEvent> {}, noGuard {}, noAction {}, state<Type> {});
+            source, event_t<noneEvent> {}, noGuard {}, noAction {}, state_t<Type> {});
     }
 
     template <class OtherState> auto operator==(OtherState) -> bool
@@ -1903,33 +1905,43 @@ template <class Type> struct StateBase {
     }
 };
 
-template <class Source> struct state : public StateBase<Source> {
+template <class Source> struct state_t : public StateBase<Source> {
     using StateBase<Source>::operator=;
 
     constexpr auto operator*()
     {
-        return initial<Source> {};
+        return initial_t<Source> {};
     }
 };
+template <class Source> state_t<Source> state {};
 
-template <class Source> struct initial : public StateBase<Initial<state<Source>>> {
-    using StateBase<Initial<state<Source>>>::operator=;
+template <class Source> struct initial_t : public StateBase<Initial<state_t<Source>>> {
+    using StateBase<Initial<state_t<Source>>>::operator=;
 };
+template <class Source> initial_t<Source> initial {};
+
 template <class Parent, class State>
-struct direct : public StateBase<Direct<state<Parent>, state<State>>> {
-    using StateBase<Direct<state<Parent>, state<State>>>::operator=;
+struct direct_t : public StateBase<Direct<state_t<Parent>, state_t<State>>> {
+    using StateBase<Direct<state_t<Parent>, state_t<State>>>::operator=;
 };
+template <class Parent, class State> direct_t<Parent, State> direct {};
+
 template <class Parent, class State>
-struct entry : public StateBase<Entry<state<Parent>, state<State>>> {
-    using StateBase<Entry<state<Parent>, state<State>>>::operator=;
+struct entry_t : public StateBase<Entry<state_t<Parent>, state_t<State>>> {
+    using StateBase<Entry<state_t<Parent>, state_t<State>>>::operator=;
 };
+template <class Parent, class State> entry_t<Parent, State> entry {};
+
 template <class Parent, class State>
-struct exit : public StateBase<Exit<state<Parent>, state<State>>> {
-    using StateBase<Exit<state<Parent>, state<State>>>::operator=;
+struct exit_t : public StateBase<Exit<state_t<Parent>, state_t<State>>> {
+    using StateBase<Exit<state_t<Parent>, state_t<State>>>::operator=;
 };
-template <class Parent> struct history : public StateBase<History<state<Parent>>> {
-    using StateBase<History<state<Parent>>>::operator=;
+template <class Parent, class State> exit_t<Parent, State> exit {};
+
+template <class Parent> struct history_t : public StateBase<History<state_t<Parent>>> {
+    using StateBase<History<state_t<Parent>>>::operator=;
 };
+template <class Parent> history_t<Parent> history {};
 }
 
 #include <boost/hana/tuple.hpp>
@@ -2014,7 +2026,7 @@ template <class Source, class Event, class Guard, class Action> class Transition
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, guard, action, target);
+        return details::transition(state_t<Source> {}, Event {}, guard, action, target);
     }
 
     const Guard guard;
@@ -2031,7 +2043,7 @@ template <class Source, class Event, class Guard> class TransitionSEG {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, guard, noAction {}, target);
+        return details::transition(state_t<Source> {}, Event {}, guard, noAction {}, target);
     }
 
     const Guard guard;
@@ -2047,7 +2059,7 @@ template <class Source, class Event, class Action> class TransitionSEA {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, noGuard {}, action, target);
+        return details::transition(state_t<Source> {}, Event {}, noGuard {}, action, target);
     }
 
     const Action action;
@@ -2059,7 +2071,7 @@ template <class Source, class Event> class TransitionSE {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, Event {}, noGuard {}, noAction {}, target);
+        return details::transition(state_t<Source> {}, Event {}, noGuard {}, noAction {}, target);
     }
 };
 
@@ -2074,7 +2086,7 @@ template <class Source, class Action> class TransitionSA {
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
-            state<Source> {}, event<noneEvent> {}, noGuard {}, action, target);
+            state_t<Source> {}, event_t<noneEvent> {}, noGuard {}, action, target);
     }
 
   private:
@@ -2092,7 +2104,8 @@ template <class Source, class Guard, class Action> class TransitionSGA {
     // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)    
     template <class Target> constexpr auto operator=(const Target& target)
     {
-        return details::transition(state<Source> {}, event<noneEvent> {}, guard, action, target);
+        return details::transition(
+            state_t<Source> {}, event_t<noneEvent> {}, guard, action, target);
     }
 
   private:
@@ -2111,7 +2124,7 @@ template <class Source, class Guard> class TransitionSG {
     template <class Target> constexpr auto operator=(const Target& target)
     {
         return details::transition(
-            state<Source> {}, event<noneEvent> {}, guard, noAction {}, target);
+            state_t<Source> {}, event_t<noneEvent> {}, guard, noAction {}, target);
     }
 
     template <class Action> constexpr auto operator/(const Action& action)

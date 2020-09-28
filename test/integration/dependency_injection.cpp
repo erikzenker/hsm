@@ -34,7 +34,7 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} +  hsm::event<e1> {} [guard] / action = hsm::state<S1> {}
+            * hsm::state<S1> +  hsm::event<e1> [guard] / action = hsm::state<S1>
         );
         // clang-format on
     }

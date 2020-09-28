@@ -23,19 +23,19 @@ using namespace boost::hana;
 
 template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
-    using Events = decltype(collect_events_recursive(state<RootState> {}));
-    using StatesMap = decltype(make_states_map(state<RootState> {}));
-    std::array<StateIdx, maxInitialStates(state<RootState> {})> m_currentCombinedState;
-    std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_initial_states;
-    std::array<std::vector<std::size_t>, nParentStates(state<RootState> {})> m_history;
+    using Events = decltype(collect_events_recursive(state_t<RootState> {}));
+    using StatesMap = decltype(make_states_map(state_t<RootState> {}));
+    std::array<StateIdx, maxInitialStates(state_t<RootState> {})> m_currentCombinedState;
+    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_initial_states;
+    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_history;
     variant_queue<Events> m_defer_queue;
     std::size_t m_currentRegions{};
     StatesMap m_statesMap;
 
   public:
     sm(OptionalParameters&... optionalParameters)
-        : m_defer_queue(collect_events_recursive(state<RootState> {}))
-        , m_statesMap(make_states_map(state<RootState> {}))
+        : m_defer_queue(collect_events_recursive(state_t<RootState> {}))
+        , m_statesMap(make_states_map(state_t<RootState> {}))
     {
         fill_dispatch_table(optionalParameters...);
         fill_initial_state_table(rootState(), m_initial_states);
@@ -174,7 +174,8 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
-        constexpr auto states = nStates(state<RootState> {}) * nParentStates(state<RootState> {});
+        constexpr auto states
+            = nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {});
         return DispatchTable<states, Event>::table[index];
     }
 
@@ -229,7 +230,7 @@ template <class RootState, class... OptionalParameters> class sm {
 
     constexpr auto rootState()
     {
-        return state<RootState> {};
+        return state_t<RootState> {};
     }
 
     auto currentState(Region region)

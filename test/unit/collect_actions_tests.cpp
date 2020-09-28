@@ -41,13 +41,13 @@ TEST_F(CollectActionsTests, should_collect_action_typeids)
         {
             // clang-format off
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, e1, hsm::state<S1> {}),
-                hsm::transition(hsm::state<S1> {}, 0, 0, e2, hsm::state<S1> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e1, hsm::state_t<S1> {}),
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e2, hsm::state_t<S1> {}));
             // clang-format on
         }
     };
 
-    auto collectedActions = hsm::collect_action_typeids_recursive(hsm::state<S> {});
+    auto collectedActions = hsm::collect_action_typeids_recursive(hsm::state_t<S> {});
     auto expectedActions
         = boost::hana::make_tuple(boost::hana::typeid_(e1), boost::hana::typeid_(e2));
 
@@ -60,7 +60,7 @@ TEST_F(CollectActionsTests, should_collect_action_typeids_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, e2, hsm::state<S1> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e2, hsm::state_t<S1> {}));
         }
     };
 
@@ -68,11 +68,11 @@ TEST_F(CollectActionsTests, should_collect_action_typeids_recursive)
         static constexpr auto make_transition_table()
         {
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, e1, hsm::state<P> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e1, hsm::state_t<P> {}));
         }
     };
 
-    auto collectedActions = hsm::collect_action_typeids_recursive(hsm::state<S> {});
+    auto collectedActions = hsm::collect_action_typeids_recursive(hsm::state_t<S> {});
     auto expectedActions
         = boost::hana::make_tuple(boost::hana::typeid_(e1), boost::hana::typeid_(e2));
 
@@ -86,13 +86,13 @@ TEST_F(CollectActionsTests, should_collect_actions_recursive)
         {
             // clang-format off
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, e1, hsm::state<S1> {}),
-                hsm::transition(hsm::state<S1> {}, 0, 0, e2, hsm::state<S1> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e1, hsm::state_t<S1> {}),
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e2, hsm::state_t<S1> {}));
             // clang-format on
         }
     };
 
-    auto collectedActions = hsm::collect_actions_recursive(hsm::state<S> {});
+    auto collectedActions = hsm::collect_actions_recursive(hsm::state_t<S> {});
     auto expectedActions
         = boost::hana::make_tuple(e1, e2);
 
@@ -106,13 +106,13 @@ TEST_F(CollectActionsTests, should_not_collect_actions_twice)
         {
             // clang-format off
             return hsm::transition_table(
-                hsm::transition(hsm::state<S1> {}, 0, 0, e1, hsm::state<S1> {}),
-                hsm::transition(hsm::state<S1> {}, 0, 0, e1, hsm::state<S1> {}));
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e1, hsm::state_t<S1> {}),
+                hsm::transition(hsm::state_t<S1> {}, 0, 0, e1, hsm::state_t<S1> {}));
             // clang-format on
         }
     };
 
-    auto collectedActions = hsm::collect_actions_recursive(hsm::state<S> {});
+    auto collectedActions = hsm::collect_actions_recursive(hsm::state_t<S> {});
     auto expectedActions
         = boost::hana::make_tuple(e1);
 

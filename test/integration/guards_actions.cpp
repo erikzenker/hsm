@@ -44,7 +44,7 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} + hsm::event<e1> {} / a2 = hsm::state<S1> {}
+            * hsm::state<S1> + hsm::event<e1> / a2 = hsm::state<S1>
         );
         // clang-format on
     }
@@ -55,10 +55,10 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> {} + hsm::event<e1> {} /  a2 = hsm::state<S1> {},
-              hsm::state<S1> {} + hsm::event<e2> {}       = hsm::state<SubState> {},
-              hsm::state<S1> {} + hsm::event<e3> {}  [g2] = hsm::state<S2> {},
-              hsm::state<S1> {} + hsm::event<e4> {}  [g3] = hsm::state<S2> {}
+            * hsm::state<S1> + hsm::event<e1> /  a2 = hsm::state<S1>,
+              hsm::state<S1> + hsm::event<e2>       = hsm::state<SubState>,
+              hsm::state<S1> + hsm::event<e3>  [g2] = hsm::state<S2>,
+              hsm::state<S1> + hsm::event<e4>  [g3] = hsm::state<S2>
         );
         // clang-format on
     }
@@ -96,14 +96,14 @@ TEST_F(GuardsActionsTests, should_call_substate_action)
 
 TEST_F(GuardsActionsTests, should_block_transition_guard)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
     sm.process_event(e3 {});
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
 }
 
 TEST_F(GuardsActionsTests, should_not_block_transition_by_guard)
 {
-    ASSERT_TRUE(sm.is(hsm::state<S1> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
     sm.process_event(e4 {});
-    ASSERT_TRUE(sm.is(hsm::state<S2> {}));
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }
