@@ -150,8 +150,7 @@ A click on a particular feature check mark will forward to the feature documenta
   </tr>
 </table> 
 
-## Example 
-* Try it online: [https://godbolt.org/z/5eMzfv](https://godbolt.org/z/5eMzfv)
+## Example ([Run](https://godbolt.org/z/Mbd46b))
 ```c++
 #include "hsm/hsm.h"
 
