@@ -189,8 +189,12 @@ template <class RootState, class... OptionalParameters> class sm {
                 m_history[currentParentState()][region] = m_currentCombinedState[region];
 
                 if (dispatchTableEntry.history) {
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
-                    m_currentCombinedState[region] = m_history[currentParentState()][region];
+                    auto parent = calcParentStateIdx(
+                        nStates(rootState()), dispatchTableEntry.combinedState);
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                    auto combined = m_history[parent][region];
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                    m_currentCombinedState[region] = combined;
                 } else {
                     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                     m_currentCombinedState[region] = dispatchTableEntry.combinedState;
@@ -249,11 +253,8 @@ template <class RootState, class... OptionalParameters> class sm {
 
         for (Region region = 0; region < m_initial_states[initialParentState].size();
              region++) {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
-            m_currentCombinedState[region] = calcCombinedStateIdx(
-                nStates(rootState()),
-                initialParentState,
-                m_initial_states[initialParentState][region]);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_currentCombinedState[region] = m_initial_states[initialParentState][region];
         }
     }
 

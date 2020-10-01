@@ -20,7 +20,9 @@ using namespace boost::hana;
 
 namespace {
 
-struct event {
+struct e1 {
+};
+struct e2 {
 };
 struct guard {
 };
@@ -32,27 +34,40 @@ struct T {
     std::string data = "42";
 };
 
-    struct P{
-        static constexpr auto make_transition_table()
-        {
-            return hsm::transition_table(hsm::transition(
-                state_t<T> {}, hsm::event_t<event> {}, guard {}, action {}, state_t<T> {}));
-        }
+struct R {
+    static constexpr auto make_transition_table()
+    {
+        return hsm::transition_table(hsm::transition(
+            state_t<T> {}, hsm::event_t<e1> {}, guard {}, action {}, state_t<T> {}));
+    }
 
-        // Non constexpr data member
-        std::string data = "42";
-    };
+    // Non constexpr data member
+    std::string data = "42";
+};
 
-    struct S {
-        static constexpr auto make_transition_table()
-        {
-            return hsm::transition_table(hsm::transition(
-                state_t<T> {}, hsm::event_t<event> {}, guard {}, action {}, state_t<P> {}));
-        }
+struct P {
+    static constexpr auto make_transition_table()
+    {
+        return hsm::transition_table(hsm::transition(
+            state_t<T> {}, hsm::event_t<e1> {}, guard {}, action {}, state_t<T> {}));
+    }
 
-        // Non constexpr data member
-        std::string data = "42";
-    };
+    // Non constexpr data member
+    std::string data = "42";
+};
+
+struct S {
+    static constexpr auto make_transition_table()
+    {
+        return hsm::transition_table(
+            hsm::transition(state_t<T> {}, hsm::event_t<e1> {}, guard {}, action {}, state_t<P> {}),
+            hsm::transition(
+                state_t<T> {}, hsm::event_t<e2> {}, guard {}, action {}, history_t<R> {}));
+    }
+
+    // Non constexpr data member
+    std::string data = "42";
+};
 
 class FlattenTransitionTableTests : public Test {
 };
@@ -62,5 +77,5 @@ TEST_F(FlattenTransitionTableTests, should_flatten_with_parent_state)
 {
     constexpr auto transitions = flatten_transition_table(state_t<S> {});
 
-    ASSERT_EQ(size_c<2>, size(transitions));
+    ASSERT_EQ(size_c<4>, size(transitions));
 }
