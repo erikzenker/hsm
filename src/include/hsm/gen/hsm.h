@@ -1,12 +1,12 @@
 #pragma once
 
+#include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/eval.hpp>
 #include <boost/hana/find_if.hpp>
 #include <boost/hana/functional/always.hpp>
+#include <boost/hana/functional/compose.hpp>
 #include <boost/hana/lazy.hpp>
 #include <boost/hana/pair.hpp>
-#include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/functional/compose.hpp>
 
 namespace hsm {
     namespace bh {
