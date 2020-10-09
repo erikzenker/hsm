@@ -58,6 +58,10 @@ constexpr auto is_initial_state = [](auto type) {
 };
 }
 
+constexpr auto get_parent_state = [](auto state) {
+    return decltype(std::declval<typename decltype(state)::type>().get_parent_state())();
+};
+
 constexpr auto unwrap_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
 constexpr auto unwrap_typeid_to_shared_ptr
     = [](auto typeid_) { return std::make_shared<typename decltype(typeid_)::type>(); };
@@ -72,7 +76,6 @@ constexpr auto make_transition_table2
 constexpr auto has_transition_table = bh::is_valid(
     [](auto stateTypeid) -> decltype(std::declval<typename decltype(stateTypeid)::type>()
                                          .make_transition_table()) {});
-
 constexpr auto has_internal_transition_table
     = bh::compose(details::has_internal_transition_table, unwrap_typeid);
 
@@ -85,10 +88,30 @@ constexpr auto has_unexpected_event_handler
 
 constexpr auto has_deferred_events = bh::compose(details::has_deferred_events, unwrap_typeid);
 
-constexpr auto is_exit_state = bh::compose(details::is_exit_state, unwrap_typeid);
-constexpr auto is_entry_state = bh::compose(details::is_entry_state, unwrap_typeid);
-constexpr auto is_direct_state = bh::compose(details::is_direct_state, unwrap_typeid);
-constexpr auto is_history_state = bh::compose(details::is_history_state, unwrap_typeid);
+constexpr auto is_exit_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<ExitPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
+constexpr auto is_entry_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<EntryPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
+constexpr auto is_direct_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<DirectPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
+constexpr auto is_history_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<HistoryPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
 constexpr auto is_initial_state = [](auto typeid_) {
     return bh::equal(
         bh::bool_c<std::is_base_of<InitialPseudoState, typename decltype(typeid_)::type>::value>,

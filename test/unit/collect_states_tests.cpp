@@ -77,6 +77,18 @@ struct SubState {
     }
 };
 
+struct HistorySubState {
+    static constexpr auto make_transition_table()
+    {
+        // clang-format off
+        return hsm::transition_table(
+            // Region 0    
+            hsm::transition(hsm::initial_t<S1> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S2> {})
+        );
+        // clang-format on
+    }
+};
+
 struct MainState {
     static constexpr auto make_transition_table()
     {
@@ -85,6 +97,7 @@ struct MainState {
             // Region 0    
             hsm::transition(hsm::initial_t<S1> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S2> {}),
             hsm::transition(hsm::state_t<S2> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<SubState> {}),
+            hsm::transition(hsm::state_t<S2> {}, hsm::event_t<e1> {}, g1, a1, hsm::history_t<HistorySubState> {}),
             // Region 1
             hsm::transition(hsm::initial_t<S3> {}, hsm::event_t<e1> {}, g1, a1, hsm::state_t<S4> {})
         );
@@ -276,9 +289,15 @@ TEST_F(CollectStatesTests, should_collect_states_recursive)
 TEST_F(CollectStatesTests, should_collect_parent_state_typeids)
 {
     auto collectedParentStates = hsm::collect_parent_state_typeids(hsm::state_t<MainState> {});
-    ASSERT_EQ(
+
+    ASSERT_EQ(bh::size_c<3>, bh::size(collectedParentStates));
+
+    auto expectedParentStates = bh::transform(
         bh::make_tuple(
-            bh::typeid_(hsm::state_t<MainState> {}), bh::typeid_(hsm::state_t<SubState> {})),
-        collectedParentStates);
-    ASSERT_EQ(bh::size_c<2>, bh::size(collectedParentStates));
+            hsm::state_t<MainState> {},
+            hsm::state_t<SubState> {},
+            hsm::state_t<HistorySubState> {}),
+        bh::typeid_);
+
+    ASSERT_EQ(expectedParentStates, collectedParentStates);
 }

@@ -9,6 +9,7 @@
 #include <boost/hana/transform.hpp>
 #include <boost/hana/maximum.hpp>
 
+#include <iostream>
 #include <vector>
 
 namespace hsm {
@@ -28,7 +29,7 @@ constexpr auto collect_initial_states = [](auto parentState) {
 
 /**
  * Collect the initial states for the parent states
- * and returns it as tuple of state idx.
+ * and returns it as tuple of combined state idx.
  *
  * Returns: [[StateIdx]]
  *
@@ -41,7 +42,8 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
         constexpr auto initialStates = collect_initial_states(ParentState {});
         constexpr auto initialStatesStateIdx
             = bh::transform(initialStates, [rootState](auto initialState) {
-                  return getStateIdx(rootState, initialState);
+                  return getCombinedStateIdx(
+                      getCombinedStateTypeids(rootState), ParentState {}, initialState);
               });
 
         return initialStatesStateIdx;

@@ -1,5 +1,34 @@
 #pragma once
 
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/eval.hpp>
+#include <boost/hana/find_if.hpp>
+#include <boost/hana/functional/always.hpp>
+#include <boost/hana/functional/compose.hpp>
+#include <boost/hana/lazy.hpp>
+#include <boost/hana/pair.hpp>
+
+namespace hsm {
+    namespace bh {
+        using namespace boost::hana;    
+    }
+
+    constexpr auto function = bh::second;
+    constexpr auto predicate = bh::first;
+    constexpr auto case_ = bh::make_pair;
+
+    constexpr auto otherwise = bh::always(bh::true_c);
+    constexpr auto switch_ = [](auto&&... cases_) {
+        return function(bh::find_if(bh::make_basic_tuple(cases_...), predicate).value());
+    };
+
+    constexpr auto lazy_predicate = bh::compose(bh::eval, bh::first);
+    constexpr auto lazy_otherwise = bh::make_lazy(bh::always(bh::true_c));
+    constexpr auto lazy_switch_ = [](auto&&... cases_) {
+        return function(bh::find_if(bh::make_basic_tuple(cases_...), lazy_predicate).value());
+    };
+}
+
 namespace hsm {
 
 struct noAction {
@@ -160,6 +189,10 @@ constexpr auto is_initial_state = [](auto type) {
 };
 }
 
+constexpr auto get_parent_state = [](auto state) {
+    return decltype(std::declval<typename decltype(state)::type>().get_parent_state())();
+};
+
 constexpr auto unwrap_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
 constexpr auto unwrap_typeid_to_shared_ptr
     = [](auto typeid_) { return std::make_shared<typename decltype(typeid_)::type>(); };
@@ -174,7 +207,6 @@ constexpr auto make_transition_table2
 constexpr auto has_transition_table = bh::is_valid(
     [](auto stateTypeid) -> decltype(std::declval<typename decltype(stateTypeid)::type>()
                                          .make_transition_table()) {});
-
 constexpr auto has_internal_transition_table
     = bh::compose(details::has_internal_transition_table, unwrap_typeid);
 
@@ -187,10 +219,30 @@ constexpr auto has_unexpected_event_handler
 
 constexpr auto has_deferred_events = bh::compose(details::has_deferred_events, unwrap_typeid);
 
-constexpr auto is_exit_state = bh::compose(details::is_exit_state, unwrap_typeid);
-constexpr auto is_entry_state = bh::compose(details::is_entry_state, unwrap_typeid);
-constexpr auto is_direct_state = bh::compose(details::is_direct_state, unwrap_typeid);
-constexpr auto is_history_state = bh::compose(details::is_history_state, unwrap_typeid);
+constexpr auto is_exit_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<ExitPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
+constexpr auto is_entry_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<EntryPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
+constexpr auto is_direct_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<DirectPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
+constexpr auto is_history_state = [](auto typeid_) {
+    return bh::equal(
+        bh::bool_c<std::is_base_of<HistoryPseudoState, typename decltype(typeid_)::type>::value>,
+        bh::true_c);
+};
+
 constexpr auto is_initial_state = [](auto typeid_) {
     return bh::equal(
         bh::bool_c<std::is_base_of<InitialPseudoState, typename decltype(typeid_)::type>::value>,
@@ -357,13 +409,25 @@ using namespace boost::hana;
 
 namespace {
 template <class State> constexpr auto flatten_sub_transition_table(State state);
+
+template <class State> constexpr auto resolve(State target)
+{
+    // clang-format off
+        return lazy_switch_(
+            case_(bh::make_lazy(is_entry_state(target)),   [](auto&& entry) { return get_parent_state(entry); }),
+            case_(bh::make_lazy(is_direct_state(target)),  [](auto&& direct) { return get_parent_state(direct); }),
+            case_(bh::make_lazy(is_history_state(target)), [](auto&& history) { return get_parent_state(history); }),
+            case_(bh::make_lazy(otherwise()),              [](auto&& state) { return state; }))
+            (target);
+    // clang-format on
+}
 }
 
 template <class State> constexpr auto flatten_transition_table(State state)
 {
     auto flattenSubTransitionTable = [state](auto transition) {
         return bh::prepend(
-            flatten_sub_transition_table(transition.target()),
+            flatten_sub_transition_table(resolve(transition.target())),
             details::extended_transition(state, transition));
     };
 
@@ -374,6 +438,7 @@ template <class State> constexpr auto flatten_transition_table(State state)
 }
 
 namespace {
+
 template <class State> constexpr auto flatten_sub_transition_table(State state)
 {
     // clang-format off
@@ -881,6 +946,7 @@ const auto get_unexpected_event_handler = [](auto rootState) {
 #include <boost/hana/transform.hpp>
 #include <boost/hana/maximum.hpp>
 
+#include <iostream>
 #include <vector>
 
 namespace hsm {
@@ -900,7 +966,7 @@ constexpr auto collect_initial_states = [](auto parentState) {
 
 /**
  * Collect the initial states for the parent states
- * and returns it as tuple of state idx.
+ * and returns it as tuple of combined state idx.
  *
  * Returns: [[StateIdx]]
  *
@@ -913,7 +979,8 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
         constexpr auto initialStates = collect_initial_states(ParentState {});
         constexpr auto initialStatesStateIdx
             = bh::transform(initialStates, [rootState](auto initialState) {
-                  return getStateIdx(rootState, initialState);
+                  return getCombinedStateIdx(
+                      getCombinedStateTypeids(rootState), ParentState {}, initialState);
               });
 
         return initialStatesStateIdx;
@@ -1142,62 +1209,11 @@ constexpr auto has_action = [](auto&& transition) {
 };
 }
 
-#include <boost/hana/eval.hpp>
-#include <boost/hana/find_if.hpp>
-#include <boost/hana/functional/always.hpp>
-#include <boost/hana/lazy.hpp>
-#include <boost/hana/pair.hpp>
-#include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/functional/compose.hpp>
-
-namespace hsm {
-    namespace bh {
-        using namespace boost::hana;    
-    }
-
-    constexpr auto function = bh::second;
-    constexpr auto predicate = bh::first;
-    constexpr auto case_ = bh::make_pair;
-
-    constexpr auto otherwise = bh::always(bh::true_c);
-    constexpr auto switch_ = [](auto&&... cases_) {
-        return function(bh::find_if(bh::make_basic_tuple(cases_...), predicate).value());
-    };
-
-    constexpr auto lazy_predicate = bh::compose(bh::eval, bh::first);
-    constexpr auto lazy_otherwise = bh::make_lazy(bh::always(bh::true_c));
-    constexpr auto lazy_switch_ = [](auto&&... cases_) {
-        return function(bh::find_if(bh::make_basic_tuple(cases_...), lazy_predicate).value());
-    };
-}
-
-#include <boost/hana/equal.hpp>
-#include <boost/hana/filter.hpp>
-#include <boost/hana/find.hpp>
-#include <boost/hana/for_each.hpp>
-#include <boost/hana/functional/apply.hpp>
-#include <boost/hana/if.hpp>
-#include <boost/hana/lazy.hpp>
-#include <boost/hana/length.hpp>
-#include <boost/hana/mult.hpp>
-#include <boost/hana/size.hpp>
-#include <boost/hana/type.hpp>
-
 namespace hsm {
 
 namespace bh {
 using namespace boost::hana;
 }
-
-constexpr auto nParentStates
-    = [](auto rootState) { return bh::length(collect_parent_state_typeids(rootState)); };
-constexpr auto nStates
-    = [](auto rootState) { return bh::length(collect_state_typeids_recursive(rootState)); };
-constexpr auto nEvents
-    = [](auto rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
-
-constexpr auto hasRegions
-    = [](auto rootState) { return bh::equal(bh::size_c<1>, maxInitialStates(rootState)); };
 
 constexpr auto resolveDst = [](auto&& transition) {
     // clang-format off
@@ -1257,6 +1273,36 @@ constexpr auto resolveSrcParent = [](auto&& transition) {
     transition.source(), transition);
     // clang-format on
 };
+
+}
+
+#include <boost/hana/equal.hpp>
+#include <boost/hana/filter.hpp>
+#include <boost/hana/find.hpp>
+#include <boost/hana/for_each.hpp>
+#include <boost/hana/functional/apply.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/lazy.hpp>
+#include <boost/hana/length.hpp>
+#include <boost/hana/mult.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/type.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+constexpr auto nParentStates
+    = [](auto rootState) { return bh::length(collect_parent_state_typeids(rootState)); };
+constexpr auto nStates
+    = [](auto rootState) { return bh::length(collect_state_typeids_recursive(rootState)); };
+constexpr auto nEvents
+    = [](auto rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
+
+constexpr auto hasRegions
+    = [](auto rootState) { return bh::equal(bh::size_c<1>, maxInitialStates(rootState)); };
 
 constexpr auto makeInvalidGuard
     = [](auto dispatchTable) { return decltype(dispatchTable[0].guard) {}; };
@@ -1737,8 +1783,12 @@ template <class RootState, class... OptionalParameters> class sm {
                 m_history[currentParentState()][region] = m_currentCombinedState[region];
 
                 if (dispatchTableEntry.history) {
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
-                    m_currentCombinedState[region] = m_history[currentParentState()][region];
+                    auto parent = calcParentStateIdx(
+                        nStates(rootState()), dispatchTableEntry.combinedState);
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                    auto combined = m_history[parent][region];
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                    m_currentCombinedState[region] = combined;
                 } else {
                     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
                     m_currentCombinedState[region] = dispatchTableEntry.combinedState;
@@ -1797,11 +1847,8 @@ template <class RootState, class... OptionalParameters> class sm {
 
         for (Region region = 0; region < m_initial_states[initialParentState].size();
              region++) {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
-            m_currentCombinedState[region] = calcCombinedStateIdx(
-                nStates(rootState()),
-                initialParentState,
-                m_initial_states[initialParentState][region]);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_currentCombinedState[region] = m_initial_states[initialParentState][region];
         }
     }
 

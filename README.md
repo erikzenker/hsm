@@ -150,7 +150,7 @@ A click on a particular feature check mark will forward to the feature documenta
   </tr>
 </table> 
 
-## Example ([Run](https://godbolt.org/z/Mbd46b))
+## Example ([Run](https://godbolt.org/z/szEPEG))
 ```c++
 #include "hsm/hsm.h"
 
@@ -278,13 +278,13 @@ The benchmark result are taken from the [state machine benchmark repository](htt
 * \>= clang-8
 
 ## Play with it Online
-* Follow the link to the compiler explorer: [https://godbolt.org/z/P9b1dY](https://godbolt.org/z/P9b1dY)
+* Follow the link to the compiler explorer: [https://godbolt.org/z/jqPbcj](https://godbolt.org/z/jqPbcj)
 
 ## Usage as Single Header
-* Download [amalgamation header](https://raw.githubusercontent.com/erikzenker/hsm/master/src/include/hsm/hsm_gen.h) and put it into your project src folder
+* Download [amalgamation header](https://raw.githubusercontent.com/erikzenker/hsm/master/src/include/hsm/gen/hsm.h) and put it into your project src folder
 * Include amalgamation header:
   ```c++
-  #include "path/to/amalgamation/header/hsm_gen.h"
+  #include "path/to/amalgamation/header/hsm.h"
   ```
 
 ## Install with CMake

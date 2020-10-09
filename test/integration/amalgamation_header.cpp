@@ -1,4 +1,4 @@
-#include "hsm/hsm_gen.h"
+#include "hsm/gen/hsm.h"
 
 #include <gtest/gtest.h>
 
