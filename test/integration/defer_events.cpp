@@ -23,7 +23,7 @@ struct e3 {
 
 // States
 struct S1 {
-    constexpr auto defer_events()
+    static constexpr auto defer_events()
     {
         return hsm::events<e2, e3>;
     }

@@ -40,7 +40,7 @@ struct MainState {
         // clang-format on
     }
 
-    constexpr auto on_unexpected_event()
+    static constexpr auto on_unexpected_event()
     {
         return [](auto event) { event.called->set_value(); };
     }

@@ -23,8 +23,7 @@ namespace hsm {
 constexpr auto collect_initial_states = [](auto parentState) {
     constexpr auto childStates = collect_child_states(parentState);
     constexpr auto initialStates = bh::filter(childStates, is_initial_state);
-    return bh::transform(
-        initialStates, [](auto initialState) { return unwrap_typeid(initialState).get_state(); });
+    return bh::transform(initialStates, [](auto initialState) { return get_state(initialState); });
 };
 
 /**

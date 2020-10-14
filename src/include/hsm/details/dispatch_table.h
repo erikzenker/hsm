@@ -58,10 +58,17 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
             [](auto& action, 
                auto& event, 
                const auto& source, 
-               const auto& target, 
+               auto& target, 
                const auto& optionalDependency) {
                 bh::unpack(optionalDependency, [&action, &event, &source, &target](const auto&... optionalDependency){
-                    action(event, *source, *target, get(optionalDependency)...);
+                    using Target = typename TargetPtr::element_type::element_type;
+                    bh::if_(is_default_constructable(bh::type_c<Target>),
+                        [](auto action, auto &event, auto source, auto target, auto... optionalDependency){
+                            action(event, **source, **target, get(optionalDependency)...);    
+                        },
+                        [](auto action, auto &event, auto source, auto &target, auto... optionalDependency){
+                            action(event, **source, target, get(optionalDependency)...);    
+                        })(action, event, source, target, optionalDependency...);
                 });
             })
         (m_action, event, m_source, m_target, m_optionalDependency);
@@ -82,7 +89,7 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
                 return bh::unpack(
                     optionalDependency,
                     [&guard, &event, &source, &target](const auto&... optionalDependency) {
-                        return guard(event, *source, *target, get(optionalDependency)...);
+                        return guard(event, **source, **target, get(optionalDependency)...);
                     });
             })(m_guard, event, m_source, m_target, m_optionalDependency);
         // clang-format on

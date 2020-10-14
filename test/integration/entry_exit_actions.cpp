@@ -12,11 +12,11 @@ using namespace ::testing;
 struct S1 {
 };
 struct S2 {
-    constexpr auto on_entry()
+    static constexpr auto on_entry()
     {
         return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
     }
-    constexpr auto on_exit()
+    static constexpr auto on_exit()
     {
         return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
     }
@@ -55,12 +55,12 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto on_entry()
+    static constexpr auto on_entry()
     {
         return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
     }
 
-    constexpr auto on_exit()
+    static constexpr auto on_exit()
     {
         return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
     }

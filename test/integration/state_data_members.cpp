@@ -19,7 +19,7 @@ struct S2 {
 };
 
 struct S3 {
-    constexpr auto on_entry()
+    static constexpr auto on_entry()
     {
         return [](auto event, auto& source, auto& target) {
             source.data = event.sourceData;
@@ -27,7 +27,7 @@ struct S3 {
         };
     }
 
-    constexpr auto on_exit()
+    static constexpr auto on_exit()
     {
         return [](auto& event, auto source, auto target) {
             event.sourceData = source.data;
@@ -97,7 +97,7 @@ struct SubState {
         // clang-format on
     }
 
-    constexpr auto on_entry()
+    static constexpr auto on_entry()
     {
         return [](auto event, auto& source, auto& target) {
             source.data = event.sourceData;

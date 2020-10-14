@@ -13,7 +13,7 @@ using namespace hsm;
 namespace {
 
 struct T {
-    constexpr auto make_internal_transition_table()
+    static constexpr auto make_internal_transition_table()
     {
         return hsm::transition_table(hsm::internal_transition("event", "guard", "action"));
     }
@@ -26,7 +26,7 @@ struct P {
             hsm::transition(hsm::state_t<T> {}, "event", "guard", "action", hsm::state_t<T> {}));
     }
 
-    constexpr auto make_internal_transition_table()
+    static constexpr auto make_internal_transition_table()
     {
         return hsm::transition_table(hsm::internal_transition("event", "guard", "action"));
     }
@@ -39,7 +39,7 @@ struct S {
             hsm::transition(hsm::state_t<T> {}, "event", "guard", "action", hsm::state_t<P> {}));
     }
 
-    constexpr auto make_internal_transition_table()
+    static constexpr auto make_internal_transition_table()
     {
         return hsm::transition_table(hsm::internal_transition("event", "guard", "action"));
     }

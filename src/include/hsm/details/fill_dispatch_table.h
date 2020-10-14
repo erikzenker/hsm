@@ -49,9 +49,9 @@ constexpr auto resolveEntryAction = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& dst){
         return bh::if_(has_entry_action(dst)
-            , [](auto&& dst) { return dst.on_entry(); }
+            , [](auto&& dst) { return get_entry_action(dst); }
             , [](auto&&) { return [](auto...) {}; })
-            (unwrap_typeid(dst));    
+            (dst);    
     },
     transition.target());
     // clang-format on
@@ -61,7 +61,7 @@ constexpr auto resolveInitialStateEntryAction = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& target){
         return bh::if_(has_substate_initial_state_entry_action(target)
-            , [](auto&& target) { return unwrap_typeid(bh::at_c<0>(collect_initial_states(target))).on_entry();}
+            , [](auto&& target) { return get_entry_action(bh::at_c<0>(collect_initial_states(target)));}
             , [](auto&&) { return [](auto...) {}; })
             (target);    
     },
@@ -73,9 +73,9 @@ constexpr auto resolveExitAction = [](auto&& transition) {
     // clang-format off
     return bh::apply([](auto&& src){
         return bh::if_(has_exit_action(src)
-            , [](auto&& src) { return src.on_exit(); }
+            , [](auto&& src) { return get_exit_action(src); }
             , [](auto&&) { return [](auto...) {}; })
-            (unwrap_typeid(src));
+            (src);
     },
     transition.source());
     // clang-format on
@@ -158,10 +158,10 @@ const auto addDispatchTableEntryOfSubMachineExits
                           const auto defer = false;
                           const auto valid = true;
 
-                          auto parentState2 = bh::find(statesMap, bh::typeid_(parentState)).value();
-                          auto target2 = bh::find(statesMap, bh::typeid_(target)).value();
+                          auto mappedParentState = bh::find(statesMap, bh::typeid_(parentState)).value();
+                          auto mappedTarget = bh::find(statesMap, bh::typeid_(target)).value();
 
-                          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, parentState2, target2, optionalDependency)};
+                          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, mappedParentState, mappedTarget, optionalDependency)};
                       });
               },
               [](auto) {})(transition.source());
@@ -216,7 +216,7 @@ fill_dispatch_table_with_deferred_events(RootState rootState, OptionalDependency
     constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
 
     bh::for_each(transitions, [&](auto transition) {
-        const auto deferredEvents = unwrap_typeid(resolveExtentedInitialState(transition)).defer_events();
+        const auto deferredEvents = get_defer_events(resolveExtentedInitialState(transition));
 
         bh::for_each(deferredEvents, [&](auto event) {
             using Event = typename decltype(event)::type;

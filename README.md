@@ -148,6 +148,13 @@ A click on a particular feature check mark will forward to the feature documenta
     <td><center>✗</center></td>
     <td><center>✗</center></td>
   </tr>
+  <tr>
+    <td>Custom target state construction</td>
+    <td><center><a href="test/integration/custom_targets.cpp">✓</a></center></td>
+    <td><center>✗</center></td>
+    <td><center>✗</center></td>
+    <td><center>✗</center></td>
+  </tr>
 </table> 
 
 ## Example ([Run](https://godbolt.org/z/szEPEG))
