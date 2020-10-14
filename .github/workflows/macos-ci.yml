@@ -24,7 +24,7 @@ jobs:
       - name: Install Hsm
         run: |
          cmake .
-         cmake --build . --target hsmUnitTests
+         cmake --build . --target install
         
       - name: Run Hsm Tests
         run: ctest -VV
