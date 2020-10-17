@@ -52,7 +52,7 @@ jobs:
         echo $CXX
         echo $CC
         cd build && mkdir install
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DHSM_BENCHMARK=ON -DCMAKE_INSTALL_PREFIX=install
         cmake --build . --target install
       env: 
         CXX: ${{ matrix.cxx }}

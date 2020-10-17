@@ -21,7 +21,7 @@ namespace bh {
 using namespace boost::hana;
 }
 
-using Idx = std::uint16_t;
+using Idx = std::uint64_t;
 using StateIdx = Idx;
 using EventIdx = Idx;
 using ActionIdx = Idx;

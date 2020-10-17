@@ -16,6 +16,7 @@
 #include <boost/hana/find.hpp>
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/functional/apply.hpp>
+#include <boost/hana/functional/capture.hpp>
 #include <boost/hana/if.hpp>
 #include <boost/hana/lazy.hpp>
 #include <boost/hana/length.hpp>
@@ -175,24 +176,31 @@ constexpr auto filter_transitions = [](auto transitions, auto eventTypeid) {
     return bh::filter(transitions, isEvent);
 };
 
+
+constexpr auto fill_dispatch_table_for_filtered_transitions = [](auto rootState, auto&& statesMap, auto&& optionalDependency, auto eventTypeid, auto transition){
+    using Event = typename decltype(eventTypeid)::type;
+
+    constexpr auto combinedStateTypeids = getCombinedStateTypeids(rootState);
+    constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);    
+    auto& dispatchTable = DispatchTable<states, Event>::table;
+
+    addDispatchTableEntry(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
+    addDispatchTableEntryOfSubMachineExits(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
+};
+
+constexpr auto fill_dispatch_table_for_event = [](auto rootState, auto&& statesMap, auto&& optionalDependency, auto transitions, auto eventTypeid){
+    
+    auto filteredTransitions = filter_transitions(transitions, eventTypeid);
+
+    bh::for_each(filteredTransitions, bh::capture(rootState, statesMap, optionalDependency, eventTypeid)(fill_dispatch_table_for_filtered_transitions));
+};
+
 constexpr auto fill_dispatch_table_with_transitions = [](
     auto rootState, auto&& statesMap, auto&& optionalDependency, auto transitions)
 {
     auto eventTypeids = collect_event_typeids_recursive_with_transitions(transitions);
-    constexpr auto combinedStateTypeids = getCombinedStateTypeids(rootState);
-    constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
 
-    bh::for_each(eventTypeids, [&](auto eventTypeid) {
-        using Event = typename decltype(eventTypeid)::type;
-
-        auto filteredTransitions = filter_transitions(transitions, eventTypeid);
-        auto& dispatchTable = DispatchTable<states, Event>::table;
-
-        bh::for_each(filteredTransitions, [&](auto transition) {
-            addDispatchTableEntry(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
-            addDispatchTableEntryOfSubMachineExits(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
-        });
-    });
+    bh::for_each(eventTypeids, bh::capture(rootState, statesMap, optionalDependency, transitions)(fill_dispatch_table_for_event));
 
 };
 
@@ -207,26 +215,26 @@ constexpr auto getDeferingTransitions = [](auto rootState) {
 constexpr auto hasDeferedEvents
     = [](auto rootState) { return bh::size(getDeferingTransitions(rootState)); };
 
+
+
+
 template <class RootState, class OptionalDependency>
 constexpr auto
 fill_dispatch_table_with_deferred_events(RootState rootState, OptionalDependency /*optionalDependency*/)
 {
-    const auto combinedStateTypeids = getCombinedStateTypeids(rootState);
     const auto transitions = getDeferingTransitions(rootState);
-    constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
-
-    bh::for_each(transitions, [&](auto transition) {
+    bh::for_each(transitions, bh::capture(rootState)([](auto rootState, auto transition){
         const auto deferredEvents = get_defer_events(resolveExtentedInitialState(transition));
-
-        bh::for_each(deferredEvents, [&](auto event) {
+        bh::for_each(deferredEvents, bh::capture(rootState, transition)([](auto rootState, auto transition, auto event){
             using Event = typename decltype(event)::type;
-
+            const auto combinedStateTypeids = getCombinedStateTypeids(rootState);
+            constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
             auto& dispatchTable = DispatchTable<states, Event>::table;
             const auto from = getCombinedStateIdx(
                 combinedStateTypeids, resolveSrcParent(transition), resolveSrc(transition));
             dispatchTable[from].defer = true;
-        });
-    });
+        }));
+    }));
 }
 
 template <class RootState, class StatesMap, class OptionalDependency>

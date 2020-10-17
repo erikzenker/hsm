@@ -39,13 +39,11 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
         using ParentState = typename decltype(parentStateTypeid)::type;
 
         constexpr auto initialStates = collect_initial_states(ParentState {});
-        constexpr auto initialStatesStateIdx
-            = bh::transform(initialStates, [rootState](auto initialState) {
-                  return getCombinedStateIdx(
-                      getCombinedStateTypeids(rootState), ParentState {}, initialState);
-              });
 
-        return initialStatesStateIdx;
+        return bh::transform(initialStates, [rootState](auto initialState) {
+            return getCombinedStateIdx(
+                getCombinedStateTypeids(rootState), ParentState {}, initialState);
+        });
     });
 };
 
@@ -59,7 +57,7 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
  *  [1 -> [3, 1]],
  *  [2 -> [0, 2]]]
  */
-constexpr auto make_initial_state_map = [](auto rootState) {
+inline auto make_initial_state_map = [](auto rootState) {
     constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
     constexpr auto initialStates = collect_initial_state_stateidx(rootState, parentStateTypeids);
     return bh::to_map(to_pairs(bh::zip(parentStateTypeids, initialStates)));
@@ -80,15 +78,20 @@ constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateT
     for_each_idx(
         parentStateTypeids,
         [rootState, &initialStateTable](auto parentStateTypeid, auto parentStateId) {
-            constexpr auto initialStates
-                = bh::find(make_initial_state_map(rootState), parentStateTypeid).value();
-            auto initialStatesStateIdx = std::vector<std::size_t>(bh::size(initialStates));
+            bh::apply(
+                [](auto parentStateId, auto& initialStateTable, auto initialStates) {
+                    auto initialStatesStateIdx = std::vector<std::size_t>(bh::size(initialStates));
 
-            for_each_idx(initialStates, [&initialStatesStateIdx](auto stateIdx, auto regionId) {
-                initialStatesStateIdx[regionId] = stateIdx;
-            });
+                    for_each_idx(
+                        initialStates, [&initialStatesStateIdx](auto stateIdx, auto regionId) {
+                            initialStatesStateIdx[regionId] = stateIdx;
+                        });
 
-            initialStateTable.at(parentStateId) = initialStatesStateIdx;
+                    initialStateTable.at(parentStateId) = initialStatesStateIdx;
+                },
+                parentStateId,
+                initialStateTable,
+                bh::find(make_initial_state_map(rootState), parentStateTypeid).value());
         });
 };
 

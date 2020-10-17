@@ -1,6 +1,7 @@
 #include "hsm/details/collect_actions.h"
 #include "hsm/details/state.h"
 #include "hsm/details/transition_table.h"
+#include "hsm/details/utils/toTypeid.h"
 #include "hsm/front/transition_tuple.h"
 
 #include <gtest/gtest.h>
@@ -10,6 +11,7 @@
 #include <future>
 
 using namespace ::testing;
+using namespace hsm::details::utils;
 
 class CollectActionsTests : public Test {
 };
@@ -47,9 +49,9 @@ TEST_F(CollectActionsTests, should_collect_action_typeids)
         }
     };
 
-    auto collectedActions = hsm::collect_action_typeids_recursive(hsm::state_t<S> {});
+    auto collectedActions = toTypeid(hsm::collect_action_typeids_recursive(hsm::state_t<S> {}));
     auto expectedActions
-        = boost::hana::make_tuple(boost::hana::typeid_(e1), boost::hana::typeid_(e2));
+        = toTypeid(boost::hana::make_tuple(boost::hana::typeid_(e1), boost::hana::typeid_(e2)));
 
     ASSERT_EQ(expectedActions, collectedActions);
 }
@@ -72,9 +74,9 @@ TEST_F(CollectActionsTests, should_collect_action_typeids_recursive)
         }
     };
 
-    auto collectedActions = hsm::collect_action_typeids_recursive(hsm::state_t<S> {});
+    auto collectedActions = toTypeid(hsm::collect_action_typeids_recursive(hsm::state_t<S> {}));
     auto expectedActions
-        = boost::hana::make_tuple(boost::hana::typeid_(e1), boost::hana::typeid_(e2));
+        = toTypeid(boost::hana::make_tuple(boost::hana::typeid_(e1), boost::hana::typeid_(e2)));
 
     ASSERT_EQ(expectedActions, collectedActions);
 }
@@ -92,9 +94,8 @@ TEST_F(CollectActionsTests, should_collect_actions_recursive)
         }
     };
 
-    auto collectedActions = hsm::collect_actions_recursive(hsm::state_t<S> {});
-    auto expectedActions
-        = boost::hana::make_tuple(e1, e2);
+    auto collectedActions = toTypeid(hsm::collect_actions_recursive(hsm::state_t<S> {}));
+    auto expectedActions = toTypeid(boost::hana::make_tuple(e1, e2));
 
     ASSERT_EQ(expectedActions, collectedActions);
 }
@@ -112,9 +113,8 @@ TEST_F(CollectActionsTests, should_not_collect_actions_twice)
         }
     };
 
-    auto collectedActions = hsm::collect_actions_recursive(hsm::state_t<S> {});
-    auto expectedActions
-        = boost::hana::make_tuple(e1);
+    auto collectedActions = toTypeid(hsm::collect_actions_recursive(hsm::state_t<S> {}));
+    auto expectedActions = toTypeid(boost::hana::make_tuple(e1));
 
     ASSERT_EQ(expectedActions, collectedActions);
 }
