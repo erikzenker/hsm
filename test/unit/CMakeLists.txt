@@ -29,6 +29,9 @@ add_executable(
           for_each_tests.cpp
         )
 
+set_property(TARGET hsmUnitTests PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreadedDebug$<$<CONFIG:Debug>:Debug>")
+
 target_link_libraries(hsmUnitTests
         PRIVATE
           hsm::hsm

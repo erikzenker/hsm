@@ -1,4 +1,4 @@
-name: MacOs CI
+name: Windows CI
 
 on:
   push:
@@ -8,7 +8,8 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: windows-2019
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -19,12 +20,12 @@ jobs:
           packages: conan
         
       - name: Conan Install
-        run: conan install . --build missing 
+        run: conan install . --build missing
 
       - name: Install Hsm
         run: |
-         cmake . -DHSM_BENCHMARK=ON 
+         cmake . -DCMAKE_BUILD_TYPE=DEBUG
          cmake --build . --target install
-        
+
       - name: Run Hsm Tests
-        run: ctest -VV
+        run: ctest -VV -C Debug

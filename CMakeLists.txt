@@ -32,4 +32,6 @@ add_subdirectory(test)
 add_subdirectory(example)
 
 # add benchmark
-add_subdirectory(benchmark)
+if(${HSM_BENCHMARK})
+    add_subdirectory(benchmark)
+endif()
