@@ -155,6 +155,13 @@ A click on a particular feature check mark will forward to the feature documenta
     <td><center>✗</center></td>
     <td><center>✗</center></td>
   </tr>
+  <tr>
+    <td>Chain actions</td>
+    <td><center><a href="test/integration/chain_actions.cpp">✓</a></center></td>
+    <td><center><a href="https://github.com/boost-ext/sml/blob/master/example/actions_guards.cpp">✓</a><center></td>
+    <td><center><a href="https://www.boost.org/doc/libs/1_63_0/libs/msm/doc/HTML/ch03s02.html">✓</a></center></td>
+    <td><center>?</center></td>
+  </tr>
 </table> 
 
 ## Example ([Run](https://godbolt.org/z/szEPEG))

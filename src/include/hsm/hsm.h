@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hsm/details/chain_actions.h"
 #include "hsm/details/create_state.h"
 #include "hsm/details/reuse_state.h"
 #include "hsm/details/sm.h"
