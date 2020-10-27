@@ -29,6 +29,7 @@ add_executable(hsmIntegrationTests
         transition_logging.cpp
         amalgamation_header.cpp
         custom_targets.cpp
+        chain_actions.cpp
 )
 
 target_link_libraries(hsmIntegrationTests
