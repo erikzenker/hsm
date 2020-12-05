@@ -13,18 +13,18 @@ using namespace hsm;
 class RemoveDuplicatesTests : public Test {
 };
 
-TEST_F(RemoveDuplicatesTests, should_remove_duplicate_typeids)
+TEST_F(RemoveDuplicatesTests, should_remove_duplicates)
 {
     auto tuple = boost::hana::make_tuple('c', 42, 42, 'c', 42, 'c', 'c');
     auto typeids = boost::hana::transform(tuple, boost::hana::typeid_);
-    auto noDuplicatesTuple = remove_duplicate_typeids(typeids);
+    auto noDuplicatesTuple = remove_duplicates(typeids);
     auto expectedTuple
         = boost::hana::transform(boost::hana::make_tuple('c', 42), boost::hana::typeid_);
 
     ASSERT_EQ(expectedTuple, noDuplicatesTuple);
 }
 
-TEST_F(RemoveDuplicatesTests, should_remove_duplicates)
+TEST_F(RemoveDuplicatesTests, should_remove_duplicate_types)
 {
     auto tuple = boost::hana::make_tuple('c', 42, 42, 'c', 42, 'c', 'c');
     auto noDuplicatesTuple = toTypeid(remove_duplicate_types(tuple));

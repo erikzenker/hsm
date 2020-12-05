@@ -19,18 +19,22 @@ namespace bh {
 using namespace boost::hana;
 }
 
-constexpr auto index_of = [](auto const& iterable, auto const& element) {
-    auto size = decltype(bh::size(iterable)){};
-    auto dropped = decltype(bh::size(
-        bh::drop_while(iterable, bh::not_equal.to(element))
-    )){};
-    return size - dropped;
-};
+template <class Iterable, class Element>
+constexpr auto index_of(Iterable const& iterable, Element const& element)
+{
+    return bh::apply(
+        [](auto size, auto dropped) { return size - dropped; },
+        bh::size(iterable),
+        bh::size(bh::drop_while(iterable, bh::not_equal.to(element))));
+}
 
-const auto make_index_map = [](auto typeids) {
-    const auto range = bh::to<bh::basic_tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(typeids)));
-    return bh::to_map(to_pairs(bh::zip(typeids, range)));
-};
+template <class Typeids> constexpr auto make_index_map(Typeids typeids)
+{
+    return bh::apply(
+        [](auto typeids, auto range) { return bh::to_map(to_pairs(bh::zip(typeids, range))); },
+        typeids,
+        bh::to<bh::basic_tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(typeids))));
+}
 
 // constexpr auto find = [](auto&& reverseIndexMap, auto index, auto&& closure) {
 //     boost::mp11::mp_with_index<bh::size(reverseIndexMap)>(

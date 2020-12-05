@@ -37,22 +37,27 @@ constexpr auto getStateIdx = [](auto rootState, auto state) {
     return index_of(collect_state_typeids_recursive(rootState), bh::typeid_(state));
 };
 
-constexpr auto getCombinedStateTypeids = [](const auto& rootState) {
+template <class State> constexpr auto getCombinedStateTypeids(const State& rootState)
+{
     auto parentStateTypeids = collect_parent_state_typeids(rootState);
     auto stateTypeids = collect_state_typeids_recursive(rootState);
     auto stateCartesianProduct
         = bh::cartesian_product(bh::make_basic_tuple(parentStateTypeids, stateTypeids));
     return bh::transform(stateCartesianProduct, bh::typeid_);
-};
+}
 
-constexpr auto getCombinedStateTypeid = [](const auto& parentState, const auto& state) {
+template <class ParentState, class State>
+constexpr auto getCombinedStateTypeid(const ParentState& parentState, const State& state)
+{
     return bh::typeid_(bh::make_basic_tuple(bh::typeid_(parentState), bh::typeid_(state)));
-};
+}
 
-constexpr auto getCombinedStateIdx = [](auto combinedStateTypids, auto parentState, auto state) {
-    constexpr auto combinedStateTypeid = getCombinedStateTypeid(parentState, state);
-    return index_of(combinedStateTypids, combinedStateTypeid);
-};
+template <class StateTypeids, class ParentState, class State>
+constexpr auto
+getCombinedStateIdx(StateTypeids combinedStateTypids, ParentState parentState, State state)
+{
+    return index_of(combinedStateTypids, getCombinedStateTypeid(parentState, state));
+}
 
 constexpr auto calcCombinedStateIdx
     = [](std::size_t nStates, Idx parentStateIdx, Idx stateIdx) -> Idx {
@@ -87,15 +92,17 @@ const auto is_anonymous_transition
 const auto is_history_transition
     = [](auto transition) { return is_history_state(transition.target()); };
 
-const auto has_anonymous_transition = [](auto rootState) {
+template <class State> constexpr auto has_anonymous_transition(State rootState)
+{
     auto transitions = flatten_transition_table(rootState);
     auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
     return bh::size(anonymousTransition);
-};
+}
 
-const auto has_history = [](auto rootState) {
+template <class State> constexpr auto has_history(State rootState)
+{
     auto transitions = flatten_transition_table(rootState);
     auto historyTransitions = bh::filter(transitions, is_history_transition);
     return bh::size(historyTransitions);
-};
+}
 }

@@ -20,11 +20,12 @@ namespace hsm {
  * Returns: [[State]]
  *
  */
-constexpr auto collect_initial_states = [](auto parentState) {
+template <class State> constexpr auto collect_initial_states(State parentState)
+{
     constexpr auto childStates = collect_child_states(parentState);
     constexpr auto initialStates = bh::filter(childStates, is_initial_state);
     return bh::transform(initialStates, [](auto initialState) { return get_state(initialState); });
-};
+}
 
 /**
  * Collect the initial states for the parent states
@@ -34,7 +35,9 @@ constexpr auto collect_initial_states = [](auto parentState) {
  *
  * Example: [[0,1], [0], [1], [1,2]]
  */
-constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentStateTypeids) {
+template <class State, class Typeids>
+constexpr auto collect_initial_state_stateidx(State rootState, Typeids parentStateTypeids)
+{
     return bh::transform(parentStateTypeids, [rootState](auto parentStateTypeid) {
         using ParentState = typename decltype(parentStateTypeid)::type;
 
@@ -45,7 +48,7 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
                 getCombinedStateTypeids(rootState), ParentState {}, initialState);
         });
     });
-};
+}
 
 /**
  * Return a map from parent state id to inital state ids
@@ -57,11 +60,12 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
  *  [1 -> [3, 1]],
  *  [2 -> [0, 2]]]
  */
-inline auto make_initial_state_map = [](auto rootState) {
+template <class State> inline constexpr auto make_initial_state_map(State rootState)
+{
     constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
     constexpr auto initialStates = collect_initial_state_stateidx(rootState, parentStateTypeids);
     return bh::to_map(to_pairs(bh::zip(parentStateTypeids, initialStates)));
-};
+}
 
 /**
  * Fills the initial state table with the state idx of the initial
@@ -73,7 +77,9 @@ inline auto make_initial_state_map = [](auto rootState) {
  *  in the parent state.
  *  initialStateTable[parentStateIdx][regionIdx] is a state idx.
  */
-constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateTable) {
+template <class State, class StateTable>
+constexpr auto fill_initial_state_table(State rootState, StateTable& initialStateTable)
+{
     constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
     for_each_idx(
         parentStateTypeids,
@@ -93,7 +99,7 @@ constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateT
                 initialStateTable,
                 bh::find(make_initial_state_map(rootState), parentStateTypeid).value());
         });
-};
+}
 
 /**
  * Returns a tuple of initial state sizes
@@ -102,17 +108,19 @@ constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateT
  *
  * Example: [3, 1, 2]
  */
-constexpr auto initialStateSizes = [](auto parentStateTypeids) {
+template <class Typeids> constexpr auto initialStateSizes(Typeids parentStateTypeids)
+{
     return bh::transform(parentStateTypeids, [](auto parentStateTypeid) {
         using ParentState = typename decltype(parentStateTypeid)::type;
         return bh::size(collect_initial_states(ParentState {}));
     });
-};
+}
 
 /**
  * Returns the maximal number of initial states
  */
-constexpr auto maxInitialStates = [](auto rootState) {
+template <class State> constexpr auto maxInitialStates(State rootState)
+{
     return bh::maximum(initialStateSizes(collect_parent_state_typeids(rootState)));
-};
+}
 }

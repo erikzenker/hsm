@@ -45,6 +45,8 @@ constexpr auto get_state = [](auto state) {
     return decltype(std::declval<typename decltype(state)::type>().get_state())();
 };
 
+constexpr auto unwrap_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
+
 constexpr auto unwrap_typeid_to_shared_ptr = [](auto typeid_) {
     return bh::if_(
         is_default_constructable(typeid_),

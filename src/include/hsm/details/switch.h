@@ -18,13 +18,16 @@ namespace hsm {
     constexpr auto case_ = bh::make_pair;
 
     constexpr auto otherwise = bh::always(bh::true_c);
-    constexpr auto switch_ = [](auto&&... cases_) {
+    template <class... Case> constexpr auto switch_(Case&&... cases_)
+    {
         return function(bh::find_if(bh::make_basic_tuple(cases_...), predicate).value());
-    };
+    }
 
     constexpr auto lazy_predicate = bh::compose(bh::eval, bh::first);
     constexpr auto lazy_otherwise = bh::make_lazy(bh::always(bh::true_c));
-    constexpr auto lazy_switch_ = [](auto&&... cases_) {
+
+    template <class... Case> constexpr auto lazy_switch_(Case&&... cases_)
+    {
         return function(bh::find_if(bh::make_basic_tuple(cases_...), lazy_predicate).value());
-    };
+    }
 }

@@ -103,22 +103,27 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     OptionalDependency m_optionalDependency;
 };
 
-constexpr auto make_transition = [](auto action,
-                                    auto guard,
-                                    auto eventTypeid,
-                                    auto source,
-                                    auto target,
-                                    auto optionalDependency) {
+template <
+    class Action,
+    class Guard,
+    class EventTypeid,
+    class Source,
+    class Target,
+    class Dependency>
+constexpr auto make_transition(
+    Action action,
+    Guard guard,
+    EventTypeid eventTypeid,
+    Source source,
+    Target target,
+    Dependency optionalDependency)
+{
     using Event = typename decltype(eventTypeid)::type;
 
-    return std::make_unique<DispatchTableEntry<
-        decltype(action),
-        decltype(guard),
-        decltype(source),
-        decltype(target),
-        Event,
-        decltype(optionalDependency)>>(action, guard, source, target, optionalDependency);
-};
+    return std::make_unique<
+        DispatchTableEntry<Action, Guard, Source, Target, Event, decltype(optionalDependency)>>(
+        action, guard, source, target, optionalDependency);
+}
 
 template <class Event> struct NextState {
     StateIdx combinedState{};
@@ -137,4 +142,12 @@ template <StateIdx NStates, class Event> struct DispatchTable {
 
 template <StateIdx NStates, class Event>
 DispatchArray<NStates, Event> DispatchTable<NStates, Event>::table {};
+
+constexpr auto get_dispatch_table = [](auto rootState, auto eventTypeid) -> auto&
+{
+    using Event = typename decltype(eventTypeid)::type;
+    return bh::apply(
+        [](auto states) -> auto& { return DispatchTable<states, Event>::table; },
+        nStates(rootState) * nParentStates(rootState));
+};
 }

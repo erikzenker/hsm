@@ -23,7 +23,7 @@ using namespace boost::hana;
 
 template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
-    using Events = decltype(collect_events_recursive(state_t<RootState> {}));
+    using Events = decltype(collect_event_typeids_recursive(state_t<RootState> {}));
     using StatesMap = decltype(make_states_map(state_t<RootState> {}));
     std::array<StateIdx, maxInitialStates(state_t<RootState> {})> m_currentCombinedState;
     std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_initial_states;
@@ -34,7 +34,9 @@ template <class RootState, class... OptionalParameters> class sm {
 
   public:
     sm(OptionalParameters&... optionalParameters)
-        : m_defer_queue(collect_events_recursive(state_t<RootState> {}))
+        : m_initial_states()
+        , m_history()
+        , m_defer_queue(collect_event_typeids_recursive(state_t<RootState> {}))
         , m_statesMap(make_states_map(state_t<RootState> {}))
     {
         fill_dispatch_table(optionalParameters...);
@@ -174,9 +176,12 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
-        constexpr auto states
-            = nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {});
-        return DispatchTable<states, Event>::table[index];
+        return bh::apply(
+            [](auto states, StateIdx index) -> auto& {
+                return DispatchTable<states, Event>::table[index];
+            },
+            nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {}),
+            index);
     }
 
     template <class DispatchTableEntry>

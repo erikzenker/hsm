@@ -50,40 +50,43 @@ constexpr auto extractStateTypeids = [](auto transition) {
 };
 }
 
-constexpr auto collect_child_state_typeids_recursive = [](auto parentState) {
+template <class State> constexpr auto collect_child_state_typeids_recursive(State parentState)
+{
     auto transitions = flatten_transition_table(parentState);
     auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStateTypeids));
 
-    return remove_duplicate_typeids(collectedStates);
-};
+    return remove_duplicates(collectedStates);
+}
 
-constexpr auto collect_child_states_recursive = [](auto parentState) {
-    auto transitions = flatten_transition_table(parentState);
-    auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStates));
+template <class State> constexpr auto collect_child_states_recursive(State parentState)
+{
+    return bh::flatten(bh::transform(flatten_transition_table(parentState), extractExtendedStates));
+    ;
+}
 
-    return collectedStates;
-};
-
-constexpr auto collect_state_typeids_recursive = [](auto&& parentState) {
+template <class State> constexpr auto collect_state_typeids_recursive(State parentState)
+{
     auto collectedStates
         = bh::append(collect_child_state_typeids_recursive(parentState), bh::typeid_(parentState));
     return collectedStates;
-};
+}
 
-constexpr auto collect_states_recursive = [](auto&& parentState) {
-    auto collectedStates = bh::append(collect_child_states_recursive(parentState), parentState);
-    return remove_duplicate_types(collectedStates);
-};
+template <class State> constexpr auto collect_states_recursive(State parentState)
+{
+    return remove_duplicates(bh::append(collect_child_states_recursive(parentState), parentState));
+}
 
-const auto collect_child_state_typeids = [](auto&& state) {
+template <class State> constexpr auto collect_child_state_typeids(State state)
+{
     auto transitions = make_transition_table2(state);
     auto collectedStates = bh::flatten(bh::transform(transitions, extractStateTypeids));
 
-    return remove_duplicate_typeids(collectedStates);
-};
+    return remove_duplicates(collectedStates);
+}
 
-constexpr auto collect_child_states = [](auto&& state) {
-    return remove_duplicate_types(
+template <class State> constexpr auto collect_child_states(State state)
+{
+    return remove_duplicates(
         bh::flatten(bh::transform(make_transition_table2(state), extractStates)));
-};
+}
 }
