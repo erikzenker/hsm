@@ -9,8 +9,9 @@ namespace hsm {
 namespace bh {
 using namespace boost::hana;
 }
-constexpr auto to_pairs = [](const auto& tuples) {
+template <class Tuple> constexpr auto to_pairs(const Tuple& tuple)
+{
     return bh::transform(
-        tuples, [](auto tuple) { return bh::make_pair(bh::at_c<0>(tuple), bh::at_c<1>(tuple)); });
-};
+        tuple, [](auto tuple) { return bh::make_pair(bh::at_c<0>(tuple), bh::at_c<1>(tuple)); });
+}
 }

@@ -14,11 +14,12 @@ namespace bh {
 using namespace boost::hana;
 }
 
-constexpr auto collect_parent_state_typeids = [](auto state) {
+template <class State> constexpr auto collect_parent_state_typeids(State state)
+{
     auto toParentStateTypeid = [](auto transition) { return bh::typeid_(transition.parent()); };
 
     auto transitions = flatten_transition_table(state);
     auto parentStateTypeids = bh::transform(transitions, toParentStateTypeid);
-    return remove_duplicate_typeids(parentStateTypeids);
-};
+    return remove_duplicates(parentStateTypeids);
+}
 }

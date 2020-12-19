@@ -79,33 +79,47 @@ template <class Action> constexpr auto reuse_state(Action action)
 }
 }
 
-#include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/eval.hpp>
-#include <boost/hana/find_if.hpp>
-#include <boost/hana/functional/always.hpp>
-#include <boost/hana/functional/compose.hpp>
-#include <boost/hana/lazy.hpp>
-#include <boost/hana/pair.hpp>
+#include <boost/hana/for_each.hpp>
 
 namespace hsm {
     namespace bh {
         using namespace boost::hana;    
     }
 
-    constexpr auto function = bh::second;
-    constexpr auto predicate = bh::first;
-    constexpr auto case_ = bh::make_pair;
-
-    constexpr auto otherwise = bh::always(bh::true_c);
-    constexpr auto switch_ = [](auto&&... cases_) {
-        return function(bh::find_if(bh::make_basic_tuple(cases_...), predicate).value());
+    inline auto for_each_idx = [](const auto& list, const auto& closure) {
+        std::size_t index = 0;
+        bh::for_each(list, [closure, &index](const auto& elem) {
+            closure(elem, index);
+            index++;
+        });
     };
+}
 
-    constexpr auto lazy_predicate = bh::compose(bh::eval, bh::first);
-    constexpr auto lazy_otherwise = bh::make_lazy(bh::always(bh::true_c));
-    constexpr auto lazy_switch_ = [](auto&&... cases_) {
-        return function(bh::find_if(bh::make_basic_tuple(cases_...), lazy_predicate).value());
-    };
+#include <boost/hana/map.hpp>
+#include <boost/hana/pair.hpp>
+#include <boost/hana/type.hpp>
+#include <boost/hana/unique.hpp>
+#include <boost/mp11/algorithm.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+namespace {
+constexpr auto to_type_pair = [](auto x) { return bh::make_pair(bh::typeid_(x), x); };
+}
+
+template <class Tuple> constexpr auto remove_duplicates(Tuple tuple)
+{
+    return boost::mp11::mp_unique<std::decay_t<decltype(tuple)>> {};
+}
+
+template <class Tuple> constexpr auto remove_duplicate_types(Tuple tuple)
+{
+    return bh::values(bh::to_map(bh::transform(tuple, to_type_pair)));
+}
 }
 
 namespace hsm {
@@ -255,6 +269,8 @@ constexpr auto get_state = [](auto state) {
     return decltype(std::declval<typename decltype(state)::type>().get_state())();
 };
 
+constexpr auto unwrap_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
+
 constexpr auto unwrap_typeid_to_shared_ptr = [](auto typeid_) {
     return bh::if_(
         is_default_constructable(typeid_),
@@ -354,6 +370,69 @@ const auto get_unexpected_event_handler = [](auto rootState) {
         [](auto rootState) { return decltype(rootState)::type::on_unexpected_event(); },
         [](auto) { return [](auto /*event*/) {}; })(rootState);
 };
+}
+
+#include <boost/hana/at.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/type.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+namespace {
+const auto collectGuard = [](auto transition) { return bh::at_c<3>(transition); };
+}
+
+const auto collect_guards_recursive = [](auto state) {
+    auto collectedGuards = bh::transform(flatten_transition_table(state), collectGuard);
+    return remove_duplicate_types(collectedGuards);
+};
+
+const auto collect_guard_typeids_recursive = [](auto state) {
+    return bh::transform(collect_guards_recursive(state), bh::typeid_);
+};
+}
+
+#include <boost/hana/front.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/type.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+template <class State> constexpr auto collect_parent_state_typeids(State state)
+{
+    auto toParentStateTypeid = [](auto transition) { return bh::typeid_(transition.parent()); };
+
+    auto transitions = flatten_transition_table(state);
+    auto parentStateTypeids = bh::transform(transitions, toParentStateTypeid);
+    return remove_duplicates(parentStateTypeids);
+}
+}
+
+namespace hsm {
+template <class Event> struct event_t;
+struct noneEvent;
+struct noAction;
+struct noGuard;
+
+template <class Event, class Guard> class TransitionEG;
+template <class Event, class Action> class TransitionEA;
+template <class Event, class Guard, class Action> class TransitionEGA;
+template <class Source, class Action> class TransitionSA;
+template <class Source, class Guard> class TransitionSG;
+template <class Source, class Event> class TransitionSE;
+template <class Source, class Event, class Guard> class TransitionSEG;
+template <class Source, class Event, class Action> class TransitionSEA;
+template <class Source, class Event, class Guard, class Action> class TransitionSEGA;
+
+template <class Source> struct initial_t;
 }
 
 #include <type_traits>
@@ -491,370 +570,6 @@ constexpr auto extended_transition = [](auto&& parent, auto&& transition) {
 }
 }
 
-#include <boost/hana/back.hpp>
-#include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/flatten.hpp>
-#include <boost/hana/if.hpp>
-#include <boost/hana/prepend.hpp>
-#include <boost/hana/transform.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-namespace {
-template <class State> constexpr auto flatten_sub_transition_table(State state);
-
-template <class State> constexpr auto resolve(State target)
-{
-    // clang-format off
-        return lazy_switch_(
-            case_(bh::make_lazy(is_entry_state(target)),   [](auto&& entry) { return get_parent_state(entry); }),
-            case_(bh::make_lazy(is_direct_state(target)),  [](auto&& direct) { return get_parent_state(direct); }),
-            case_(bh::make_lazy(is_history_state(target)), [](auto&& history) { return get_parent_state(history); }),
-            case_(bh::make_lazy(otherwise()),              [](auto&& state) { return state; }))
-            (target);
-    // clang-format on
-}
-}
-
-template <class State> constexpr auto flatten_transition_table(State state)
-{
-    auto flattenSubTransitionTable = [state](auto transition) {
-        return bh::prepend(
-            flatten_sub_transition_table(resolve(transition.target())),
-            details::extended_transition(state, transition));
-    };
-
-    constexpr auto transitionTable = make_transition_table2(state);
-    constexpr auto extendedTransitionTable
-        = bh::transform(transitionTable, flattenSubTransitionTable);
-    return bh::flatten(extendedTransitionTable);
-}
-
-namespace {
-
-template <class State> constexpr auto flatten_sub_transition_table(State state)
-{
-    // clang-format off
-    return bh::if_(
-        has_transition_table(state),
-        [](auto stateWithTransitionTable) {
-            return flatten_transition_table(stateWithTransitionTable);
-        },
-        [](auto) { return bh::make_basic_tuple(); })(state);
-    // clang-format on
-}
-}
-}
-
-#include <boost/hana/map.hpp>
-#include <boost/hana/pair.hpp>
-#include <boost/hana/type.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-namespace {
-constexpr auto to_pair = [](auto x) { return bh::make_pair(x, x); };
-
-constexpr auto to_type_pair = [](auto x) { return bh::make_pair(bh::typeid_(x), x); };
-}
-
-constexpr auto remove_duplicates = [](auto tuple, auto predicate) {
-    return bh::values(bh::to_map(bh::transform(tuple, predicate)));
-};
-
-constexpr auto remove_duplicate_typeids
-    = [](auto tuple) { return remove_duplicates(tuple, to_pair); };
-
-constexpr auto remove_duplicate_types
-    = [](auto tuple) { return remove_duplicates(tuple, to_type_pair); };
-}
-
-#include <boost/hana/at.hpp>
-#include <boost/hana/pair.hpp>
-#include <boost/hana/transform.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-constexpr auto to_pairs = [](const auto& tuples) {
-    return bh::transform(
-        tuples, [](auto tuple) { return bh::make_pair(bh::at_c<0>(tuple), bh::at_c<1>(tuple)); });
-};
-}
-
-#include <boost/hana/at.hpp>
-#include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/flatten.hpp>
-#include <boost/hana/if.hpp>
-#include <boost/hana/transform.hpp>
-#include <boost/hana/type.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-namespace {
-
-constexpr auto resolveInitialState = [](auto transition) {
-    return bh::if_(
-        is_initial_state(transition.source()),
-        [](auto initial) { return get_state(initial); },
-        [](auto source) { return source; })(transition.source());
-};
-
-constexpr auto resolveExtentedInitialState = [](auto transition) {
-    return bh::if_(
-        is_initial_state(transition.source()),
-        [](auto initial) { return get_state(initial); },
-        [](auto source) { return source; })(transition.source());
-};
-
-constexpr auto extractExtendedStateTypeids = [](auto transition) {
-    return bh::make_basic_tuple(
-        bh::typeid_(resolveExtentedInitialState(transition)), bh::typeid_(transition.target()));
-};
-constexpr auto extractExtendedStates = [](auto transition) {
-    return bh::make_basic_tuple(resolveExtentedInitialState(transition), transition.target());
-};
-const auto extractStates = [](auto transition) {
-    return bh::make_basic_tuple(transition.source(), transition.target());
-};
-constexpr auto extractStateTypeids = [](auto transition) {
-    return bh::make_basic_tuple(
-        bh::typeid_(resolveInitialState(transition)), bh::typeid_(transition.target()));
-};
-}
-
-constexpr auto collect_child_state_typeids_recursive = [](auto parentState) {
-    auto transitions = flatten_transition_table(parentState);
-    auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStateTypeids));
-
-    return remove_duplicate_typeids(collectedStates);
-};
-
-constexpr auto collect_child_states_recursive = [](auto parentState) {
-    auto transitions = flatten_transition_table(parentState);
-    auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStates));
-
-    return collectedStates;
-};
-
-constexpr auto collect_state_typeids_recursive = [](auto&& parentState) {
-    auto collectedStates
-        = bh::append(collect_child_state_typeids_recursive(parentState), bh::typeid_(parentState));
-    return collectedStates;
-};
-
-constexpr auto collect_states_recursive = [](auto&& parentState) {
-    auto collectedStates = bh::append(collect_child_states_recursive(parentState), parentState);
-    return remove_duplicate_types(collectedStates);
-};
-
-const auto collect_child_state_typeids = [](auto&& state) {
-    auto transitions = make_transition_table2(state);
-    auto collectedStates = bh::flatten(bh::transform(transitions, extractStateTypeids));
-
-    return remove_duplicate_typeids(collectedStates);
-};
-
-constexpr auto collect_child_states = [](auto&& state) {
-    return remove_duplicate_types(
-        bh::flatten(bh::transform(make_transition_table2(state), extractStates)));
-};
-}
-
-#include <boost/hana/append.hpp>
-#include <boost/hana/at.hpp>
-#include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/equal.hpp>
-#include <boost/hana/filter.hpp>
-#include <boost/hana/not.hpp>
-#include <boost/hana/prepend.hpp>
-#include <boost/hana/size.hpp>
-#include <boost/hana/transform.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-constexpr auto isNotEmpty
-    = [](const auto& tuple) { return bh::not_(bh::equal(bh::size_c<0>, bh::size(tuple))); };
-
-constexpr auto get_internal_transition_table = [](auto state) {
-    return bh::if_(
-        has_internal_transition_table(state),
-        [](auto parentState) {
-            auto internalTransitionTable = make_internal_transition_table(parentState);
-            return bh::transform(internalTransitionTable, [parentState](auto internalTransition) {
-                return details::extended_transition(
-                    parentState,
-                    details::transition(
-                        parentState,
-                        internalTransition.event(),
-                        internalTransition.guard(),
-                        internalTransition.action(),
-                        parentState));
-            });
-        },
-        [](auto) { return bh::make_basic_tuple(); })(state);
-};
-
-constexpr auto extend_internal_transition = [](auto internalTransition, auto state) {
-    return details::extended_transition(
-        internalTransition.parent(),
-        details::transition(
-            state,
-            internalTransition.event(),
-            internalTransition.guard(),
-            internalTransition.action(),
-            state));
-};
-
-constexpr auto flatten_internal_transition_table = [](auto parentState) {
-    auto states = collect_states_recursive(parentState);
-
-    auto internalTransitionTables = bh::transform(states, get_internal_transition_table);
-    auto internalTransitions = bh::flatten(bh::filter(internalTransitionTables, isNotEmpty));
-
-    return bh::to<bh::basic_tuple_tag>(
-        bh::flatten(bh::transform(internalTransitions, [states](auto transition) {
-            return bh::transform(states, [transition](auto state) {
-                return extend_internal_transition(transition, state);
-            });
-        })));
-};
-
-} // namespace hsm
-
-#include <boost/hana/at.hpp>
-#include <boost/hana/concat.hpp>
-#include <boost/hana/flatten.hpp>
-#include <boost/hana/transform.hpp>
-#include <boost/hana/tuple.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-namespace {
-constexpr auto collectEventTypeids = [](auto transition) { return transition.event().typeid_; };
-constexpr auto collectEvents = [](auto transition) {
-    using Event = typename decltype(transition.event().typeid_)::type;
-    return bh::tuple_t<Event>;
-};
-}
-
-constexpr auto collect_event_typeids_recursive = [](auto state) {
-    return remove_duplicate_typeids(bh::transform(
-        bh::concat(flatten_transition_table(state), flatten_internal_transition_table(state)),
-        collectEventTypeids));
-};
-
-constexpr auto collect_event_typeids_recursive_with_transitions = [](auto transitions) {
-    return remove_duplicate_typeids(bh::transform(transitions, collectEventTypeids));
-};
-
-constexpr auto collect_events_recursive = [](auto state) {
-    return remove_duplicate_types(bh::flatten(bh::transform(
-        bh::concat(flatten_transition_table(state), flatten_internal_transition_table(state)),
-        collectEvents)));
-};
-}
-
-#include <boost/hana/for_each.hpp>
-
-namespace hsm {
-    namespace bh {
-        using namespace boost::hana;    
-    }
-
-    inline auto for_each_idx = [](const auto& list, const auto& closure) {
-        std::size_t index = 0;
-        bh::for_each(list, [closure, &index](const auto& elem) {
-            closure(elem, index);
-            index++;
-        });
-    };
-}
-
-#include <boost/hana/at.hpp>
-#include <boost/hana/transform.hpp>
-#include <boost/hana/type.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-namespace {
-const auto collectGuard = [](auto transition) { return bh::at_c<3>(transition); };
-}
-
-const auto collect_guards_recursive = [](auto state) {
-    auto collectedGuards = bh::transform(flatten_transition_table(state), collectGuard);
-    return remove_duplicate_types(collectedGuards);
-};
-
-const auto collect_guard_typeids_recursive = [](auto state) {
-    return bh::transform(collect_guards_recursive(state), bh::typeid_);
-};
-}
-
-#include <boost/hana/front.hpp>
-#include <boost/hana/transform.hpp>
-#include <boost/hana/type.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-constexpr auto collect_parent_state_typeids = [](auto state) {
-    auto toParentStateTypeid = [](auto transition) { return bh::typeid_(transition.parent()); };
-
-    auto transitions = flatten_transition_table(state);
-    auto parentStateTypeids = bh::transform(transitions, toParentStateTypeid);
-    return remove_duplicate_typeids(parentStateTypeids);
-};
-}
-
-namespace hsm {
-template <class Event> struct event_t;
-struct noneEvent;
-struct noAction;
-struct noGuard;
-
-template <class Event, class Guard> class TransitionEG;
-template <class Event, class Action> class TransitionEA;
-template <class Event, class Guard, class Action> class TransitionEGA;
-template <class Source, class Action> class TransitionSA;
-template <class Source, class Guard> class TransitionSG;
-template <class Source, class Event> class TransitionSE;
-template <class Source, class Event, class Guard> class TransitionSEG;
-template <class Source, class Event, class Action> class TransitionSEA;
-template <class Source, class Event, class Guard, class Action> class TransitionSEGA;
-
-template <class Source> struct initial_t;
-}
-
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/type.hpp>
 
@@ -891,13 +606,29 @@ struct noneEvent {
 using none = event_t<noneEvent>;
 }
 
+#include <boost/hana/at.hpp>
+#include <boost/hana/pair.hpp>
+#include <boost/hana/transform.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+template <class Tuple> constexpr auto to_pairs(const Tuple& tuple)
+{
+    return bh::transform(
+        tuple, [](auto tuple) { return bh::make_pair(bh::at_c<0>(tuple), bh::at_c<1>(tuple)); });
+}
+}
+
+#include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/drop_while.hpp>
 #include <boost/hana/map.hpp>
 #include <boost/hana/minus.hpp>
 #include <boost/hana/not_equal.hpp>
 #include <boost/hana/range.hpp>
 #include <boost/hana/size.hpp>
-#include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/zip.hpp>
 
 //#include <boost/mp11.hpp>
@@ -908,18 +639,22 @@ namespace bh {
 using namespace boost::hana;
 }
 
-constexpr auto index_of = [](auto const& iterable, auto const& element) {
-    auto size = decltype(bh::size(iterable)){};
-    auto dropped = decltype(bh::size(
-        bh::drop_while(iterable, bh::not_equal.to(element))
-    )){};
-    return size - dropped;
-};
+template <class Iterable, class Element>
+constexpr auto index_of(Iterable const& iterable, Element const& element)
+{
+    return bh::apply(
+        [](auto size, auto dropped) { return size - dropped; },
+        bh::size(iterable),
+        bh::size(bh::drop_while(iterable, bh::not_equal.to(element))));
+}
 
-const auto make_index_map = [](auto typeids) {
-    const auto range = bh::to<bh::basic_tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(typeids)));
-    return bh::to_map(to_pairs(bh::zip(typeids, range)));
-};
+template <class Typeids> constexpr auto make_index_map(Typeids typeids)
+{
+    return bh::apply(
+        [](auto typeids, auto range) { return bh::to_map(to_pairs(bh::zip(typeids, range))); },
+        typeids,
+        bh::to<bh::basic_tuple_tag>(bh::make_range(bh::int_c<0>, bh::size(typeids))));
+}
 
 // constexpr auto find = [](auto&& reverseIndexMap, auto index, auto&& closure) {
 //     boost::mp11::mp_with_index<bh::size(reverseIndexMap)>(
@@ -967,22 +702,27 @@ constexpr auto getStateIdx = [](auto rootState, auto state) {
     return index_of(collect_state_typeids_recursive(rootState), bh::typeid_(state));
 };
 
-constexpr auto getCombinedStateTypeids = [](const auto& rootState) {
+template <class State> constexpr auto getCombinedStateTypeids(const State& rootState)
+{
     auto parentStateTypeids = collect_parent_state_typeids(rootState);
     auto stateTypeids = collect_state_typeids_recursive(rootState);
     auto stateCartesianProduct
         = bh::cartesian_product(bh::make_basic_tuple(parentStateTypeids, stateTypeids));
     return bh::transform(stateCartesianProduct, bh::typeid_);
-};
+}
 
-constexpr auto getCombinedStateTypeid = [](const auto& parentState, const auto& state) {
+template <class ParentState, class State>
+constexpr auto getCombinedStateTypeid(const ParentState& parentState, const State& state)
+{
     return bh::typeid_(bh::make_basic_tuple(bh::typeid_(parentState), bh::typeid_(state)));
-};
+}
 
-constexpr auto getCombinedStateIdx = [](auto combinedStateTypids, auto parentState, auto state) {
-    constexpr auto combinedStateTypeid = getCombinedStateTypeid(parentState, state);
-    return index_of(combinedStateTypids, combinedStateTypeid);
-};
+template <class StateTypeids, class ParentState, class State>
+constexpr auto
+getCombinedStateIdx(StateTypeids combinedStateTypids, ParentState parentState, State state)
+{
+    return index_of(combinedStateTypids, getCombinedStateTypeid(parentState, state));
+}
 
 constexpr auto calcCombinedStateIdx
     = [](std::size_t nStates, Idx parentStateIdx, Idx stateIdx) -> Idx {
@@ -1017,23 +757,25 @@ const auto is_anonymous_transition
 const auto is_history_transition
     = [](auto transition) { return is_history_state(transition.target()); };
 
-const auto has_anonymous_transition = [](auto rootState) {
+template <class State> constexpr auto has_anonymous_transition(State rootState)
+{
     auto transitions = flatten_transition_table(rootState);
     auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
     return bh::size(anonymousTransition);
-};
+}
 
-const auto has_history = [](auto rootState) {
+template <class State> constexpr auto has_history(State rootState)
+{
     auto transitions = flatten_transition_table(rootState);
     auto historyTransitions = bh::filter(transitions, is_history_transition);
     return bh::size(historyTransitions);
-};
+}
 }
 
 #include <boost/hana/find.hpp>
+#include <boost/hana/maximum.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/transform.hpp>
-#include <boost/hana/maximum.hpp>
 
 #include <iostream>
 #include <vector>
@@ -1046,11 +788,12 @@ namespace hsm {
  * Returns: [[State]]
  *
  */
-constexpr auto collect_initial_states = [](auto parentState) {
+template <class State> constexpr auto collect_initial_states(State parentState)
+{
     constexpr auto childStates = collect_child_states(parentState);
     constexpr auto initialStates = bh::filter(childStates, is_initial_state);
     return bh::transform(initialStates, [](auto initialState) { return get_state(initialState); });
-};
+}
 
 /**
  * Collect the initial states for the parent states
@@ -1060,7 +803,9 @@ constexpr auto collect_initial_states = [](auto parentState) {
  *
  * Example: [[0,1], [0], [1], [1,2]]
  */
-constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentStateTypeids) {
+template <class State, class Typeids>
+constexpr auto collect_initial_state_stateidx(State rootState, Typeids parentStateTypeids)
+{
     return bh::transform(parentStateTypeids, [rootState](auto parentStateTypeid) {
         using ParentState = typename decltype(parentStateTypeid)::type;
 
@@ -1071,7 +816,7 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
                 getCombinedStateTypeids(rootState), ParentState {}, initialState);
         });
     });
-};
+}
 
 /**
  * Return a map from parent state id to inital state ids
@@ -1083,11 +828,12 @@ constexpr auto collect_initial_state_stateidx = [](auto rootState, auto parentSt
  *  [1 -> [3, 1]],
  *  [2 -> [0, 2]]]
  */
-inline auto make_initial_state_map = [](auto rootState) {
+template <class State> inline constexpr auto make_initial_state_map(State rootState)
+{
     constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
     constexpr auto initialStates = collect_initial_state_stateidx(rootState, parentStateTypeids);
     return bh::to_map(to_pairs(bh::zip(parentStateTypeids, initialStates)));
-};
+}
 
 /**
  * Fills the initial state table with the state idx of the initial
@@ -1099,7 +845,9 @@ inline auto make_initial_state_map = [](auto rootState) {
  *  in the parent state.
  *  initialStateTable[parentStateIdx][regionIdx] is a state idx.
  */
-constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateTable) {
+template <class State, class StateTable>
+constexpr auto fill_initial_state_table(State rootState, StateTable& initialStateTable)
+{
     constexpr auto parentStateTypeids = collect_parent_state_typeids(rootState);
     for_each_idx(
         parentStateTypeids,
@@ -1119,7 +867,7 @@ constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateT
                 initialStateTable,
                 bh::find(make_initial_state_map(rootState), parentStateTypeid).value());
         });
-};
+}
 
 /**
  * Returns a tuple of initial state sizes
@@ -1128,19 +876,493 @@ constexpr auto fill_initial_state_table = [](auto rootState, auto& initialStateT
  *
  * Example: [3, 1, 2]
  */
-constexpr auto initialStateSizes = [](auto parentStateTypeids) {
+template <class Typeids> constexpr auto initialStateSizes(Typeids parentStateTypeids)
+{
     return bh::transform(parentStateTypeids, [](auto parentStateTypeid) {
         using ParentState = typename decltype(parentStateTypeid)::type;
         return bh::size(collect_initial_states(ParentState {}));
     });
-};
+}
 
 /**
  * Returns the maximal number of initial states
  */
-constexpr auto maxInitialStates = [](auto rootState) {
+template <class State> constexpr auto maxInitialStates(State rootState)
+{
     return bh::maximum(initialStateSizes(collect_parent_state_typeids(rootState)));
+}
+}
+
+#include <boost/hana/bool.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/not.hpp>
+#include <boost/hana/or.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+constexpr auto has_substate_initial_state_entry_action = [](auto&& target) {
+    return bh::if_(
+        has_transition_table(target),
+        [](auto&& target) { return has_entry_action(bh::at_c<0>(collect_initial_states(target))); },
+        [](auto&&) { return bh::false_c; })(target);
 };
+
+constexpr auto has_action = [](auto&& transition) {
+    return bh::or_(
+        bh::not_(is_no_action(transition.action())),
+        has_entry_action(transition.target()),
+        has_substate_initial_state_entry_action(transition.target()),
+        has_exit_action(transition.source()));
+};
+}
+
+#include <boost/hana/functional/apply.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+template <class Transition> constexpr auto resolveSubStateParent(Transition transition)
+{
+    auto constexpr target = transition.target();
+    if constexpr (is_entry_state(target)) {
+        return get_parent_state(target);
+    } else if constexpr (is_direct_state(target)) {
+        return get_parent_state(target);
+    } else if constexpr (is_history_state(target)) {
+        return get_parent_state(target);
+    } else {
+        return target;
+    }
+}
+
+template <class Transition> constexpr auto resolveDst(Transition transition)
+{
+    auto constexpr dst = transition.target();
+
+    if constexpr (has_transition_table(dst)) {
+        return bh::at_c<0>(collect_initial_states(dst));
+    } else if constexpr (is_entry_state(dst)) {
+        return get_state(dst);
+    } else if constexpr (is_direct_state(dst)) {
+        return get_state(dst);
+    } else if constexpr (is_history_state(dst)) {
+        return bh::at_c<0>(collect_initial_states(get_parent_state(dst)));
+    } else {
+        return dst;
+    }
+}
+
+template <class Transition> constexpr auto resolveDstParent(Transition transition)
+{
+    auto constexpr target = transition.target();
+
+    if constexpr (has_transition_table(target)) {
+        return target;
+    } else if constexpr (is_entry_state(target)) {
+        return get_parent_state(target);
+    } else if constexpr (is_direct_state(target)) {
+        return get_parent_state(target);
+    } else if constexpr (is_history_state(target)) {
+        return get_parent_state(target);
+    } else {
+        return transition.parent();
+    }
+}
+
+template <class Transition> constexpr auto resolveSrc(Transition transition)
+{
+    auto constexpr src = transition.source();
+
+    if constexpr (is_initial_state(src)) {
+        return get_state(src);
+    } else if constexpr (is_exit_state(src)) {
+        return get_state(src);
+    } else if constexpr (is_direct_state(src)) {
+        return get_state(src);
+    } else {
+        return src;
+    }
+}
+
+template <class Transition> constexpr auto resolveSrcParent(Transition transition)
+{
+    auto constexpr src = transition.source();
+
+    if constexpr (is_exit_state(src)) {
+        return get_parent_state(src);
+    } else if constexpr (is_direct_state(src)) {
+        return get_parent_state(src);
+    } else {
+        return transition.parent();
+    }
+}
+
+template <class Transition> constexpr auto resolveEntryAction(Transition&& transition)
+{
+    // clang-format off
+    return bh::apply([](auto&& dst){
+        return bh::if_(has_entry_action(dst)
+            , [](auto&& dst) { return get_entry_action(dst); }
+            , [](auto&&) { return [](auto...) {}; })
+            (dst);    
+    },
+    transition.target());
+    // clang-format on
+}
+
+template <class Transition> constexpr auto resolveInitialStateEntryAction(Transition&& transition)
+{
+    // clang-format off
+    return bh::apply([](auto&& target){
+        return bh::if_(has_substate_initial_state_entry_action(target)
+            , [](auto&& target) { return get_entry_action(bh::at_c<0>(collect_initial_states(target)));}
+            , [](auto&&) { return [](auto...) {}; })
+            (target);    
+    },
+    transition.target());
+    // clang-format on
+}
+
+template <class Transition> constexpr auto resolveExitAction(Transition&& transition)
+{
+    // clang-format off
+    return bh::apply([](auto&& src){
+        return bh::if_(has_exit_action(src)
+            , [](auto&& src) { return get_exit_action(src); }
+            , [](auto&&) { return [](auto...) {}; })
+            (src);
+    },
+    transition.source());
+    // clang-format on
+}
+
+template <class Transition> constexpr auto resolveNoAction(Transition&& transition)
+{
+    return bh::if_(
+        is_no_action(transition.action()),
+        [](auto&&) { return [](auto&&...) {}; },
+        [](auto&& transition) { return transition.action(); })(transition);
+}
+
+template <class Transition> constexpr auto resolveEntryExitAction(Transition&& transition)
+{
+    return [exitAction(resolveExitAction(transition)),
+            action(resolveNoAction(transition)),
+            entryAction(resolveEntryAction(transition)),
+            initialStateEntryAction(resolveInitialStateEntryAction(transition))](auto&&... params) {
+        exitAction(params...);
+        action(params...);
+        entryAction(params...);
+        initialStateEntryAction(params...);
+    };
+}
+
+template <class Transition> constexpr auto resolveAction(Transition&& transition)
+{
+    // clang-format off
+    return bh::if_(
+        has_action(transition),
+        [](auto&& transition) { return resolveEntryExitAction(transition);},
+        [](auto&& transition) { return transition.action(); })
+        (transition);
+    // clang-format on
+}
+
+template <class Transition> constexpr auto resolveHistory(Transition&& transition)
+{
+    // clang-format off
+    return bh::apply([](auto&& dst){
+        return bh::if_(is_history_state(dst)
+            , [](auto&&) { return true; }
+            , [](auto&&) { return false; })
+            (dst);
+    }, 
+    transition.target());
+    // clang-format on                   
+}
+}
+
+#include <boost/hana/eval.hpp>
+#include <boost/hana/find_if.hpp>
+#include <boost/hana/functional/always.hpp>
+#include <boost/hana/lazy.hpp>
+#include <boost/hana/pair.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/functional/compose.hpp>
+
+namespace hsm {
+    namespace bh {
+        using namespace boost::hana;    
+    }
+
+    constexpr auto function = bh::second;
+    constexpr auto predicate = bh::first;
+    constexpr auto case_ = bh::make_pair;
+
+    constexpr auto otherwise = bh::always(bh::true_c);
+    template <class... Case> constexpr auto switch_(Case&&... cases_)
+    {
+        return function(bh::find_if(bh::make_basic_tuple(cases_...), predicate).value());
+    }
+
+    constexpr auto lazy_predicate = bh::compose(bh::eval, bh::first);
+    constexpr auto lazy_otherwise = bh::make_lazy(bh::always(bh::true_c));
+
+    template <class... Case> constexpr auto lazy_switch_(Case&&... cases_)
+    {
+        return function(bh::find_if(bh::make_basic_tuple(cases_...), lazy_predicate).value());
+    }
+}
+
+#include <boost/hana/back.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/flatten.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/prepend.hpp>
+#include <boost/hana/transform.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+namespace {
+template <class State> constexpr auto flatten_sub_transition_table(State state);
+
+}
+
+template <class State> constexpr auto flatten_transition_table(State state)
+{
+    auto flattenSubTransitionTable = [state](auto transition) {
+        return bh::prepend(
+            flatten_sub_transition_table(resolveSubStateParent(transition)),
+            details::extended_transition(state, transition));
+    };
+
+    return bh::flatten(bh::transform(make_transition_table2(state), flattenSubTransitionTable));
+}
+
+namespace {
+
+template <class State> constexpr auto flatten_sub_transition_table(State state)
+{
+    // clang-format off
+    return bh::if_(
+        has_transition_table(state),
+        [](auto stateWithTransitionTable) {
+            return flatten_transition_table(stateWithTransitionTable);
+        },
+        [](auto) { return bh::make_basic_tuple(); })(state);
+    // clang-format on
+}
+}
+}
+
+#include <boost/hana/at.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/flatten.hpp>
+#include <boost/hana/if.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/type.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+namespace {
+
+constexpr auto resolveInitialState = [](auto transition) {
+    return bh::if_(
+        is_initial_state(transition.source()),
+        [](auto initial) { return get_state(initial); },
+        [](auto source) { return source; })(transition.source());
+};
+
+constexpr auto resolveExtentedInitialState = [](auto transition) {
+    return bh::if_(
+        is_initial_state(transition.source()),
+        [](auto initial) { return get_state(initial); },
+        [](auto source) { return source; })(transition.source());
+};
+
+constexpr auto extractExtendedStateTypeids = [](auto transition) {
+    return bh::make_basic_tuple(
+        bh::typeid_(resolveExtentedInitialState(transition)), bh::typeid_(transition.target()));
+};
+constexpr auto extractExtendedStates = [](auto transition) {
+    return bh::make_basic_tuple(resolveExtentedInitialState(transition), transition.target());
+};
+const auto extractStates = [](auto transition) {
+    return bh::make_basic_tuple(transition.source(), transition.target());
+};
+constexpr auto extractStateTypeids = [](auto transition) {
+    return bh::make_basic_tuple(
+        bh::typeid_(resolveInitialState(transition)), bh::typeid_(transition.target()));
+};
+}
+
+template <class State> constexpr auto collect_child_state_typeids_recursive(State parentState)
+{
+    auto transitions = flatten_transition_table(parentState);
+    auto collectedStates = bh::flatten(bh::transform(transitions, extractExtendedStateTypeids));
+
+    return remove_duplicates(collectedStates);
+}
+
+template <class State> constexpr auto collect_child_states_recursive(State parentState)
+{
+    return bh::flatten(bh::transform(flatten_transition_table(parentState), extractExtendedStates));
+    ;
+}
+
+template <class State> constexpr auto collect_state_typeids_recursive(State parentState)
+{
+    auto collectedStates
+        = bh::append(collect_child_state_typeids_recursive(parentState), bh::typeid_(parentState));
+    return collectedStates;
+}
+
+template <class State> constexpr auto collect_states_recursive(State parentState)
+{
+    return remove_duplicates(bh::append(collect_child_states_recursive(parentState), parentState));
+}
+
+template <class State> constexpr auto collect_child_state_typeids(State state)
+{
+    auto transitions = make_transition_table2(state);
+    auto collectedStates = bh::flatten(bh::transform(transitions, extractStateTypeids));
+
+    return remove_duplicates(collectedStates);
+}
+
+template <class State> constexpr auto collect_child_states(State state)
+{
+    return remove_duplicates(
+        bh::flatten(bh::transform(make_transition_table2(state), extractStates)));
+}
+}
+
+#include <boost/hana/append.hpp>
+#include <boost/hana/at.hpp>
+#include <boost/hana/basic_tuple.hpp>
+#include <boost/hana/equal.hpp>
+#include <boost/hana/filter.hpp>
+#include <boost/hana/not.hpp>
+#include <boost/hana/prepend.hpp>
+#include <boost/hana/size.hpp>
+#include <boost/hana/transform.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+constexpr auto isNotEmpty
+    = [](const auto& tuple) { return bh::not_(bh::equal(bh::size_c<0>, bh::size(tuple))); };
+
+constexpr auto get_internal_transition_table = [](auto state) {
+    return bh::if_(
+        has_internal_transition_table(state),
+        [](auto parentState) {
+            return bh::transform(
+                make_internal_transition_table(parentState),
+                [parentState](auto internalTransition) {
+                    return details::extended_transition(
+                        parentState,
+                        details::transition(
+                            parentState,
+                            internalTransition.event(),
+                            internalTransition.guard(),
+                            internalTransition.action(),
+                            parentState));
+                });
+        },
+        [](auto) { return bh::make_basic_tuple(); })(state);
+};
+
+constexpr auto get_internal_transitions = [](auto states) {
+    return bh::flatten(
+        bh::filter(bh::transform(states, get_internal_transition_table), isNotEmpty));
+};
+
+template <class Transition, class States>
+constexpr auto extend_internal_transition(Transition internalTransition, States states)
+{
+    return bh::transform(states, [internalTransition](auto state) {
+        return details::extended_transition(
+            internalTransition.parent(),
+            details::transition(
+                state,
+                internalTransition.event(),
+                internalTransition.guard(),
+                internalTransition.action(),
+                state));
+    });
+}
+
+template <class State> constexpr auto flatten_internal_transition_table(State parentState)
+{
+    return [](auto states) {
+        constexpr auto extend
+            = [states](auto transition) { return extend_internal_transition(transition, states); };
+
+        return bh::to<bh::basic_tuple_tag>(
+            bh::flatten(bh::transform(get_internal_transitions(states), extend)));
+    }(collect_states_recursive(parentState));
+}
+
+} // namespace hsm
+
+#include <boost/hana/at.hpp>
+#include <boost/hana/concat.hpp>
+#include <boost/hana/flatten.hpp>
+#include <boost/hana/transform.hpp>
+#include <boost/hana/tuple.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+namespace {
+constexpr auto collectEventTypeids = [](auto transition) { return transition.event().typeid_; };
+constexpr auto collectEvents = [](auto transition) {
+    using Event = typename decltype(transition.event().typeid_)::type;
+    return bh::tuple_t<Event>;
+};
+}
+
+template <class State> constexpr auto collect_event_typeids_recursive(State state)
+{
+    return remove_duplicates(bh::transform(
+        bh::concat(flatten_transition_table(state), flatten_internal_transition_table(state)),
+        collectEventTypeids));
+}
+
+template <class TransitionTuple>
+constexpr auto collect_event_typeids_recursive_with_transitions(TransitionTuple transitions)
+{
+    return remove_duplicates(bh::transform(transitions, collectEventTypeids));
+}
+
+template <class State> constexpr auto collect_events_recursive(State state)
+{
+    return remove_duplicate_types(bh::flatten(bh::transform(
+        bh::concat(flatten_transition_table(state), flatten_internal_transition_table(state)),
+        collectEvents)));
+}
 }
 
 #include <boost/any.hpp>
@@ -1244,22 +1466,27 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     OptionalDependency m_optionalDependency;
 };
 
-constexpr auto make_transition = [](auto action,
-                                    auto guard,
-                                    auto eventTypeid,
-                                    auto source,
-                                    auto target,
-                                    auto optionalDependency) {
+template <
+    class Action,
+    class Guard,
+    class EventTypeid,
+    class Source,
+    class Target,
+    class Dependency>
+constexpr auto make_transition(
+    Action action,
+    Guard guard,
+    EventTypeid eventTypeid,
+    Source source,
+    Target target,
+    Dependency optionalDependency)
+{
     using Event = typename decltype(eventTypeid)::type;
 
-    return std::make_unique<DispatchTableEntry<
-        decltype(action),
-        decltype(guard),
-        decltype(source),
-        decltype(target),
-        Event,
-        decltype(optionalDependency)>>(action, guard, source, target, optionalDependency);
-};
+    return std::make_unique<
+        DispatchTableEntry<Action, Guard, Source, Target, Event, decltype(optionalDependency)>>(
+        action, guard, source, target, optionalDependency);
+}
 
 template <class Event> struct NextState {
     StateIdx combinedState{};
@@ -1278,100 +1505,14 @@ template <StateIdx NStates, class Event> struct DispatchTable {
 
 template <StateIdx NStates, class Event>
 DispatchArray<NStates, Event> DispatchTable<NStates, Event>::table {};
-}
 
-#include <boost/hana/bool.hpp>
-#include <boost/hana/if.hpp>
-#include <boost/hana/not.hpp>
-#include <boost/hana/or.hpp>
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-constexpr auto has_substate_initial_state_entry_action = [](auto&& target) {
-    return bh::if_(
-        has_transition_table(target),
-        [](auto&& target) { return has_entry_action(bh::at_c<0>(collect_initial_states(target))); },
-        [](auto&&) { return bh::false_c; })(target);
+constexpr auto get_dispatch_table = [](auto rootState, auto eventTypeid) -> auto&
+{
+    using Event = typename decltype(eventTypeid)::type;
+    return bh::apply(
+        [](auto states) -> auto& { return DispatchTable<states, Event>::table; },
+        nStates(rootState) * nParentStates(rootState));
 };
-
-constexpr auto has_action = [](auto&& transition) {
-    return bh::or_(
-        bh::not_(is_no_action(transition.action())),
-        has_entry_action(transition.target()),
-        has_substate_initial_state_entry_action(transition.target()),
-        has_exit_action(transition.source()));
-};
-}
-
-namespace hsm {
-
-namespace bh {
-using namespace boost::hana;
-}
-
-constexpr auto resolveDst = [](auto&& transition) {
-    // clang-format off
-    return bh::apply([](auto&& dstTypeid){
-        return lazy_switch_(
-            // TODO: make multi region capable    
-            case_(bh::make_lazy(has_transition_table(dstTypeid)), [](auto&& submachine) { return bh::at_c<0>(collect_initial_states(submachine));}),
-            case_(bh::make_lazy(is_entry_state(dstTypeid)),       [](auto&& entry) { return get_state(entry); }),
-            case_(bh::make_lazy(is_direct_state(dstTypeid)),      [](auto&& direct) { return get_state(direct); }),
-            // TODO: make multi region capable 
-            case_(bh::make_lazy(is_history_state(dstTypeid)),     [](auto&& history) { return bh::at_c<0>(collect_initial_states(get_parent_state(history)));}),
-            case_(bh::make_lazy((otherwise())),                   [](auto&& dstTypeid) { return dstTypeid; }))
-            (dstTypeid);
-    },
-    transition.target());
-    // clang-format on
-};
-
-constexpr auto resolveDstParent = [](auto transition) {
-    // clang-format off
-    return bh::apply([](auto&& dstTypeid, auto&& transition){
-        return lazy_switch_(
-            case_(bh::make_lazy(has_transition_table(dstTypeid)), [](auto&& submachine, auto&&) { return submachine; }),
-            case_(bh::make_lazy(is_entry_state(dstTypeid)),       [](auto&& entry, auto&&) { return get_parent_state(entry); }),
-            case_(bh::make_lazy(is_direct_state(dstTypeid)),      [](auto&& direct, auto&&) { return get_parent_state(direct); }),
-            case_(bh::make_lazy(is_history_state(dstTypeid)),     [](auto&& history, auto&&) { return get_parent_state(history); }),
-            case_(bh::make_lazy(otherwise()),                     [](auto&&, auto&& transition) { return transition.parent(); }))
-            (dstTypeid, transition);
-    },
-    transition.target(), transition);
-    // clang-format on
-};
-
-constexpr auto resolveSrc = [](auto&& transition) {
-    // clang-format off
-    return bh::apply([](auto&& src){
-        return lazy_switch_(
-            case_(bh::make_lazy(is_initial_state(src)), [](auto&& initial) { return get_state(initial); }),    
-            case_(bh::make_lazy(is_exit_state(src)),    [](auto&& exit) { return get_state(exit); }),
-            case_(bh::make_lazy(is_direct_state(src)),  [](auto&& direct) { return get_state(direct); }),
-            case_(bh::make_lazy(otherwise()),           [](auto&& state) { return state; }))
-            (src);    
-    },
-    transition.source());
-    // clang-format on
-};
-
-constexpr auto resolveSrcParent = [](auto&& transition) {
-    // clang-format off
-    return bh::apply([](auto&& src, auto&& transition){
-        return lazy_switch_(
-            case_(bh::make_lazy(is_exit_state(src)),   [](auto&& exit, auto&&) { return get_parent_state(exit); }),
-            case_(bh::make_lazy(is_direct_state(src)), [](auto&& direct, auto&&) { return get_parent_state(direct); }),
-            case_(bh::make_lazy(otherwise()),          [](auto&&, auto&& transition) { return transition.parent(); }))
-            (src, transition);
-    },
-    transition.source(), transition);
-    // clang-format on
-};
-
 }
 
 #include <boost/hana/equal.hpp>
@@ -1381,7 +1522,6 @@ constexpr auto resolveSrcParent = [](auto&& transition) {
 #include <boost/hana/functional/apply.hpp>
 #include <boost/hana/functional/capture.hpp>
 #include <boost/hana/if.hpp>
-#include <boost/hana/lazy.hpp>
 #include <boost/hana/length.hpp>
 #include <boost/hana/mult.hpp>
 #include <boost/hana/size.hpp>
@@ -1393,143 +1533,126 @@ namespace bh {
 using namespace boost::hana;
 }
 
-constexpr auto nParentStates
-    = [](auto rootState) { return bh::length(collect_parent_state_typeids(rootState)); };
-constexpr auto nStates
-    = [](auto rootState) { return bh::length(collect_state_typeids_recursive(rootState)); };
-constexpr auto nEvents
-    = [](auto rootState) { return bh::length(collect_event_typeids_recursive(rootState)); };
+template <class State> constexpr auto nParentStates(State rootState)
+{
+    return bh::length(collect_parent_state_typeids(rootState));
+}
 
-constexpr auto hasRegions
-    = [](auto rootState) { return bh::equal(bh::size_c<1>, maxInitialStates(rootState)); };
+template <class State> constexpr auto nStates(State rootState)
+{
+    return bh::length(collect_state_typeids_recursive(rootState));
+}
 
-constexpr auto makeInvalidGuard
-    = [](auto dispatchTable) { return decltype(dispatchTable[0].guard) {}; };
+template <class State> constexpr auto nEvents(State rootState)
+{
+    return bh::length(collect_event_typeids_recursive(rootState));
+}
 
-constexpr auto makeInvalidAction
-    = [](auto dispatchTable) { return decltype(dispatchTable[0].action) {}; };
+template <class State> constexpr auto hasRegions(State rootState)
+{
+    return bh::equal(bh::size_c<1>, maxInitialStates(rootState));
+}
 
-constexpr auto resolveEntryAction = [](auto&& transition) {
-    // clang-format off
-    return bh::apply([](auto&& dst){
-        return bh::if_(has_entry_action(dst)
-            , [](auto&& dst) { return get_entry_action(dst); }
-            , [](auto&&) { return [](auto...) {}; })
-            (dst);    
-    },
-    transition.target());
-    // clang-format on
-};
+template <
+    class State,
+    class TransitionTuple,
+    class EventTypeid,
+    class StatesMap,
+    class Dependencies>
+constexpr auto addDispatchTableEntry(
+    State rootState,
+    TransitionTuple&& transition,
+    EventTypeid eventTypeid,
+    StatesMap&& statesMap,
+    Dependencies optionalDependency)
+{
+    bh::apply(
+        [=](auto combinedStateIds, auto source, auto target) {
+            bh::apply(
+                [=](auto fromIdx, auto toIdx, auto history, auto mappedSource, auto mappedTarget) {
+                    bh::apply(
+                        [=](auto& dispatchTable, auto&& transition2) {
+                            const auto defer = false;
+                            const auto valid = true;
+                            dispatchTable[fromIdx]
+                                = { toIdx, history, defer, valid, std::move(transition2) };
+                        },
+                        get_dispatch_table(rootState, eventTypeid),
+                        make_transition(
+                            resolveAction(transition),
+                            transition.guard(),
+                            eventTypeid,
+                            mappedSource,
+                            mappedTarget,
+                            optionalDependency));
+                },
+                getCombinedStateIdx(combinedStateIds, resolveSrcParent(transition), source),
+                getCombinedStateIdx(combinedStateIds, resolveDstParent(transition), target),
+                resolveHistory(transition),
+                bh::find(statesMap, bh::typeid_(source)).value(),
+                bh::find(statesMap, bh::typeid_(target)).value());
+        },
+        getCombinedStateTypeids(rootState),
+        resolveSrc(transition),
+        resolveDst(transition));
+}
 
-constexpr auto resolveInitialStateEntryAction = [](auto&& transition) {
-    // clang-format off
-    return bh::apply([](auto&& target){
-        return bh::if_(has_substate_initial_state_entry_action(target)
-            , [](auto&& target) { return get_entry_action(bh::at_c<0>(collect_initial_states(target)));}
-            , [](auto&&) { return [](auto...) {}; })
-            (target);    
-    },
-    transition.target());
-    // clang-format on
-};
+template <
+    class State,
+    class TransitionTuple,
+    class EventTypeid,
+    class StatesMap,
+    class Dependencies>
+constexpr auto addDispatchTableEntryOfSubMachineExits(
+    State rootState,
+    TransitionTuple transition,
+    EventTypeid eventTypeid,
+    StatesMap&& statesMap,
+    Dependencies optionalDependency)
+{
+    (void)rootState;
+    (void)eventTypeid;
+    (void)optionalDependency;
 
-constexpr auto resolveExitAction = [](auto&& transition) {
-    // clang-format off
-    return bh::apply([](auto&& src){
-        return bh::if_(has_exit_action(src)
-            , [](auto&& src) { return get_exit_action(src); }
-            , [](auto&&) { return [](auto...) {}; })
-            (src);
-    },
-    transition.source());
-    // clang-format on
-};
-
-constexpr auto resolveNoAction = [](auto&& transition) {
-    return bh::if_(
-        is_no_action(transition.action()),
-        [](auto&&) { return [](auto&&...) {}; },
-        [](auto&& transition) { return transition.action(); })(transition);
-};
-
-constexpr auto resolveEntryExitAction = [](auto&& transition) {
-    return [exitAction(resolveExitAction(transition)),
-            action(resolveNoAction(transition)),
-            entryAction(resolveEntryAction(transition)),
-            initialStateEntryAction(resolveInitialStateEntryAction(transition))](auto&&... params) {
-        exitAction(params...);
-        action(params...);
-        entryAction(params...);
-        initialStateEntryAction(params...);
-    };
-};
-
-constexpr auto resolveAction = [](auto&& transition) {
-    // clang-format off
-    return bh::if_(
-        has_action(transition),
-        [](auto&& transition) { return resolveEntryExitAction(transition);},
-        [](auto&& transition) { return transition.action(); })
-        (transition);
-    // clang-format on
-};
-
-constexpr auto resolveHistory = [](auto&& transition) {
-    // clang-format off
-    return bh::apply([](auto&& dst){
-        return bh::if_(is_history_state(dst)
-            , [](auto&&) { return true; }
-            , [](auto&&) { return false; })
-            (dst);
-    }, 
-    transition.target());
-    // clang-format on                   
-};
-
-constexpr auto addDispatchTableEntry = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable, auto eventTypeid, auto&& statesMap, auto optionalDependency) {
-          const auto source = resolveSrc(transition);
-          const auto target = resolveDst(transition);
-          const auto from = getCombinedStateIdx(combinedStateTypids, resolveSrcParent(transition), source);
-          const auto guard = transition.guard();
-          const auto action = resolveAction(transition);
-          const auto to = getCombinedStateIdx(combinedStateTypids, resolveDstParent(transition), target);
-          const auto history = resolveHistory(transition);
-          const auto defer = false;
-          const auto valid = true;
-
-          auto mappedSource = bh::find(statesMap, bh::typeid_(source)).value();
-          auto mappedTarget = bh::find(statesMap, bh::typeid_(target)).value();
-
-          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, mappedSource, mappedTarget, optionalDependency)};
-      };
-
-const auto addDispatchTableEntryOfSubMachineExits
-    = [](auto&& combinedStateTypids, auto&& transition, auto& dispatchTable, auto&& eventTypeid, auto&& statesMap, auto optionalDependency) {
-          bh::if_(
-              has_transition_table(transition.source()),
-              [&](auto parentState) {
-                  auto states = collect_child_state_typeids(parentState);
-
-                  bh::for_each(
-                      states, [&](auto state) {
-                          const auto target = resolveDst(transition);                          
-                          const auto from = getCombinedStateIdx(combinedStateTypids, parentState, state);
-                          const auto guard = transition.guard();
-                          const auto action = resolveAction(transition);
-                          const auto to = getCombinedStateIdx(
-                              combinedStateTypids, resolveDstParent(transition), target);
-                          const auto history = resolveHistory(transition);
-                          const auto defer = false;
-                          const auto valid = true;
-
-                          auto mappedParentState = bh::find(statesMap, bh::typeid_(parentState)).value();
-                          auto mappedTarget = bh::find(statesMap, bh::typeid_(target)).value();
-
-                          dispatchTable[from] = { to, history, defer, valid, make_transition(action, guard, eventTypeid, mappedParentState, mappedTarget, optionalDependency)};
-                      });
-              },
-              [](auto) {})(transition.source());
-      };
+    constexpr auto parentState = transition.source();
+    if constexpr (has_transition_table(parentState)) {
+        bh::for_each(collect_child_state_typeids(parentState), [=](auto state) {
+            bh::apply(
+                [=](auto combinedStateTypeids, auto target) {
+                    bh::apply(
+                        [=](auto fromIdx,
+                            auto toIdx,
+                            auto history,
+                            auto mappedParent,
+                            auto mappedTarget) {
+                            bh::apply(
+                                [=](auto& dispatchTable, auto&& transition2) {
+                                    const auto defer = false;
+                                    const auto valid = true;
+                                    dispatchTable[fromIdx]
+                                        = { toIdx, history, defer, valid, std::move(transition2) };
+                                },
+                                get_dispatch_table(rootState, eventTypeid),
+                                make_transition(
+                                    resolveAction(transition),
+                                    transition.guard(),
+                                    eventTypeid,
+                                    mappedParent,
+                                    mappedTarget,
+                                    optionalDependency));
+                        },
+                        getCombinedStateIdx(combinedStateTypeids, parentState, state),
+                        getCombinedStateIdx(
+                            combinedStateTypeids, resolveDstParent(transition), target),
+                        resolveHistory(transition),
+                        bh::find(statesMap, bh::typeid_(parentState)).value(),
+                        bh::find(statesMap, bh::typeid_(target)).value());
+                },
+                getCombinedStateTypeids(rootState),
+                resolveDst(transition));
+        });
+    }
+}
 
 constexpr auto filter_transitions = [](auto transitions, auto eventTypeid) {
     auto isEvent = [eventTypeid](auto transition) {
@@ -1539,32 +1662,32 @@ constexpr auto filter_transitions = [](auto transitions, auto eventTypeid) {
     return bh::filter(transitions, isEvent);
 };
 
-constexpr auto fill_dispatch_table_for_filtered_transitions = [](auto rootState, auto&& statesMap, auto&& optionalDependency, auto eventTypeid, auto transition){
-    using Event = typename decltype(eventTypeid)::type;
-
-    constexpr auto combinedStateTypeids = getCombinedStateTypeids(rootState);
-    constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);    
-    auto& dispatchTable = DispatchTable<states, Event>::table;
-
-    addDispatchTableEntry(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
-    addDispatchTableEntryOfSubMachineExits(combinedStateTypeids, transition, dispatchTable, eventTypeid, statesMap, optionalDependency);
+constexpr auto fill_dispatch_table_for_filtered_transitions = [](auto rootState,
+                                                                 auto&& statesMap,
+                                                                 auto&& optionalDependency,
+                                                                 auto eventTypeid,
+                                                                 auto transition) {
+    addDispatchTableEntry(rootState, transition, eventTypeid, statesMap, optionalDependency);
+    addDispatchTableEntryOfSubMachineExits(
+        rootState, transition, eventTypeid, statesMap, optionalDependency);
 };
 
 constexpr auto fill_dispatch_table_for_event = [](auto rootState, auto&& statesMap, auto&& optionalDependency, auto transitions, auto eventTypeid){
     
     auto filteredTransitions = filter_transitions(transitions, eventTypeid);
-
     bh::for_each(filteredTransitions, bh::capture(rootState, statesMap, optionalDependency, eventTypeid)(fill_dispatch_table_for_filtered_transitions));
 };
 
-constexpr auto fill_dispatch_table_with_transitions = [](
-    auto rootState, auto&& statesMap, auto&& optionalDependency, auto transitions)
+template <class State, class StatesMap, class Dependencies, class TransitionTuple>
+constexpr auto fill_dispatch_table_with_transitions(
+    State rootState,
+    StatesMap&& statesMap,
+    Dependencies&& optionalDependency,
+    TransitionTuple transitions)
 {
     auto eventTypeids = collect_event_typeids_recursive_with_transitions(transitions);
-
     bh::for_each(eventTypeids, bh::capture(rootState, statesMap, optionalDependency, transitions)(fill_dispatch_table_for_event));
-
-};
+}
 
 constexpr auto getDeferingTransitions = [](auto rootState) {
     constexpr auto transitionHasDeferedEvents
@@ -1624,19 +1747,22 @@ namespace bh {
 using namespace boost::hana;
 }
 
+constexpr auto to_map = [](auto tupleOfPairs) {
+    return bh::unpack(tupleOfPairs, [](auto... pairs) { return bh::make_map(pairs...); });
+};
+
 /***
  * Returns a map from typeid(state<State>) -> State
  * of all states found recursive under parentState
  *
  */
-constexpr auto make_states_map = [](auto&& parentState) {
+template <class State> constexpr auto make_states_map(State&& parentState)
+{
     auto collectedStateTypeids = collect_state_typeids_recursive(parentState);
-    auto collectedStates = bh::transform(
-        remove_duplicate_types(
-            bh::append(collect_child_states_recursive(parentState), parentState)),
-        unwrap_typeid_to_shared_ptr);
-    return bh::to_map(to_pairs(bh::zip(collectedStateTypeids, collectedStates)));
-};
+    auto collectedStatesPtr
+        = bh::transform(collect_states_recursive(parentState), unwrap_typeid_to_shared_ptr);
+    return to_map(to_pairs(bh::zip(collectedStateTypeids, collectedStatesPtr)));
+}
 }
 
 #include <boost/hana/type.hpp>
@@ -1719,7 +1845,7 @@ using namespace boost::hana;
 
 template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
-    using Events = decltype(collect_events_recursive(state_t<RootState> {}));
+    using Events = decltype(collect_event_typeids_recursive(state_t<RootState> {}));
     using StatesMap = decltype(make_states_map(state_t<RootState> {}));
     std::array<StateIdx, maxInitialStates(state_t<RootState> {})> m_currentCombinedState;
     std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_initial_states;
@@ -1730,7 +1856,9 @@ template <class RootState, class... OptionalParameters> class sm {
 
   public:
     sm(OptionalParameters&... optionalParameters)
-        : m_defer_queue(collect_events_recursive(state_t<RootState> {}))
+        : m_initial_states()
+        , m_history()
+        , m_defer_queue(collect_event_typeids_recursive(state_t<RootState> {}))
         , m_statesMap(make_states_map(state_t<RootState> {}))
     {
         fill_dispatch_table(optionalParameters...);
@@ -1870,9 +1998,12 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
     {
-        constexpr auto states
-            = nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {});
-        return DispatchTable<states, Event>::table[index];
+        return bh::apply(
+            [](auto states, StateIdx index) -> auto& {
+                return DispatchTable<states, Event>::table[index];
+            },
+            nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {}),
+            index);
     }
 
     template <class DispatchTableEntry>

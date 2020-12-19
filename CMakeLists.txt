@@ -16,6 +16,10 @@ if(${HSM_UBSAN})
     set(CMAKE_CXX_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer -fno-sanitize-recover -fsanitize=float-divide-by-zero")
 endif()
 
+if(${HSM_TIME_TRACE})
+    set(CMAKE_CXX_FLAGS "-ftime-trace")
+endif()
+
 # dependencies
 find_package(Boost 1.72 REQUIRED)
 

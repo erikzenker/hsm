@@ -25,19 +25,23 @@ constexpr auto collectEvents = [](auto transition) {
 };
 }
 
-constexpr auto collect_event_typeids_recursive = [](auto state) {
-    return remove_duplicate_typeids(bh::transform(
+template <class State> constexpr auto collect_event_typeids_recursive(State state)
+{
+    return remove_duplicates(bh::transform(
         bh::concat(flatten_transition_table(state), flatten_internal_transition_table(state)),
         collectEventTypeids));
-};
+}
 
-constexpr auto collect_event_typeids_recursive_with_transitions = [](auto transitions) {
-    return remove_duplicate_typeids(bh::transform(transitions, collectEventTypeids));
-};
+template <class TransitionTuple>
+constexpr auto collect_event_typeids_recursive_with_transitions(TransitionTuple transitions)
+{
+    return remove_duplicates(bh::transform(transitions, collectEventTypeids));
+}
 
-constexpr auto collect_events_recursive = [](auto state) {
+template <class State> constexpr auto collect_events_recursive(State state)
+{
     return remove_duplicate_types(bh::flatten(bh::transform(
         bh::concat(flatten_transition_table(state), flatten_internal_transition_table(state)),
         collectEvents)));
-};
+}
 }

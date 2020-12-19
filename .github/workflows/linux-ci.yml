@@ -12,7 +12,6 @@ jobs:
       matrix:
         cxx: ["g++-8", "g++-9", "clang++-8", "clang++-9"]
         include: 
-
           - cxx: "g++-8"
             cc: "gcc-8"
           - cxx: "g++-9"

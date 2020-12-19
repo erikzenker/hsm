@@ -3,6 +3,8 @@
 #include <boost/hana/map.hpp>
 #include <boost/hana/pair.hpp>
 #include <boost/hana/type.hpp>
+#include <boost/hana/unique.hpp>
+#include <boost/mp11/algorithm.hpp>
 
 namespace hsm {
 
@@ -11,18 +13,16 @@ using namespace boost::hana;
 }
 
 namespace {
-constexpr auto to_pair = [](auto x) { return bh::make_pair(x, x); };
-
 constexpr auto to_type_pair = [](auto x) { return bh::make_pair(bh::typeid_(x), x); };
 }
 
-constexpr auto remove_duplicates = [](auto tuple, auto predicate) {
-    return bh::values(bh::to_map(bh::transform(tuple, predicate)));
-};
+template <class Tuple> constexpr auto remove_duplicates(Tuple tuple)
+{
+    return boost::mp11::mp_unique<std::decay_t<decltype(tuple)>> {};
+}
 
-constexpr auto remove_duplicate_typeids
-    = [](auto tuple) { return remove_duplicates(tuple, to_pair); };
-
-constexpr auto remove_duplicate_types
-    = [](auto tuple) { return remove_duplicates(tuple, to_type_pair); };
+template <class Tuple> constexpr auto remove_duplicate_types(Tuple tuple)
+{
+    return bh::values(bh::to_map(bh::transform(tuple, to_type_pair)));
+}
 }

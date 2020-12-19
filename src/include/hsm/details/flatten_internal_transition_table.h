@@ -27,44 +27,51 @@ constexpr auto get_internal_transition_table = [](auto state) {
     return bh::if_(
         has_internal_transition_table(state),
         [](auto parentState) {
-            auto internalTransitionTable = make_internal_transition_table(parentState);
-            return bh::transform(internalTransitionTable, [parentState](auto internalTransition) {
-                return details::extended_transition(
-                    parentState,
-                    details::transition(
+            return bh::transform(
+                make_internal_transition_table(parentState),
+                [parentState](auto internalTransition) {
+                    return details::extended_transition(
                         parentState,
-                        internalTransition.event(),
-                        internalTransition.guard(),
-                        internalTransition.action(),
-                        parentState));
-            });
+                        details::transition(
+                            parentState,
+                            internalTransition.event(),
+                            internalTransition.guard(),
+                            internalTransition.action(),
+                            parentState));
+                });
         },
         [](auto) { return bh::make_basic_tuple(); })(state);
 };
 
-constexpr auto extend_internal_transition = [](auto internalTransition, auto state) {
-    return details::extended_transition(
-        internalTransition.parent(),
-        details::transition(
-            state,
-            internalTransition.event(),
-            internalTransition.guard(),
-            internalTransition.action(),
-            state));
+constexpr auto get_internal_transitions = [](auto states) {
+    return bh::flatten(
+        bh::filter(bh::transform(states, get_internal_transition_table), isNotEmpty));
 };
 
-constexpr auto flatten_internal_transition_table = [](auto parentState) {
-    auto states = collect_states_recursive(parentState);
+template <class Transition, class States>
+constexpr auto extend_internal_transition(Transition internalTransition, States states)
+{
+    return bh::transform(states, [internalTransition](auto state) {
+        return details::extended_transition(
+            internalTransition.parent(),
+            details::transition(
+                state,
+                internalTransition.event(),
+                internalTransition.guard(),
+                internalTransition.action(),
+                state));
+    });
+}
 
-    auto internalTransitionTables = bh::transform(states, get_internal_transition_table);
-    auto internalTransitions = bh::flatten(bh::filter(internalTransitionTables, isNotEmpty));
+template <class State> constexpr auto flatten_internal_transition_table(State parentState)
+{
+    return [](auto states) {
+        constexpr auto extend
+            = [states](auto transition) { return extend_internal_transition(transition, states); };
 
-    return bh::to<bh::basic_tuple_tag>(
-        bh::flatten(bh::transform(internalTransitions, [states](auto transition) {
-            return bh::transform(states, [transition](auto state) {
-                return extend_internal_transition(transition, state);
-            });
-        })));
-};
+        return bh::to<bh::basic_tuple_tag>(
+            bh::flatten(bh::transform(get_internal_transitions(states), extend)));
+    }(collect_states_recursive(parentState));
+}
 
 } // namespace hsm
