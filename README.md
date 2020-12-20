@@ -247,19 +247,19 @@ The benchmark result are taken from the [state machine benchmark repository](htt
   </tr>
   <tr>
     <td><a href="benchmark/simple/">Simple state machine</a></td>
-    <td><center>49 ms</center></td>
-    <td><center>26 ms</center></td>
-    <td><center>38 ms</center></td>
-    <td><center>414ms</center></td>
+    <td><center>99 ms</center></td>
+    <td><center>17 ms</center></td>
+    <td><center>18 ms</center></td>
+    <td><center>443 ms</center></td>
   </tr>
   <tr>
     <td><a href="benchmark/complex/">Complex state machine</a></td>
-    <td><center>526 ms</center></td>
-    <td><center>528 ms</center></td>
-    <td><center>541 ms</center></td>
-    <td><center>877 ms</center></td>
+    <td><center>818 ms</center></td>
+    <td><center>978 ms</center></td>
+    <td><center>881 ms</center></td>
+    <td><center>1374 ms</center></td>
   </tr>
-</table>  
+</table> 
 
 ## Compiletime Benchmark Results
 
@@ -273,17 +273,17 @@ The benchmark result are taken from the [state machine benchmark repository](htt
   </tr>
   <tr>
     <td><a href="benchmark/simple/">Simple state machine</a></td>
-    <td><center>10.010 s</center></td>
-    <td><center>0.786 s</center></td>
-    <td><center>5.380 s </center></td>
-    <td><center>1.480 s</center></td>
+    <td><center>6.41 s</center></td>
+    <td><center>0.62 s</center></td>
+    <td><center>5.17 s </center></td>
+    <td><center>1.52 s</center></td>
   </tr>
   <tr>
     <td><a href="benchmark/complex/">Complex state machine</a></td>
-    <td><center>77.120 s</center></td>
-    <td><center>3.130 s</center></td>
-    <td><center>26.820 s</center></td>
-    <td><center>5.190 s</center></td>
+    <td><center>41.99 s</center></td>
+    <td><center>3.01 s</center></td>
+    <td><center>25.54 s</center></td>
+    <td><center>4.27 s</center></td>
   </tr>
 </table>  
 
