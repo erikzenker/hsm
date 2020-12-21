@@ -27,24 +27,29 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x' 
+    - uses: BSFishy/pip-action@v1
+      with:
+        packages: conan
 
     - name: Cache Conan
       id: cache-conan
       uses: actions/cache@v2
       with:
         path: ~/.conan
-        key: ${{ runner.os }}-${{ matrix.cxx }}-conan-cache
+        key:
+          conan-cache-${{ runner.os }}-${{ matrix.cxx }}
+        restore-keys: |
+          conan-cache-${{ runner.os }}-${{ matrix.cxx }}
       
     - name: Install Dependencies
-      run: sudo apt install cmake g++-8 g++-9 g++-10 clang-8 clang-9 clang-10 python3-pip
-        
-    - name: Install Conan
-      run: sudo pip3 install conan
+      run: sudo apt install cmake g++-8 g++-9 g++-10 clang-8 clang-9 clang-10 tree
         
     - name: Print System Information
       run: |
         cmake --version
-        pip3 --version
         ${{ matrix.cxx }} --version
 
     - name: Install Conan Dependencies
@@ -53,6 +58,7 @@ jobs:
         echo $CC
         mkdir build && cd build
         conan install .. -s compiler.libcxx=libstdc++11 --build missing
+        
       env: 
         CXX: ${{ matrix.cxx }}
         CC: ${{ matrix.cc}}
