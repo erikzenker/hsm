@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
       with:
@@ -15,10 +15,10 @@ jobs:
       
     - name: Install Dependencies
       run: | 
-        sudo apt install clang-format-9 
-        clang-format-9 --version
+        sudo apt install clang-format-10
+        clang-format-10 --version
 
     - name: Clang format
       run: |
-        git clang-format-9 HEAD~1
+        git clang-format-10 HEAD~1
         git diff --exit-code
