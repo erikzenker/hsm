@@ -170,6 +170,7 @@ A click on a particular feature check mark will forward to the feature documenta
 ```c++
 #include "hsm/hsm.h"
 
+#include <iostream>
 #include <cassert>
 
 // States
@@ -185,15 +186,13 @@ struct Coin {
 };
 
 // Guards
-const auto noError = [](auto /*event*/, auto /*source*/, auto /*target*/){return true;};
+const auto noError = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
 
 // Actions
-const auto beep = [](auto /*event*/, auto /*source*/, auto /*target*/){ 
-  std::cout << "beep!" << std::endl;
-};
-
-const auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/){ 
-  std::cout << "blink, blink, blink!" << std::endl;
+constexpr auto beep
+    = [](auto /*event*/, auto /*source*/, auto /*target*/) { std::cout << "beep!" << std::endl; };
+constexpr auto blink = [](auto /*event*/, auto /*source*/, auto /*target*/) {
+    std::cout << "blink, blink, blink!" << std::endl;
 };
 
 struct Turnstile {
@@ -201,33 +200,33 @@ struct Turnstile {
     {
         // clang-format off
         return hsm::transition_table(
-            // Source                 + Event               [Guard]   / Action = Target
-            // +----------------------+---------------------+---------+--------+------------------------+
-            * hsm::state<Locked> {}   + hsm::event<Push> {}           / beep   = hsm::state<Locked> {}  ,
-              hsm::state<Locked> {}   + hsm::event<Coin> {} [noError] / blink  = hsm::state<Unlocked> {},
-            // +----------------------+---------------------+---------+--------+------------------------+
-              hsm::state<Unlocked> {} + hsm::event<Push> {} [noError]          = hsm::state<Locked> {}  ,
-              hsm::state<Unlocked> {} + hsm::event<Coin> {}           / blink  = hsm::state<Unlocked> {}
-            // +----------------------+---------------------+---------+--------+------------------------+
+            // Source              + Event            [Guard]   / Action = Target
+            // +-------------------+-----------------+---------+--------+----------------------+
+            * hsm::state<Locked>   + hsm::event<Push>           / beep   = hsm::state<Locked>  ,
+              hsm::state<Locked>   + hsm::event<Coin> [noError] / blink  = hsm::state<Unlocked>,
+            // +--------------------+---------------------+---------+--------+------------------------+
+              hsm::state<Unlocked> + hsm::event<Push> [noError]          = hsm::state<Locked>  ,
+              hsm::state<Unlocked> + hsm::event<Coin>           / blink  = hsm::state<Unlocked>
+            // +--------------------+---------------------+---------+--------+------------------------+                        
             );
         // clang-format on
     }
 };
 
-int main()
+auto main() -> int
 {
     hsm::sm<Turnstile> turnstileSm;
 
     // The turnstile is initially locked
-    assert(turnstileSm.is(hsm::state<Locked> {}));
+    assert(turnstileSm.is(hsm::state<Locked>));
 
     // Inserting a coin unlocks it
     turnstileSm.process_event(Coin {});
-    assert(turnstileSm.is(hsm::state<Unlocked> {}));
+    assert(turnstileSm.is(hsm::state<Unlocked>));
 
     // Entering the turnstile will lock it again
     turnstileSm.process_event(Push {});
-    assert(turnstileSm.is(hsm::state<Locked> {}));
+    assert(turnstileSm.is(hsm::state<Locked>));
 
     return 0;
 }
