@@ -1,4 +1,4 @@
-name: Linux CI
+name: Coverage CI
 on:
   push:
     branches: [ master ]
@@ -10,20 +10,10 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        cxx: ["g++-8", "g++-9", "g++-10", "clang++-8", "clang++-9", "clang++-10"]
+        cxx: ["g++-10"]
         include: 
-          - cxx: "g++-8"
-            cc: "gcc-8"
-          - cxx: "g++-9"
-            cc: "gcc-9"
           - cxx: "g++-10"
             cc: "gcc-10"
-          - cxx: "clang++-8"
-            cc: "clang-8"
-          - cxx: "clang++-9"
-            cc: "clang-9"
-          - cxx: "clang++-10"
-            cc: "clang-10"
 
     steps:
     - uses: actions/checkout@v2
@@ -45,7 +35,7 @@ jobs:
           conan-cache-${{ runner.os }}-${{ matrix.cxx }}
       
     - name: Install Dependencies
-      run: sudo apt install cmake g++-8 g++-9 g++-10 clang-8 clang-9 clang-10
+      run: sudo apt install cmake g++-10
         
     - name: Print System Information
       run: |
@@ -53,28 +43,31 @@ jobs:
         ${{ matrix.cxx }} --version
 
     - name: Install Conan Dependencies
+      env: 
+        CXX: ${{ matrix.cxx }}
+        CC: ${{ matrix.cc}}
       run: |
         echo $CXX
         echo $CC
         mkdir build && cd build
         conan install .. -s compiler.libcxx=libstdc++11 --build missing
         
+
+    - name: Install Hsm
       env: 
         CXX: ${{ matrix.cxx }}
         CC: ${{ matrix.cc}}
-
-    - name: Install Hsm
       run: |
         echo $CXX
         echo $CC
         cd build && mkdir install
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DHSM_BENCHMARK=ON -DCMAKE_INSTALL_PREFIX=install
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -DHSM_GCC_COVERAGE=ON
         cmake --build . --target install
-      env: 
-        CXX: ${{ matrix.cxx }}
-        CC: ${{ matrix.cc}}
         
     - name: Run Hsm Tests
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
         cd build 
         ctest -VV
+        bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
