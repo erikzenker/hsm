@@ -27,6 +27,10 @@ struct S8 {
 };
 struct S9 {
 };
+struct PS1 {
+};
+struct PS2 {
+};
 
 // Events
 struct e1 {
@@ -36,6 +40,8 @@ struct e2 {
 struct e3 {
 };
 struct e4 {
+};
+struct e5 {
 };
 
 // Guards
@@ -51,14 +57,15 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> + hsm::event<e1>                = hsm::state<S2>,
-              hsm::state<S1> + hsm::event<e2>                = hsm::state<S4>,
-              hsm::state<S1> + hsm::event<e3>                = hsm::state<S6>,
-              hsm::state<S1> + hsm::event<e4>                = hsm::state<S8>,
-              hsm::state<S2>                                 = hsm::state<S3>,
-              hsm::state<S4>                        / action = hsm::state<S5>,
-              hsm::state<S6>                [guard]          = hsm::state<S7>,
-              hsm::state<S8>                [guard] / action = hsm::state<S9>
+            * hsm::state<S1> + hsm::event<e1>                = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e2>                = hsm::state<S4>
+            , hsm::state<S1> + hsm::event<e3>                = hsm::state<S6>
+            , hsm::state<S1> + hsm::event<e4>                = hsm::state<S8>
+            , hsm::state<S2>                                 = hsm::state<S3>
+            , hsm::state<S4>                        / action = hsm::state<S5>
+            , hsm::state<S6>                [guard]          = hsm::state<S7>
+            , hsm::state<S8>                [guard] / action = hsm::state<S9>
+            ,*hsm::state<PS1> + hsm::event<e5>               = hsm::state<PS2>
         );
         // clang-format on
     }

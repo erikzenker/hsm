@@ -29,6 +29,18 @@ constexpr auto chain_actions = [](auto... actions) {
 constexpr auto chain = chain_actions;
 }
 
+#include <boost/hana/experimental/printable.hpp>
+#include <iostream>
+
+namespace hsm {
+
+constexpr auto log = [](auto event, auto source, auto target) {
+    std::cout << boost::hana::experimental::print(boost::hana::typeid_(source)) << " + "
+              << boost::hana::experimental::print(boost::hana::typeid_(event)) << " = "
+              << boost::hana::experimental::print(boost::hana::typeid_(target)) << std::endl;
+};
+}
+
 namespace hsm {
 
 template <class StateFactory> class CreateState {
@@ -750,26 +762,6 @@ constexpr auto getActionIdx = [](auto rootState, auto action) {
 constexpr auto getGuardIdx = [](auto rootState, auto guard) {
     return index_of(collect_guard_typeids_recursive(rootState), bh::typeid_(guard));
 };
-
-const auto is_anonymous_transition
-    = [](auto transition) { return bh::typeid_(transition.event()) == bh::typeid_(none {}); };
-
-const auto is_history_transition
-    = [](auto transition) { return is_history_state(transition.target()); };
-
-template <class State> constexpr auto has_anonymous_transition(State rootState)
-{
-    auto transitions = flatten_transition_table(rootState);
-    auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
-    return bh::size(anonymousTransition);
-}
-
-template <class State> constexpr auto has_history(State rootState)
-{
-    auto transitions = flatten_transition_table(rootState);
-    auto historyTransitions = bh::filter(transitions, is_history_transition);
-    return bh::size(historyTransitions);
-}
 }
 
 #include <boost/hana/find.hpp>
@@ -1828,6 +1820,36 @@ public:
 };
 }
 
+#include <boost/hana/size.hpp>
+#include <boost/hana/filter.hpp>
+
+namespace hsm {
+
+namespace bh {
+using namespace boost::hana;
+}
+
+const auto is_anonymous_transition
+    = [](auto transition) { return bh::typeid_(transition.event()) == bh::typeid_(none {}); };
+
+const auto is_history_transition
+    = [](auto transition) { return is_history_state(transition.target()); };
+
+template <class State> constexpr auto has_anonymous_transition(State rootState)
+{
+    auto transitions = flatten_transition_table(rootState);
+    auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
+    return bh::size(anonymousTransition);
+}
+
+template <class State> constexpr auto has_history(State rootState)
+{
+    auto transitions = flatten_transition_table(rootState);
+    auto historyTransitions = bh::filter(transitions, is_history_transition);
+    return bh::size(historyTransitions);
+}
+}
+
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/if.hpp>
 
@@ -1922,6 +1944,7 @@ template <class RootState, class... OptionalParameters> class sm {
     template <class Event> auto process_event_internal(Event&& event) -> bool
     {
         bool allGuardsFailed = true;
+        bool allTransitionsInvalid = true;
 
         for (Region region = 0; region < current_regions(); region++) {
 
@@ -1934,17 +1957,22 @@ template <class RootState, class... OptionalParameters> class sm {
             }
 
             if(!result.valid){
-                return false;
+                continue;
             }
 
             if (!result.transition->executeGuard(event)) {
                 continue;
             }
 
+            allTransitionsInvalid = false;
             allGuardsFailed = false;
             update_current_state(region, result);
 
             result.transition->executeAction(event);
+        }
+
+        if (allTransitionsInvalid){
+            return false;    
         }
 
         if (allGuardsFailed) {
@@ -1973,7 +2001,6 @@ template <class RootState, class... OptionalParameters> class sm {
             has_anonymous_transition(rootState()),
             [this]() {
                 while (true) {
-
                     for (Region region = 0; region < current_regions(); region++) {
 
                         auto event = noneEvent {};
