@@ -28,6 +28,7 @@ add_executable(
           collect_initial_states_tests.cpp
           for_each_tests.cpp
           transition_table_traits_tests.cpp
+          chain_actions_tests.cpp
         )
 
 set_property(TARGET hsmUnitTests PROPERTY
