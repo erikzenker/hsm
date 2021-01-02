@@ -19,7 +19,7 @@ jobs:
           packages: conan
         
       - name: Conan Install
-        run: conan install . --build missing 
+        run: conan install . --build missing -o boost:without_fiber=True
 
       - name: Install Hsm
         run: |

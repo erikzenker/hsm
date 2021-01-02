@@ -4,6 +4,7 @@
 #include "hsm/details/fill_dispatch_table.h"
 #include "hsm/details/idx.h"
 #include "hsm/details/make_states_map.h"
+#include "hsm/details/transition_table_traits.h"
 #include "hsm/details/variant_queue.h"
 
 #include <boost/hana/basic_tuple.hpp>
@@ -100,6 +101,7 @@ template <class RootState, class... OptionalParameters> class sm {
     template <class Event> auto process_event_internal(Event&& event) -> bool
     {
         bool allGuardsFailed = true;
+        bool allTransitionsInvalid = true;
 
         for (Region region = 0; region < current_regions(); region++) {
 
@@ -112,17 +114,22 @@ template <class RootState, class... OptionalParameters> class sm {
             }
 
             if(!result.valid){
-                return false;
+                continue;
             }
 
             if (!result.transition->executeGuard(event)) {
                 continue;
             }
 
+            allTransitionsInvalid = false;
             allGuardsFailed = false;
             update_current_state(region, result);
 
             result.transition->executeAction(event);
+        }
+
+        if (allTransitionsInvalid) {
+            return false;
         }
 
         if (allGuardsFailed) {
@@ -151,7 +158,6 @@ template <class RootState, class... OptionalParameters> class sm {
             has_anonymous_transition(rootState()),
             [this]() {
                 while (true) {
-
                     for (Region region = 0; region < current_regions(); region++) {
 
                         auto event = noneEvent {};

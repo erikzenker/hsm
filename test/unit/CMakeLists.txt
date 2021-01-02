@@ -27,6 +27,7 @@ add_executable(
           make_states_map_tests.cpp
           collect_initial_states_tests.cpp
           for_each_tests.cpp
+          transition_table_traits_tests.cpp
           chain_actions_tests.cpp
         )
 
