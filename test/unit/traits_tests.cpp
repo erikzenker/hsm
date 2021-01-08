@@ -143,9 +143,9 @@ TEST_F(TraitsTests, should_recognize_no_action)
 {
     namespace bh = boost::hana;
 
-    auto result = bh::if_(
+    constexpr auto result = bh::if_(
         hsm::is_no_action(hsm::noAction {}), []() { return true; }, []() { return false; })();
-    ASSERT_TRUE(result);
+    static_assert(result);
 }
 
 TEST_F(TraitsTests, should_recognize_substate_initial_state_entry_action)
