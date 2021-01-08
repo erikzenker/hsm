@@ -789,6 +789,7 @@ constexpr auto getGuardIdx = [](auto rootState, auto guard) {
 #include <boost/hana/maximum.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/transform.hpp>
+#include <boost/hana/zip.hpp>
 
 #include <iostream>
 #include <vector>
@@ -918,10 +919,9 @@ using namespace boost::hana;
 }
 
 constexpr auto has_substate_initial_state_entry_action = [](auto target) {
-    if constexpr(has_transition_table(target)){
+    if constexpr (has_transition_table(target)) {
         return has_entry_action(bh::at_c<0>(collect_initial_states(target)));
-    }
-    else {
+    } else {
         return bh::false_c;
     }
 };
@@ -1074,7 +1074,9 @@ template <class Transition> constexpr auto resolveEntryExitAction(Transition tra
 
 template <class Transition> constexpr auto resolveAction(Transition transition)
 {
-    if constexpr (has_action(transition)) {
+    const auto hasAction = has_action(transition);
+
+    if constexpr (hasAction) {
         return resolveEntryExitAction(transition);
     } else {
         return transition.action();
