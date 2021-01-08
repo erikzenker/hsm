@@ -1052,7 +1052,9 @@ template <class Transition> constexpr auto resolveExitAction(Transition transiti
 
 template <class Transition> constexpr auto resolveNoAction(Transition transition)
 {
-    if constexpr (is_no_action(transition.action())) {
+    const auto isNoAction = is_no_action(transition.action());
+
+    if constexpr (isNoAction) {
         return [](auto&&...) {};
     } else {
         return transition.action();
