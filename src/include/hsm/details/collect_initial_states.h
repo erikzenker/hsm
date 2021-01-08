@@ -5,9 +5,10 @@
 #include "hsm/details/idx.h"
 
 #include <boost/hana/find.hpp>
+#include <boost/hana/maximum.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/transform.hpp>
-#include <boost/hana/maximum.hpp>
+#include <boost/hana/zip.hpp>
 
 #include <iostream>
 #include <vector>

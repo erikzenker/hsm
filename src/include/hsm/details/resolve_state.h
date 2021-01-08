@@ -141,7 +141,9 @@ template <class Transition> constexpr auto resolveEntryExitAction(Transition tra
 
 template <class Transition> constexpr auto resolveAction(Transition transition)
 {
-    if constexpr (has_action(transition)) {
+    const auto hasAction = has_action(transition);
+
+    if constexpr (hasAction) {
         return resolveEntryExitAction(transition);
     } else {
         return transition.action();
