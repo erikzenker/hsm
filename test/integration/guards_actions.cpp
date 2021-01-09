@@ -8,6 +8,9 @@
 #include <future>
 #include <memory>
 
+using namespace ::testing;
+using namespace boost::hana;
+
 namespace hsm::test {
 
 // States
@@ -73,9 +76,6 @@ auto lambda = [](auto event, auto source, auto target) {
     print_transition(event, source, target, "Lambda based action");
 };
 
-using namespace ::testing;
-using namespace boost::hana;
-
 struct SubState {
     static constexpr auto make_transition_table()
     {
@@ -88,8 +88,24 @@ struct SubState {
 };
 
 struct MainState {
+
+    BOOST_HOF_LIFT_CLASS(ff, free_function);
+
     static constexpr auto make_transition_table()
     {
+        // Instead of writing adapter from hand you
+        // can create these kind of adapters with boost hof
+        // using BOOST_HOF_LIFT or BOOST_HOF_LIFT_CLASS.
+        // See the boost hof documentation for more details.
+        // I did not provide these example with boost hof because
+        // there were problems building it on windows.
+        constexpr auto free_function_adapter
+            = [](auto&&... args) { free_function(std::forward<decltype(args)>(args)...); };
+
+        constexpr auto member_function_adapter = [](auto&&... args) {
+            MainState::member_function(std::forward<decltype(args)>(args)...);
+        };
+
         // clang-format off
         return hsm::transition_table(
             * hsm::state<S1> + hsm::event<e1> /  a2 = hsm::state<S1>
@@ -98,9 +114,9 @@ struct MainState {
             , hsm::state<S1> + hsm::event<e4>  [g3] = hsm::state<S2>
             // The following transitions show different possibilities to provide actions
             , hsm::state<S1> + hsm::event<e5> / Functor{} = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e6> / BOOST_HOF_LIFT(free_function) = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e6> / free_function_adapter = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e7> / lambda  = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e8> / BOOST_HOF_LIFT(MainState::member_function) = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e8> / member_function_adapter = hsm::state<S2>
         );
         // clang-format on
     }
@@ -168,7 +184,7 @@ TEST_F(GuardsActionsTests, should_use_lambda_function)
     sm.process_event(e7 {});
 }
 
-TEST_F(GuardsActionsTests, should_use_member_functoin)
+TEST_F(GuardsActionsTests, should_use_member_function)
 {
     sm.process_event(e8 {});
 }
