@@ -134,10 +134,10 @@ template <class Transition> constexpr auto resolveEntryExitAction(Transition tra
             action(resolveNoAction(transition)),
             entryAction(resolveEntryAction(transition)),
             initialStateEntryAction(resolveInitialStateEntryAction(transition))](auto&&... params) {
-        exitAction(params...);
-        action(params...);
-        entryAction(params...);
-        initialStateEntryAction(params...);
+        exitAction(std::forward<decltype(params)>(params)...);
+        action(std::forward<decltype(params)>(params)...);
+        entryAction(std::forward<decltype(params)>(params)...);
+        initialStateEntryAction(std::forward<decltype(params)>(params)...);
     };
 }
 

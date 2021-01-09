@@ -5,7 +5,7 @@
 
 namespace hsm {
 
-constexpr auto log = [](auto event, auto source, auto target) {
+constexpr auto log = [](auto event, auto source, auto target, auto...) {
     std::cout << boost::hana::experimental::print(boost::hana::typeid_(source)) << " + "
               << boost::hana::experimental::print(boost::hana::typeid_(event)) << " = "
               << boost::hana::experimental::print(boost::hana::typeid_(target)) << std::endl;
