@@ -1897,6 +1897,16 @@ template <class RootState, class... OptionalParameters> class sm {
         , m_defer_queue(collect_event_typeids_recursive(state_t<RootState> {}))
         , m_statesMap(make_states_map(state_t<RootState> {}))
     {
+        static_assert(
+            has_transition_table(state_t<RootState> {}),
+            "Root state has no make_transition_table method");
+        static_assert(
+            bh::size(flatten_transition_table(state_t<RootState> {})),
+            "Transition table needs at least one transition");
+        static_assert(
+            maxInitialStates(state_t<RootState> {}),
+            "Transition table needs to have at least one initial state");
+
         fill_dispatch_table(optionalParameters...);
         fill_initial_state_table(rootState(), m_initial_states);
         fill_initial_state_table(rootState(), m_history);
