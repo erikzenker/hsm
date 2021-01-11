@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Promblem**
+**Problem**
 
 [Give a short description of the problem the feature should solve]
 
