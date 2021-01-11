@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new feature or capability for `dds`
+about: Suggest a new feature or capability for hsm
 title: "[FEATURE]"
 labels: enhancement
 assignees: ''
@@ -9,7 +9,7 @@ assignees: ''
 
 **Promblem**
 
-[Give a short description of the problem the feature should solve]
+[Give a short description of the problem the feature should solve.]
 
 **Current Workaround**
 
