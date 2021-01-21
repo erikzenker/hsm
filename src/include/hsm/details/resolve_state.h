@@ -36,6 +36,8 @@ template <class Transition> constexpr auto resolveDst(Transition transition)
         return get_state(dst);
     } else if constexpr (is_history_state(dst)) {
         return bh::at_c<0>(collect_initial_states(get_parent_state(dst)));
+    } else if constexpr (is_initial_state(dst)) {
+        return get_state(dst);
     } else {
         return dst;
     }

@@ -53,70 +53,28 @@ TEST_F(FlattenInternalTransitionTableTests, should_flatten_internal_transition_t
 {
     auto flattenInternalTransitionTable = flatten_internal_transition_table(hsm::state_t<S> {});
 
-    ASSERT_EQ(boost::hana::size_c<9>, boost::hana::size(flattenInternalTransitionTable));
+    ASSERT_EQ(boost::hana::size_c<3>, boost::hana::size(flattenInternalTransitionTable));
 
-    // T{} State
+    // S{} State
     ASSERT_TRUE(
-        hsm::state_t<T> {} == boost::hana::at_c<0>(flattenInternalTransitionTable).parent());
+        hsm::state_t<P> {} == boost::hana::at_c<0>(flattenInternalTransitionTable).parent());
     ASSERT_TRUE(
         hsm::state_t<T> {} == boost::hana::at_c<0>(flattenInternalTransitionTable).source());
     ASSERT_TRUE(
         hsm::state_t<T> {} == boost::hana::at_c<0>(flattenInternalTransitionTable).target());
 
     ASSERT_TRUE(
-        hsm::state_t<T> {} == boost::hana::at_c<1>(flattenInternalTransitionTable).parent());
+        hsm::state_t<S> {} == boost::hana::at_c<1>(flattenInternalTransitionTable).parent());
     ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<1>(flattenInternalTransitionTable).source());
+        hsm::state_t<T> {} == boost::hana::at_c<1>(flattenInternalTransitionTable).source());
     ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<1>(flattenInternalTransitionTable).target());
-    ASSERT_TRUE(
-        hsm::state_t<T> {} == boost::hana::at_c<2>(flattenInternalTransitionTable).parent());
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<2>(flattenInternalTransitionTable).source());
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<2>(flattenInternalTransitionTable).target());
+        hsm::state_t<T> {} == boost::hana::at_c<1>(flattenInternalTransitionTable).target());
 
     // P{} State
     ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<3>(flattenInternalTransitionTable).parent());
+        hsm::state_t<S> {} == boost::hana::at_c<2>(flattenInternalTransitionTable).parent());
     ASSERT_TRUE(
-        hsm::state_t<T> {} == boost::hana::at_c<3>(flattenInternalTransitionTable).source());
+        hsm::state_t<P> {} == boost::hana::at_c<2>(flattenInternalTransitionTable).source());
     ASSERT_TRUE(
-        hsm::state_t<T> {} == boost::hana::at_c<3>(flattenInternalTransitionTable).target());
-
-    ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<4>(flattenInternalTransitionTable).parent());
-    ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<4>(flattenInternalTransitionTable).source());
-    ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<4>(flattenInternalTransitionTable).target());
-
-    ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<5>(flattenInternalTransitionTable).parent());
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<5>(flattenInternalTransitionTable).source());
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<5>(flattenInternalTransitionTable).target());
-
-    // S{} State
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<6>(flattenInternalTransitionTable).parent());
-    ASSERT_TRUE(
-        hsm::state_t<T> {} == boost::hana::at_c<6>(flattenInternalTransitionTable).source());
-    ASSERT_TRUE(
-        hsm::state_t<T> {} == boost::hana::at_c<6>(flattenInternalTransitionTable).target());
-
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<7>(flattenInternalTransitionTable).parent());
-    ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<7>(flattenInternalTransitionTable).source());
-    ASSERT_TRUE(
-        hsm::state_t<P> {} == boost::hana::at_c<7>(flattenInternalTransitionTable).target());
-
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<8>(flattenInternalTransitionTable).parent());
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<8>(flattenInternalTransitionTable).source());
-    ASSERT_TRUE(
-        hsm::state_t<S> {} == boost::hana::at_c<8>(flattenInternalTransitionTable).target());
+        hsm::state_t<P> {} == boost::hana::at_c<2>(flattenInternalTransitionTable).target());
 }
