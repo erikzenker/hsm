@@ -24,6 +24,8 @@ struct S2 {
         return [](auto event, auto...) { (void)event.name; };
     }
 };
+struct S3 {
+};
 
 // Events
 struct e1 {
@@ -51,6 +53,9 @@ struct e5 {
 struct e6 {
     std::string name = "e2";
 };
+struct e7 {
+    std::string name = "e7";
+};
 
 // Guards
 const auto fail = [](auto /*event*/, auto /*source*/, auto /*target*/) { return false; };
@@ -67,6 +72,7 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             * hsm::state<S1> + hsm::event<e1> = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e5> = hsm::state<S3>
         );
         // clang-format on
     }
@@ -88,6 +94,7 @@ struct MainState {
         return hsm::transition_table(
             * hsm::state<S1> + hsm::event<e1> = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e2> = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e7> / hsm::log = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e3> = hsm::state<SubState>
             , hsm::state<S2> + hsm::event<e6> = hsm::state<S1>
         );
@@ -98,7 +105,7 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            + (hsm::event<e1>),
+            + (hsm::event<e1> / hsm::log),
             + (hsm::event<e2> / action),
             + (hsm::event<e5> [fail]),
             + (hsm::event<e4> [fail] / action)
@@ -160,4 +167,23 @@ TEST_F(InternalTransitionTests, should_guard_internal_transition_with_action)
     ASSERT_EQ(
         std::future_status::timeout,
         actionCalled->get_future().wait_for(std::chrono::milliseconds(1)));
+}
+
+TEST_F(
+    InternalTransitionTests,
+    DISABLED_should_not_overwrite_substate_transition_by_parent_internal_transition)
+{
+    sm.process_event(e3 {});
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S1>));
+    sm.process_event(e5 {});
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S3>));
+}
+
+TEST_F(InternalTransitionTests, should_not_transit_to_initial_state)
+{
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
+    sm.process_event(e7 {});
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }
