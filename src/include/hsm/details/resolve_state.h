@@ -89,11 +89,11 @@ template <class Transition> constexpr auto resolveSrcParent(Transition transitio
 template <class Transition> constexpr auto resolveEntryAction(Transition transition)
 {
     if constexpr (transition.internal()) {
-        return [](auto...) {};
+        return [](auto&&...) {};
     } else if constexpr (has_entry_action(transition.target())) {
         return get_entry_action(transition.target());
     } else {
-        return [](auto...) {};
+        return [](auto&&...) {};
     }
 }
 
@@ -102,18 +102,18 @@ template <class Transition> constexpr auto resolveInitialStateEntryAction(Transi
     if constexpr (has_substate_initial_state_entry_action(transition.target())) {
         return get_entry_action(bh::at_c<0>(collect_initial_states(transition.target())));
     } else {
-        return [](auto...) {};
+        return [](auto&&...) {};
     }
 }
 
 template <class Transition> constexpr auto resolveExitAction(Transition transition)
 {
     if constexpr (transition.internal()) {
-        return [](auto...) {};
+        return [](auto&&...) {};
     } else if constexpr (has_exit_action(transition.source())) {
         return get_exit_action(transition.source());
     } else {
-        return [](auto...) {};
+        return [](auto&&...) {};
     }
 }
 
@@ -134,10 +134,10 @@ template <class Transition> constexpr auto resolveEntryExitAction(Transition tra
             action(resolveNoAction(transition)),
             entryAction(resolveEntryAction(transition)),
             initialStateEntryAction(resolveInitialStateEntryAction(transition))](auto&&... params) {
-        exitAction(params...);
-        action(params...);
-        entryAction(params...);
-        initialStateEntryAction(params...);
+        exitAction(std::forward<decltype(params)>(params)...);
+        action(std::forward<decltype(params)>(params)...);
+        entryAction(std::forward<decltype(params)>(params)...);
+        initialStateEntryAction(std::forward<decltype(params)>(params)...);
     };
 }
 

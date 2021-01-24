@@ -52,13 +52,19 @@ struct MainState {
 class DependencyInjectionTests : public Test {
   protected:
     struct Dependency {
+        // Dependency is not copied, assigned, or moved
+        Dependency(const Dependency&) = delete;
+        Dependency(Dependency&&) = delete;
+        Dependency& operator=(const Dependency&) = delete;
+        Dependency& operator=(Dependency&&) = delete;
+
         int callCount = 0;
     };
 };
 
 TEST_F(DependencyInjectionTests, should_inject_dependency)
 {
-    Dependency dependency;
+    Dependency dependency { 0 };
     hsm::sm<MainState, Dependency> sm { dependency };
 
     sm.process_event(e1 {});
@@ -67,8 +73,8 @@ TEST_F(DependencyInjectionTests, should_inject_dependency)
 
 TEST_F(DependencyInjectionTests, should_set_dependency)
 {
-    Dependency dependency;
-    Dependency newDependency;
+    Dependency dependency { 0 };
+    Dependency newDependency { 0 };
     hsm::sm<MainState, Dependency> sm { dependency };
 
     sm.process_event(e1 {});
