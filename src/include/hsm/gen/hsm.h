@@ -1265,11 +1265,11 @@ template <class State> constexpr auto collect_child_states(State state)
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/equal.hpp>
 #include <boost/hana/filter.hpp>
+#include <boost/hana/functional/capture.hpp>
 #include <boost/hana/not.hpp>
 #include <boost/hana/prepend.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/transform.hpp>
-#include <boost/hana/functional/capture.hpp>
 
 namespace hsm {
 
@@ -1344,16 +1344,17 @@ constexpr auto get_internal_transitions = [](auto states) {
         bh::transform(
             states,
             [](auto parentState) {
-                constexpr auto extend = bh::capture(parentState)([](auto parentState, auto transition) {
-                    // Folowing lines satisfies older gcc -Werror=unused-but-set-parameter   
-                    (void) transition;
-                    if constexpr (has_transition_table(parentState)) {
-                        return extend_internal_transition(
-                            transition, collect_child_states(parentState));
-                    } else {
-                        return bh::make_basic_tuple();
-                    }
-                });
+                constexpr auto extend
+                    = bh::capture(parentState)([](auto parentState, auto transition) {
+                          // Folowing lines satisfies older gcc -Werror=unused-but-set-parameter
+                          (void)transition;
+                          if constexpr (has_transition_table(parentState)) {
+                              return extend_internal_transition(
+                                  transition, collect_child_states(parentState));
+                          } else {
+                              return bh::make_basic_tuple();
+                          }
+                      });
 
                 return bh::transform(get_internal_transition_table(parentState), extend);
             }),
@@ -2183,8 +2184,8 @@ template <class RootState, class... OptionalParameters> class sm {
     void fill_dispatch_table(OptionalParameters&... optionalParameters)
     {
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
-        fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
         fill_dispatch_table_with_internal_transitions(rootState(), m_statesMap, optionalDependency);
+        fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
         fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);
     }
 };
