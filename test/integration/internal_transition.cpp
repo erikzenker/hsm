@@ -93,8 +93,7 @@ struct MainState {
         // clang-format off
         return hsm::transition_table(
             * hsm::state<S1> + hsm::event<e1> = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e2> = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e7> / hsm::log = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e7> = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e3> = hsm::state<SubState>
             , hsm::state<S2> + hsm::event<e6> = hsm::state<S1>
         );
@@ -105,9 +104,9 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            + (hsm::event<e1> / hsm::log),
+            + (hsm::event<e1> ),
             + (hsm::event<e2> / action),
-            + (hsm::event<e5> [fail]),
+            + (hsm::event<e5> [fail] / hsm::log),
             + (hsm::event<e4> [fail] / action)
         );
         // clang-format on
@@ -120,19 +119,19 @@ class InternalTransitionTests : public Test {
     hsm::sm<MainState> sm;
 };
 
-TEST_F(InternalTransitionTests, should_overwrite_external_by_internal_transition)
+TEST_F(InternalTransitionTests, should_overwrite_internal_by_inner_external_transition)
 {
     ASSERT_TRUE(sm.is(hsm::state<S1>));
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(hsm::state<S1>));
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }
 
-TEST_F(InternalTransitionTests, should_overwrite_external_by_internal_transition_in_substate)
+TEST_F(InternalTransitionTests, should_overwrite_internal_by_inner_transition_in_substate)
 {
     sm.process_event(e3 {});
     ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S1>));
     sm.process_event(e1 {});
-    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S1>));
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S2>));
 }
 
 TEST_F(InternalTransitionTests, should_call_action_on_internal_transition)
@@ -170,8 +169,7 @@ TEST_F(InternalTransitionTests, should_guard_internal_transition_with_action)
 }
 
 TEST_F(
-    InternalTransitionTests,
-    DISABLED_should_not_overwrite_substate_transition_by_parent_internal_transition)
+    InternalTransitionTests, should_not_overwrite_substate_transition_by_parent_internal_transition)
 {
     sm.process_event(e3 {});
     ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S1>));
