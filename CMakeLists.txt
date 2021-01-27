@@ -1,42 +1,80 @@
-cmake_minimum_required(VERSION 3.5)
-project(hsm)
+cmake_minimum_required(VERSION 3.14)
 
-# Conan
-if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    conan_basic_setup(TARGETS)
+project(
+    hsm
+    VERSION 0.0.1
+    DESCRIPTION "Finite state machine library based on Boost.Hana"
+    HOMEPAGE_URL "https://github.com/erikzenker/hsm"
+    LANGUAGES CXX
+)
+
+# ---- Warning guard ----
+
+# Protect dependents from this project's warnings if the guard isn't disabled
+set(hsm_warning_guard SYSTEM)
+if(hsm_INCLUDE_WITHOUT_SYSTEM)
+  set(hsm_warning_guard "")
 endif()
 
-# Sanatizers
-if(${HSM_ASAN})
-    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-endif()
+# ---- Declare library ----
 
-if(${HSM_UBSAN})
-    set(CMAKE_CXX_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer -fno-sanitize-recover -fsanitize=float-divide-by-zero")
-endif()
+add_library(hsm INTERFACE)
+add_library(hsm::hsm ALIAS hsm)
 
-if(${HSM_TIME_TRACE})
-    set(CMAKE_CXX_FLAGS "-ftime-trace")
-endif()
+target_include_directories(
+    hsm
+    ${hsm_hsm_warning_guard}
+    INTERFACE
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+)
 
-# dependencies
-find_package(Boost 1.72 REQUIRED)
+target_compile_features(hsm INTERFACE cxx_std_17)
 
-add_subdirectory(vendor/googletest)
+find_package(Boost 1.72 REQUIRED COMPONENTS boost)
+target_link_libraries(hsm INTERFACE Boost::boost)
 
-# add project code
-add_subdirectory(src)
+# ---- Install ----
 
-# add unit tests
-enable_testing()
-add_subdirectory(test)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
-# add example
-add_subdirectory(example)
+set(hsm_include_directory "${CMAKE_INSTALL_INCLUDEDIR}/hsm")
 
-# add benchmark
-if(${HSM_BENCHMARK})
-    add_subdirectory(benchmark)
+install(
+    DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
+    DESTINATION "${hsm_include_directory}"
+    COMPONENT hsm_Development
+)
+
+install(
+    TARGETS hsm
+    EXPORT hsm-targets
+    INCLUDES DESTINATION "${hsm_include_directory}"
+)
+
+write_basic_package_version_file(
+    hsm-config-version.cmake
+    COMPATIBILITY SameMajorVersion
+    ARCH_INDEPENDENT
+)
+
+set(hsm_install_cmakedir "${CMAKE_INSTALL_LIBDIR}/cmake/hsm")
+
+install(
+    FILES
+    "${PROJECT_SOURCE_DIR}/cmake/hsm-config.cmake"
+    "${PROJECT_BINARY_DIR}/hsm-config-version.cmake"
+    DESTINATION "${hsm_install_cmakedir}"
+    COMPONENT hsm_Development
+)
+
+install(
+    EXPORT hsm-targets
+    NAMESPACE ska::
+    DESTINATION "${hsm_install_cmakedir}"
+    COMPONENT hsm_Development
+)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  include(CPack)
 endif()
