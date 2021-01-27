@@ -18,6 +18,6 @@ include(../cmake/test-flags.cmake)
 
 foreach(name IN ITEMS cdplayer turnstile)
   add_executable("${name}" "${name}/main.cpp")
-  target_compile_features("${name}" INTERFACE cxx_std_17)
+  target_compile_features("${name}" PRIVATE cxx_std_17)
   target_link_libraries("${name}" PRIVATE hsm::hsm)
 endforeach()

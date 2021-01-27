@@ -48,12 +48,12 @@ set_property(
     TARGET hsmUnitTests PROPERTY
     MSVC_RUNTIME_LIBRARY "MultiThreadedDebug$<$<CONFIG:Debug>:Debug>"
 )
-target_compile_features(hsmUnitTests INTERFACE cxx_std_17)
+target_compile_features(hsmUnitTests PRIVATE cxx_std_17)
 target_link_libraries(hsmUnitTests PRIVATE hsm::hsm GTest::gtest_main)
 gtest_discover_tests(hsmUnitTests TEST_PREFIX unit.)
 
 add_executable(hsmPerformanceTests performance/main.cpp)
-target_compile_features(hsmPerformanceTests INTERFACE cxx_std_17)
+target_compile_features(hsmPerformanceTests PRIVATE cxx_std_17)
 target_link_libraries(hsmPerformanceTests PRIVATE hsm::hsm GTest::gtest_main)
 gtest_discover_tests(hsmPerformanceTests TEST_PREFIX performance.)
 
@@ -81,6 +81,6 @@ add_executable(
     integration/custom_targets.cpp
     integration/chain_actions.cpp
 )
-target_compile_features(hsmIntegrationTests INTERFACE cxx_std_17)
+target_compile_features(hsmIntegrationTests PRIVATE cxx_std_17)
 target_link_libraries(hsmIntegrationTests PRIVATE hsm::hsm GTest::gtest_main)
 gtest_discover_tests(hsmIntegrationTests TEST_PREFIX integration.)
