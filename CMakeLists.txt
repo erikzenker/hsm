@@ -23,7 +23,7 @@ add_library(hsm::hsm ALIAS hsm)
 
 target_include_directories(
     hsm
-    ${hsm_hsm_warning_guard}
+    ${hsm_warning_guard}
     INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
 )
