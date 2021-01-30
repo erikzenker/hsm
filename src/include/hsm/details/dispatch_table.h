@@ -52,36 +52,32 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     void executeAction(Event& event) override
     {
         // clang-format off
-        bh::if_(
-            is_no_action(m_action),
-            [](auto&&...) {},
+        if constexpr(is_action<Action>()){
             [](auto& action, 
                auto& event, 
                const auto& source, 
                auto& target, 
                const auto& optionalDependency) {
-                bh::unpack(optionalDependency, [&action, &event, &source, &target](const auto&... optionalDependency){
+                bh::unpack(optionalDependency, 
+                    [&action, &event, &source, &target](const auto&... optionalDependency){
                     using Target = typename TargetPtr::element_type::element_type;
-                    bh::if_(is_default_constructable(bh::type_c<Target>),
-                        [](auto action, auto &event, auto source, auto target, auto... optionalDependency){
-                            action(event, **source, **target, get(optionalDependency)...);    
-                        },
-                        [](auto action, auto &event, auto source, auto &target, auto... optionalDependency){
-                            action(event, **source, target, get(optionalDependency)...);    
-                        })(action, event, source, target, optionalDependency...);
+                    if constexpr(is_default_constructable(bh::type_c<Target>)){
+                        action(event, **source, **target, get(optionalDependency)...);
+                    }
+                    else {
+                        action(event, **source, target, get(optionalDependency)...);
+                    }
                 });
-            })
-        (m_action, event, m_source, m_target, m_optionalDependency);
+            }(m_action, event, m_source, m_target, m_optionalDependency);
+        }
         // clang-format on
     }
 
     auto executeGuard(Event& event) -> bool override
     {
         // clang-format off
-        return bh::if_(
-            is_no_guard(m_guard),
-            [](auto&&...) { return true; },
-            [](auto& guard,
+        if constexpr(is_guard<Guard>()){
+            return [](auto& guard,
                auto& event,
                const auto& source,
                const auto& target,
@@ -91,7 +87,11 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
                     [&guard, &event, &source, &target](const auto&... optionalDependency) {
                         return guard(event, **source, **target, get(optionalDependency)...);
                     });
-            })(m_guard, event, m_source, m_target, m_optionalDependency);
+            }(m_guard, event, m_source, m_target, m_optionalDependency);
+        }
+        else {
+            return true;
+        }
         // clang-format on
     }
 

@@ -36,24 +36,22 @@ constexpr auto isNotEmpty
  * @param state State for which the internal transitions should be returned
  *
  */
-constexpr auto get_internal_transition_table = [](auto state) {
-    return bh::if_(
-        has_internal_transition_table(state),
-        [](auto parentState) {
-            return bh::transform(
-                make_internal_transition_table(parentState),
-                [parentState](auto internalTransition) {
-                    return details::extended_transition(
+constexpr auto get_internal_transition_table = [](auto parentState) {
+    if constexpr (has_internal_transition_table(parentState)) {
+        return bh::transform(
+            make_internal_transition_table(parentState), [parentState](auto internalTransition) {
+                return details::extended_transition(
+                    parentState,
+                    details::transition(
                         parentState,
-                        details::transition(
-                            parentState,
-                            internalTransition.event(),
-                            internalTransition.guard(),
-                            internalTransition.action(),
-                            parentState));
-                });
-        },
-        [](auto) { return bh::make_basic_tuple(); })(state);
+                        internalTransition.event(),
+                        internalTransition.guard(),
+                        internalTransition.action(),
+                        parentState));
+            });
+    } else {
+        return bh::make_basic_tuple();
+    }
 };
 
 /**

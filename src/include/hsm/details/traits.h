@@ -6,6 +6,7 @@
 #include <boost/hana/equal.hpp>
 #include <boost/hana/functional/compose.hpp>
 #include <boost/hana/not.hpp>
+#include <boost/hana/not_equal.hpp>
 #include <boost/hana/or.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/tuple.hpp>
@@ -48,17 +49,12 @@ constexpr auto get_state = [](auto state) {
 constexpr auto unwrap_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
 
 constexpr auto unwrap_typeid_to_shared_ptr = [](auto typeid_) {
-    return bh::if_(
-        is_default_constructable(typeid_),
-        [](auto typeid_) {
-            using UnwrappedType = typename decltype(typeid_)::type;
-            return std::make_shared<std::unique_ptr<UnwrappedType>>(
-                std::make_unique<UnwrappedType>());
-        },
-        [](auto typeid_) {
-            using UnwrappedType = typename decltype(typeid_)::type;
-            return std::make_shared<std::unique_ptr<UnwrappedType>>(nullptr);
-        })(typeid_);
+    using UnwrappedType = typename decltype(typeid_)::type;
+    if constexpr (is_default_constructable(typeid_)) {
+        return std::make_shared<std::unique_ptr<UnwrappedType>>(std::make_unique<UnwrappedType>());
+    } else {
+        return std::make_shared<std::unique_ptr<UnwrappedType>>(nullptr);
+    }
 };
 
 constexpr auto make_transition_table = [](auto t) {
@@ -129,8 +125,18 @@ constexpr auto is_initial_state = [](auto typeid_) {
 constexpr auto is_no_action
     = [](auto action) { return bh::equal(bh::typeid_(action), bh::typeid_(noAction {})); };
 
+template <class Action> constexpr decltype(auto) is_action()
+{
+    return bh::not_equal(bh::type_c<Action>, bh::typeid_(noAction {}));
+}
+
 constexpr auto is_no_guard
     = [](auto guard) { return bh::equal(bh::typeid_(guard), bh::typeid_(noGuard {})); };
+
+template <class Guard> constexpr decltype(auto) is_guard()
+{
+    return bh::not_equal(bh::type_c<Guard>, bh::typeid_(noGuard {}));
+}
 
 constexpr auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});
 
@@ -141,9 +147,10 @@ constexpr auto get_exit_action
 constexpr auto get_defer_events
     = [](auto stateTypeid) { return decltype(stateTypeid)::type::defer_events(); };
 const auto get_unexpected_event_handler = [](auto rootState) {
-    return bh::if_(
-        has_unexpected_event_handler(rootState),
-        [](auto rootState) { return decltype(rootState)::type::on_unexpected_event(); },
-        [](auto) { return [](auto /*event*/) {}; })(rootState);
+    if constexpr (has_unexpected_event_handler(rootState)) {
+        return decltype(rootState)::type::on_unexpected_event();
+    } else {
+        return [](auto /*event*/) {};
+    }
 };
 }

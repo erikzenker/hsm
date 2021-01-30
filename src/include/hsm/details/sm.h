@@ -12,9 +12,9 @@
 
 #include <array>
 #include <cstdint>
+#include <iostream>
 #include <sstream>
 #include <vector>
-#include <iostream>
 
 namespace hsm {
 
@@ -23,36 +23,38 @@ using namespace boost::hana;
 }
 
 template <class RootState, class... OptionalParameters> class sm {
+    static constexpr state_t<RootState> rootState {};
+
     using Region = std::uint8_t;
-    using Events = decltype(collect_event_typeids_recursive(state_t<RootState> {}));
-    using StatesMap = decltype(make_states_map(state_t<RootState> {}));
-    std::array<StateIdx, maxInitialStates(state_t<RootState> {})> m_currentCombinedState;
-    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_initial_states;
-    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_history;
+    using Events = decltype(collect_event_typeids_recursive(rootState));
+    using StatesMap = decltype(make_states_map(rootState));
+    std::array<StateIdx, maxInitialStates(rootState)> m_currentCombinedState;
+    std::array<std::vector<std::size_t>, nParentStates(rootState)> m_initial_states;
+    std::array<std::vector<std::size_t>, nParentStates(rootState)> m_history;
     variant_queue<Events> m_defer_queue;
-    std::size_t m_currentRegions{};
+    std::size_t m_currentRegions;
     StatesMap m_statesMap;
 
   public:
     sm(OptionalParameters&... optionalParameters)
         : m_initial_states()
         , m_history()
-        , m_defer_queue(collect_event_typeids_recursive(state_t<RootState> {}))
-        , m_statesMap(make_states_map(state_t<RootState> {}))
+        , m_defer_queue(collect_event_typeids_recursive(rootState))
+        , m_currentRegions(0)
+        , m_statesMap(make_states_map(rootState))
     {
         static_assert(
-            has_transition_table(state_t<RootState> {}),
-            "Root state has no make_transition_table method");
+            has_transition_table(rootState), "Root state has no make_transition_table method");
         static_assert(
-            bh::size(flatten_transition_table(state_t<RootState> {})),
+            bh::size(flatten_transition_table(rootState)),
             "Transition table needs at least one transition");
         static_assert(
-            maxInitialStates(state_t<RootState> {}),
+            maxInitialStates(rootState),
             "Transition table needs to have at least one initial state");
 
         fill_dispatch_table(optionalParameters...);
-        fill_initial_state_table(rootState(), m_initial_states);
-        fill_initial_state_table(rootState(), m_history);
+        fill_initial_state_table(rootState, m_initial_states);
+        fill_initial_state_table(rootState, m_history);
         init_current_state();
         update_current_regions();
     }
@@ -69,25 +71,25 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class State> auto is(State state) -> bool
     {
-        return currentState(0) == getStateIdx(rootState(), state);
+        return currentState(0) == getStateIdx(rootState, state);
     }
 
     template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
     {
-        return currentParentState() == getParentStateIdx(rootState(), parentState)
-            && currentState(0) == getStateIdx(rootState(), state);
+        return currentParentState() == getParentStateIdx(rootState, parentState)
+            && currentState(0) == getStateIdx(rootState, state);
     }
 
     template <class ParentState, class State>
     auto is(Region region, ParentState parentState, State state) -> bool
     {
-        return currentParentState() == getParentStateIdx(rootState(), parentState)
-            && currentState(region) == getStateIdx(rootState(), state);
+        return currentParentState() == getParentStateIdx(rootState, parentState)
+            && currentState(region) == getStateIdx(rootState, state);
     }
 
     template <class ParentState> auto parent_is(ParentState parentState) -> bool
     {
-        return currentParentState() == getParentStateIdx(rootState(), parentState);
+        return currentParentState() == getParentStateIdx(rootState, parentState);
     }
 
     auto status() -> std::string
@@ -118,12 +120,12 @@ template <class RootState, class... OptionalParameters> class sm {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
-            if(result.defer){
+            if (result.defer) {
                 m_defer_queue.push(event);
                 return true;
             }
 
-            if(!result.valid){
+            if (!result.valid) {
                 continue;
             }
 
@@ -152,128 +154,113 @@ template <class RootState, class... OptionalParameters> class sm {
 
     auto process_deferred_events()
     {
-        bh::if_(
-            hasDeferedEvents(rootState()),
-            [this]() {
-                if (!m_defer_queue.empty()) {
-                    m_defer_queue.visit([this](auto event) { this->process_event_internal(event); });
-                }
-            },
-            []() {})();
+        if constexpr (hasDeferedEvents(rootState)) {
+            if (!m_defer_queue.empty()) {
+                m_defer_queue.visit([this](auto event) { this->process_event_internal(event); });
+            }
+        }
     }
 
     auto apply_anonymous_transitions()
     {
-        bh::if_(
-            has_anonymous_transition(rootState()),
-            [this]() {
-                while (true) {
-                    for (Region region = 0; region < current_regions(); region++) {
+        if constexpr (has_anonymous_transition(rootState)) {
+            while (true) {
+                for (Region region = 0; region < current_regions(); region++) {
 
-                        auto event = noneEvent {};
-                        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                        auto& result = dispatch_table_at(m_currentCombinedState[region], event);
+                    auto event = noneEvent {};
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                    auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
-                        if (!result.valid) {
-                            return;
-                        }
-
-                        if (!result.transition->executeGuard(event)) {
-                            continue;
-                        }
-
-                        update_current_state(region, result);
-                        result.transition->executeAction(event);
+                    if (!result.valid) {
+                        return;
                     }
+
+                    if (!result.transition->executeGuard(event)) {
+                        continue;
+                    }
+
+                    update_current_state(region, result);
+                    result.transition->executeAction(event);
                 }
-            },
-            []() {})();
+            }
+        }
     }
 
-    template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
+    template <class Event>
+    constexpr auto dispatch_table_at(StateIdx index, const Event /*event*/) -> auto&
     {
         return bh::apply(
             [](auto states, StateIdx index) -> auto& {
                 return DispatchTable<states, Event>::table[index];
             },
-            nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {}),
+            nStates(rootState) * nParentStates(rootState),
             index);
     }
 
     template <class DispatchTableEntry>
     void update_current_state(Region region, const DispatchTableEntry& dispatchTableEntry)
     {
-        bh::if_(
-            has_history(rootState()),
-            [&, this]() {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
-                m_history[currentParentState()][region] = m_currentCombinedState[region];
+        if constexpr (has_history(rootState)) {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_history[currentParentState()][region] = m_currentCombinedState[region];
 
-                if (dispatchTableEntry.history) {
-                    auto parent = calcParentStateIdx(
-                        nStates(rootState()), dispatchTableEntry.combinedState);
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                    auto combined = m_history[parent][region];
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                    m_currentCombinedState[region] = combined;
-                } else {
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
-                    m_currentCombinedState[region] = dispatchTableEntry.combinedState;
-                }
-            },
-            [&, this]() { 
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
-                m_currentCombinedState[region] = dispatchTableEntry.combinedState; 
-            })();
+            if (dispatchTableEntry.history) {
+                auto parent
+                    = calcParentStateIdx(nStates(rootState), dispatchTableEntry.combinedState);
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                auto combined = m_history[parent][region];
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                m_currentCombinedState[region] = combined;
+            } else {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                m_currentCombinedState[region] = dispatchTableEntry.combinedState;
+            }
+        } else {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_currentCombinedState[region] = dispatchTableEntry.combinedState;
+        }
 
         update_current_regions();
     }
 
     void update_current_regions()
     {
-        bh::if_(
-            hasRegions(rootState()),
-            []() {},
-            [this]() { 
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
-                m_currentRegions = m_initial_states[currentParentState()].size(); 
-            })();
+        if constexpr (hasParallelRegions(rootState)) {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_currentRegions = m_initial_states[currentParentState()].size();
+        }
     }
 
     auto current_regions() -> std::size_t
     {
-        return bh::if_(
-            hasRegions(rootState()), [](auto) { return 1; }, [](auto regions) { return regions; })(
-            m_currentRegions);
+        if constexpr (hasParallelRegions(rootState)) {
+            return m_currentRegions;
+        } else {
+            return 1;
+        }
     }
 
     template <class Event> auto call_unexpected_event_handler(Event event)
     {
-        const auto handler = get_unexpected_event_handler(rootState());
+        const auto handler = get_unexpected_event_handler(rootState);
         handler(event);
-    }
-
-    constexpr auto rootState()
-    {
-        return state_t<RootState> {};
     }
 
     auto currentState(Region region)
     {
-        return calcStateIdx(nStates(rootState()), m_currentCombinedState.at(region));
+        return calcStateIdx(nStates(rootState), m_currentCombinedState.at(region));
     }
 
     auto currentParentState()
     {
-        return calcParentStateIdx(nStates(rootState()), m_currentCombinedState[0]);
+        return calcParentStateIdx(nStates(rootState), m_currentCombinedState[0]);
     }
 
     void init_current_state()
     {
-        const auto initialParentState = getParentStateIdx(rootState(), rootState());
+        const auto initialParentState = getParentStateIdx(rootState, rootState);
 
-        for (Region region = 0; region < m_initial_states[initialParentState].size();
-             region++) {
+        for (Region region = 0; region < m_initial_states[initialParentState].size(); region++) {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             m_currentCombinedState[region] = m_initial_states[initialParentState][region];
         }
@@ -282,9 +269,9 @@ template <class RootState, class... OptionalParameters> class sm {
     void fill_dispatch_table(OptionalParameters&... optionalParameters)
     {
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
-        fill_dispatch_table_with_internal_transitions(rootState(), m_statesMap, optionalDependency);
-        fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
-        fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);
+        fill_dispatch_table_with_internal_transitions(rootState, m_statesMap, optionalDependency);
+        fill_dispatch_table_with_external_transitions(rootState, m_statesMap, optionalDependency);
+        fill_dispatch_table_with_deferred_events(rootState, optionalDependency);
     }
 };
 }

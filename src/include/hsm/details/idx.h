@@ -70,12 +70,16 @@ constexpr auto calcParentStateIdx
 constexpr auto calcStateIdx
     = [](std::size_t nStates, Idx combinedState) -> Idx { return combinedState % nStates; };
 
-constexpr auto getEventIdx = [](auto rootState, auto event) {
-    auto takeWrappedEvent = [](auto event) { return event.typeid_; };
-    auto takeEvent = [](auto event) { return bh::typeid_(event); };
-    auto eventId = bh::if_(is_event(event), takeWrappedEvent, takeEvent)(event);
+constexpr decltype(auto) resolveEvent = [](auto event) {
+    if constexpr (is_event(event)) {
+        return event.typeid_;
+    } else {
+        return bh::typeid_(event);
+    }
+};
 
-    return index_of(collect_event_typeids_recursive(rootState), eventId);
+constexpr auto getEventIdx = [](auto rootState, auto event) {
+    return index_of(collect_event_typeids_recursive(rootState), resolveEvent(event));
 };
 
 constexpr auto getActionIdx = [](auto rootState, auto action) {

@@ -39,12 +39,12 @@ namespace {
 template <class State> constexpr auto flatten_sub_transition_table(State state)
 {
     // clang-format off
-    return bh::if_(
-        has_transition_table(state),
-        [](auto stateWithTransitionTable) {
-            return flatten_transition_table(stateWithTransitionTable);
-        },
-        [](auto) { return bh::make_basic_tuple(); })(state);
+    if constexpr(has_transition_table(state)){
+        return flatten_transition_table(state);
+    }
+    else {
+        return bh::make_basic_tuple();
+    }
     // clang-format on
 }
 }
