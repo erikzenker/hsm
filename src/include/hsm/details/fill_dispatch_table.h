@@ -156,22 +156,6 @@ constexpr auto filter_transitions = [](auto transitions, auto eventTypeid) {
     return bh::filter(transitions, isEvent);
 };
 
-constexpr auto fill_dispatch_table_for_filtered_transitions = [](auto rootState,
-                                                                 auto&& statesMap,
-                                                                 auto&& optionalDependency,
-                                                                 auto eventTypeid,
-                                                                 auto transition) {
-    addDispatchTableEntry(rootState, transition, eventTypeid, statesMap, optionalDependency);
-    addDispatchTableEntryOfSubMachineExits(
-        rootState, transition, eventTypeid, statesMap, optionalDependency);
-};
-
-constexpr auto fill_dispatch_table_for_event = [](auto rootState, auto&& statesMap, auto&& optionalDependency, auto transitions, auto eventTypeid){
-    
-    auto filteredTransitions = filter_transitions(transitions, eventTypeid);
-    bh::for_each(filteredTransitions, bh::capture(rootState, statesMap, optionalDependency, eventTypeid)(fill_dispatch_table_for_filtered_transitions));
-};
-
 template <class State, class StatesMap, class Dependencies, class TransitionTuple>
 constexpr auto fill_dispatch_table_with_transitions(
     State rootState,
@@ -179,8 +163,32 @@ constexpr auto fill_dispatch_table_with_transitions(
     Dependencies&& optionalDependency,
     TransitionTuple transitions)
 {
+    constexpr auto eventTypeids = collect_event_typeids_recursive_with_transitions(transitions);
+    bh::for_each(eventTypeids, [=](auto eventTypeid) {
+        constexpr auto filteredTransitions = filter_transitions(transitions, eventTypeid);
+        bh::for_each(filteredTransitions, [=](auto transition) {
+            addDispatchTableEntry(
+                rootState, transition, eventTypeid, statesMap, optionalDependency);
+        });
+    });
+}
+
+// TODO: Rename properly
+template <class State, class StatesMap, class Dependencies, class TransitionTuple>
+constexpr auto fill_dispatch_table_with_transitions2(
+    State rootState,
+    StatesMap&& statesMap,
+    Dependencies&& optionalDependency,
+    TransitionTuple transitions)
+{
     auto eventTypeids = collect_event_typeids_recursive_with_transitions(transitions);
-    bh::for_each(eventTypeids, bh::capture(rootState, statesMap, optionalDependency, transitions)(fill_dispatch_table_for_event));
+    bh::for_each(eventTypeids, [=](auto eventTypeid) {
+        auto filteredTransitions = filter_transitions(transitions, eventTypeid);
+        bh::for_each(filteredTransitions, [=](auto transition) {
+            addDispatchTableEntryOfSubMachineExits(
+                rootState, transition, eventTypeid, statesMap, optionalDependency);
+        });
+    });
 }
 
 constexpr auto getDeferingTransitions = [](auto rootState) {
@@ -201,12 +209,12 @@ template <class RootState, class OptionalDependency>
 constexpr auto
 fill_dispatch_table_with_deferred_events(RootState rootState, OptionalDependency /*optionalDependency*/)
 {
-    const auto transitions = getDeferingTransitions(rootState);
+    auto transitions = getDeferingTransitions(rootState);
     bh::for_each(transitions, bh::capture(rootState)([](auto rootState, auto transition){
         const auto deferredEvents = get_defer_events(resolveExtentedInitialState(transition));
         bh::for_each(deferredEvents, bh::capture(rootState, transition)([](auto rootState, auto transition, auto event){
             using Event = typename decltype(event)::type;
-            const auto combinedStateTypeids = getCombinedStateTypeids(rootState);
+            auto combinedStateTypeids = getCombinedStateTypeids(rootState);
             constexpr StateIdx states = nStates(rootState) * nParentStates(rootState);
             auto& dispatchTable = DispatchTable<states, Event>::table;
             const auto from = getCombinedStateIdx(
@@ -221,6 +229,14 @@ constexpr auto fill_dispatch_table_with_external_transitions(
     const RootState& rootState, StatesMap&& statesMap, OptionalDependency&& optionalDependecy)
 {
     fill_dispatch_table_with_transitions(
+        rootState, statesMap, optionalDependecy, flatten_transition_table(rootState));
+}
+
+template <class RootState, class StatesMap, class OptionalDependency>
+constexpr auto fill_dispatch_table_with_submachine_exits(
+    const RootState& rootState, StatesMap&& statesMap, OptionalDependency&& optionalDependecy)
+{
+    fill_dispatch_table_with_transitions2(
         rootState, statesMap, optionalDependecy, flatten_transition_table(rootState));
 }
 

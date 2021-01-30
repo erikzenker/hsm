@@ -10,24 +10,10 @@
 
 namespace {
 
-// States
-struct S1 {
-};
-struct S2 {
-    static constexpr auto on_entry()
-    {
-        return [](auto event, auto...) { (void)event.name; };
-    }
+using namespace ::testing;
+using namespace boost::hana;
 
-    static constexpr auto on_exit()
-    {
-        return [](auto event, auto...) { (void)event.name; };
-    }
-};
-struct S3 {
-};
-
-// Events
+// Events =======================================================================================
 struct e1 {
     std::string name = "e1";
 };
@@ -56,16 +42,53 @@ struct e6 {
 struct e7 {
     std::string name = "e7";
 };
+struct e8 {
+};
 
-// Guards
+// States =======================================================================================
+struct S1 {
+};
+
+struct S2 {
+    static constexpr auto on_entry()
+    {
+        return [](auto event, auto...) { (void)event.name; };
+    }
+
+    static constexpr auto on_exit()
+    {
+        return [](auto event, auto...) { (void)event.name; };
+    }
+};
+struct S3 {
+};
+struct S4 {
+    // static constexpr auto make_transition_table()
+    // {
+    //     // clang-format off
+    //     return hsm::transition_table(
+    //         * hsm::state<S1> + hsm::event<e1> = hsm::state<S1>
+    //     );
+    //     // clang-format on
+    // }
+
+    static constexpr auto make_internal_transition_table()
+    {
+        // clang-format off
+        return hsm::transition_table(
+            + (hsm::event<e8>)
+        );
+        // clang-format on
+    }
+};
+
+// Guards =======================================================================================
 const auto fail = [](auto /*event*/, auto /*source*/, auto /*target*/) { return false; };
 
-// Actions
+// Actions ======================================================================================
 const auto action = [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
 
-using namespace ::testing;
-using namespace boost::hana;
-
+// State Machines ===============================================================================
 struct SubState {
     static constexpr auto make_transition_table()
     {
@@ -95,7 +118,9 @@ struct MainState {
             * hsm::state<S1> + hsm::event<e1> = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e7> = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e3> = hsm::state<SubState>
+            , hsm::state<S1> + hsm::event<e8> = hsm::state<S4>
             , hsm::state<S2> + hsm::event<e6> = hsm::state<S1>
+            , hsm::state<S4> + hsm::event<e8> = hsm::state<S1>
         );
         // clang-format on
     }
@@ -184,4 +209,13 @@ TEST_F(InternalTransitionTests, should_not_transit_to_initial_state)
     ASSERT_TRUE(sm.is(hsm::state<S2>));
     sm.process_event(e1 {});
     ASSERT_TRUE(sm.is(hsm::state<S2>));
+}
+
+TEST_F(InternalTransitionTests, should_recognize_internal_transition_table_without_transition_table)
+{
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
+    sm.process_event(e8 {});
+    ASSERT_TRUE(sm.is(hsm::state<S4>, hsm::state<S1>));
+    sm.process_event(e8 {});
+    ASSERT_TRUE(sm.is(hsm::state<S4>, hsm::state<S1>));
 }

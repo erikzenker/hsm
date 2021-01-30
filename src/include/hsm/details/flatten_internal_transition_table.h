@@ -77,6 +77,21 @@ constexpr auto extend_internal_transition(Transition internalTransition, States 
     });
 }
 
+template <class Transition, class State>
+constexpr auto extend_internal_transition2(Transition internalTransition, State state)
+{
+        return bh::make_basic_tuple(details::internal_extended_transition(
+            // TODO: here the parentState of state should be used    
+            internalTransition.parent(),
+            details::transition(
+                state,
+                internalTransition.event(),
+                internalTransition.guard(),
+                internalTransition.action(),
+                state)));
+}
+
+
 /**
  * Returns the internal transitions for each for each state
  * [[transition1, transition2], [transition3, transition4], []]
@@ -95,7 +110,11 @@ constexpr auto get_internal_transitions = [](auto states) {
                           if constexpr (has_transition_table(parentState)) {
                               return extend_internal_transition(
                                   transition, collect_child_states(parentState));
-                          } else {
+                          } 
+                          else if constexpr (has_internal_transition_table(parentState)){
+                              return extend_internal_transition2(transition, parentState);
+                          }
+                          else {
                               return bh::make_basic_tuple();
                           }
                       });
