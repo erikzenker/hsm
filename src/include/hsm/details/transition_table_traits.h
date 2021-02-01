@@ -3,6 +3,7 @@
 #include "hsm/details/flatten_transition_table.h"
 
 #include <boost/hana/filter.hpp>
+#include <boost/hana/not_equal.hpp>
 #include <boost/hana/size.hpp>
 
 namespace hsm {
@@ -21,13 +22,13 @@ template <class State> constexpr auto has_anonymous_transition(State rootState)
 {
     auto transitions = flatten_transition_table(rootState);
     auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
-    return bh::size(anonymousTransition);
+    return bh::not_equal(bh::size_c<0>, bh::size(anonymousTransition));
 }
 
 template <class State> constexpr auto has_history(State rootState)
 {
     auto transitions = flatten_transition_table(rootState);
     auto historyTransitions = bh::filter(transitions, is_history_transition);
-    return bh::size(historyTransitions);
+    return bh::not_equal(bh::size_c<0>, bh::size(historyTransitions));
 }
 }

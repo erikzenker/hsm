@@ -8,7 +8,6 @@
 #include <boost/hana/at.hpp>
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/flatten.hpp>
-#include <boost/hana/if.hpp>
 #include <boost/hana/transform.hpp>
 #include <boost/hana/type.hpp>
 
@@ -21,17 +20,19 @@ using namespace boost::hana;
 namespace {
 
 constexpr auto resolveInitialState = [](auto transition) {
-    return bh::if_(
-        is_initial_state(transition.source()),
-        [](auto initial) { return get_state(initial); },
-        [](auto source) { return source; })(transition.source());
+    if constexpr (is_initial_state(transition.source())) {
+        return get_state(transition.source());
+    } else {
+        return transition.source();
+    }
 };
 
 constexpr auto resolveExtentedInitialState = [](auto transition) {
-    return bh::if_(
-        is_initial_state(transition.source()),
-        [](auto initial) { return get_state(initial); },
-        [](auto source) { return source; })(transition.source());
+    if constexpr (is_initial_state(transition.source())) {
+        return get_state(transition.source());
+    } else {
+        return transition.source();
+    }
 };
 
 constexpr auto extractExtendedStateTypeids = [](auto transition) {

@@ -15,6 +15,7 @@
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/functional/apply.hpp>
 #include <boost/hana/functional/capture.hpp>
+#include <boost/hana/greater.hpp>
 #include <boost/hana/if.hpp>
 #include <boost/hana/length.hpp>
 #include <boost/hana/mult.hpp>
@@ -42,9 +43,9 @@ template <class State> constexpr auto nEvents(State rootState)
     return bh::length(collect_event_typeids_recursive(rootState));
 }
 
-template <class State> constexpr auto hasRegions(State rootState)
+template <class State> constexpr decltype(auto) hasParallelRegions(State rootState)
 {
-    return bh::equal(bh::size_c<1>, maxInitialStates(rootState));
+    return bh::greater(maxInitialStates(rootState), bh::size_c<1>);
 }
 
 template <
@@ -191,11 +192,9 @@ constexpr auto getDeferingTransitions = [](auto rootState) {
     return bh::filter(transitions, transitionHasDeferedEvents);
 };
 
-constexpr auto hasDeferedEvents
-    = [](auto rootState) { return bh::size(getDeferingTransitions(rootState)); };
-
-
-
+constexpr auto hasDeferedEvents = [](auto rootState) {
+    return bh::not_equal(bh::size_c<0>, bh::size(getDeferingTransitions(rootState)));
+};
 
 template <class RootState, class OptionalDependency>
 constexpr auto

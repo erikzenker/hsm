@@ -9,7 +9,8 @@ endif()
 
 # Sanatizers
 if(${HSM_ASAN})
-    set(CMAKE_CXX_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 if(${HSM_UBSAN})

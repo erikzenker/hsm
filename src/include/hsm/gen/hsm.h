@@ -234,6 +234,7 @@ template <class State> class Initial final : public InitialPseudoState {
 #include <boost/hana/equal.hpp>
 #include <boost/hana/functional/compose.hpp>
 #include <boost/hana/not.hpp>
+#include <boost/hana/not_equal.hpp>
 #include <boost/hana/or.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/tuple.hpp>
@@ -276,17 +277,12 @@ constexpr auto get_state = [](auto state) {
 constexpr auto unwrap_typeid = [](auto typeid_) { return typename decltype(typeid_)::type {}; };
 
 constexpr auto unwrap_typeid_to_shared_ptr = [](auto typeid_) {
-    return bh::if_(
-        is_default_constructable(typeid_),
-        [](auto typeid_) {
-            using UnwrappedType = typename decltype(typeid_)::type;
-            return std::make_shared<std::unique_ptr<UnwrappedType>>(
-                std::make_unique<UnwrappedType>());
-        },
-        [](auto typeid_) {
-            using UnwrappedType = typename decltype(typeid_)::type;
-            return std::make_shared<std::unique_ptr<UnwrappedType>>(nullptr);
-        })(typeid_);
+    using UnwrappedType = typename decltype(typeid_)::type;
+    if constexpr (is_default_constructable(typeid_)) {
+        return std::make_shared<std::unique_ptr<UnwrappedType>>(std::make_unique<UnwrappedType>());
+    } else {
+        return std::make_shared<std::unique_ptr<UnwrappedType>>(nullptr);
+    }
 };
 
 constexpr auto make_transition_table = [](auto t) {
@@ -357,8 +353,18 @@ constexpr auto is_initial_state = [](auto typeid_) {
 constexpr auto is_no_action
     = [](auto action) { return bh::equal(bh::typeid_(action), bh::typeid_(noAction {})); };
 
+template <class Action> constexpr decltype(auto) is_action()
+{
+    return bh::not_equal(bh::type_c<Action>, bh::typeid_(noAction {}));
+}
+
 constexpr auto is_no_guard
     = [](auto guard) { return bh::equal(bh::typeid_(guard), bh::typeid_(noGuard {})); };
+
+template <class Guard> constexpr decltype(auto) is_guard()
+{
+    return bh::not_equal(bh::type_c<Guard>, bh::typeid_(noGuard {}));
+}
 
 constexpr auto is_event = bh::is_valid([](auto&& event) -> decltype(event.typeid_) {});
 
@@ -369,10 +375,11 @@ constexpr auto get_exit_action
 constexpr auto get_defer_events
     = [](auto stateTypeid) { return decltype(stateTypeid)::type::defer_events(); };
 const auto get_unexpected_event_handler = [](auto rootState) {
-    return bh::if_(
-        has_unexpected_event_handler(rootState),
-        [](auto rootState) { return decltype(rootState)::type::on_unexpected_event(); },
-        [](auto) { return [](auto /*event*/) {}; })(rootState);
+    if constexpr (has_unexpected_event_handler(rootState)) {
+        return decltype(rootState)::type::on_unexpected_event();
+    } else {
+        return [](auto /*event*/) {};
+    }
 };
 }
 
@@ -768,12 +775,16 @@ constexpr auto calcParentStateIdx
 constexpr auto calcStateIdx
     = [](std::size_t nStates, Idx combinedState) -> Idx { return combinedState % nStates; };
 
-constexpr auto getEventIdx = [](auto rootState, auto event) {
-    auto takeWrappedEvent = [](auto event) { return event.typeid_; };
-    auto takeEvent = [](auto event) { return bh::typeid_(event); };
-    auto eventId = bh::if_(is_event(event), takeWrappedEvent, takeEvent)(event);
+constexpr decltype(auto) resolveEvent = [](auto event) {
+    if constexpr (is_event(event)) {
+        return event.typeid_;
+    } else {
+        return bh::typeid_(event);
+    }
+};
 
-    return index_of(collect_event_typeids_recursive(rootState), eventId);
+constexpr auto getEventIdx = [](auto rootState, auto event) {
+    return index_of(collect_event_typeids_recursive(rootState), resolveEvent(event));
 };
 
 constexpr auto getActionIdx = [](auto rootState, auto action) {
@@ -1163,12 +1174,12 @@ namespace {
 template <class State> constexpr auto flatten_sub_transition_table(State state)
 {
     // clang-format off
-    return bh::if_(
-        has_transition_table(state),
-        [](auto stateWithTransitionTable) {
-            return flatten_transition_table(stateWithTransitionTable);
-        },
-        [](auto) { return bh::make_basic_tuple(); })(state);
+    if constexpr(has_transition_table(state)){
+        return flatten_transition_table(state);
+    }
+    else {
+        return bh::make_basic_tuple();
+    }
     // clang-format on
 }
 }
@@ -1177,7 +1188,6 @@ template <class State> constexpr auto flatten_sub_transition_table(State state)
 #include <boost/hana/at.hpp>
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/flatten.hpp>
-#include <boost/hana/if.hpp>
 #include <boost/hana/transform.hpp>
 #include <boost/hana/type.hpp>
 
@@ -1190,17 +1200,19 @@ using namespace boost::hana;
 namespace {
 
 constexpr auto resolveInitialState = [](auto transition) {
-    return bh::if_(
-        is_initial_state(transition.source()),
-        [](auto initial) { return get_state(initial); },
-        [](auto source) { return source; })(transition.source());
+    if constexpr (is_initial_state(transition.source())) {
+        return get_state(transition.source());
+    } else {
+        return transition.source();
+    }
 };
 
 constexpr auto resolveExtentedInitialState = [](auto transition) {
-    return bh::if_(
-        is_initial_state(transition.source()),
-        [](auto initial) { return get_state(initial); },
-        [](auto source) { return source; })(transition.source());
+    if constexpr (is_initial_state(transition.source())) {
+        return get_state(transition.source());
+    } else {
+        return transition.source();
+    }
 };
 
 constexpr auto extractExtendedStateTypeids = [](auto transition) {
@@ -1292,24 +1304,22 @@ constexpr auto isNotEmpty
  * @param state State for which the internal transitions should be returned
  *
  */
-constexpr auto get_internal_transition_table = [](auto state) {
-    return bh::if_(
-        has_internal_transition_table(state),
-        [](auto parentState) {
-            return bh::transform(
-                make_internal_transition_table(parentState),
-                [parentState](auto internalTransition) {
-                    return details::extended_transition(
+constexpr auto get_internal_transition_table = [](auto parentState) {
+    if constexpr (has_internal_transition_table(parentState)) {
+        return bh::transform(
+            make_internal_transition_table(parentState), [parentState](auto internalTransition) {
+                return details::extended_transition(
+                    parentState,
+                    details::transition(
                         parentState,
-                        details::transition(
-                            parentState,
-                            internalTransition.event(),
-                            internalTransition.guard(),
-                            internalTransition.action(),
-                            parentState));
-                });
-        },
-        [](auto) { return bh::make_basic_tuple(); })(state);
+                        internalTransition.event(),
+                        internalTransition.guard(),
+                        internalTransition.action(),
+                        parentState));
+            });
+    } else {
+        return bh::make_basic_tuple();
+    }
 };
 
 /**
@@ -1466,36 +1476,32 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     void executeAction(Event& event) override
     {
         // clang-format off
-        bh::if_(
-            is_no_action(m_action),
-            [](auto&&...) {},
+        if constexpr(is_action<Action>()){
             [](auto& action, 
                auto& event, 
                const auto& source, 
                auto& target, 
                const auto& optionalDependency) {
-                bh::unpack(optionalDependency, [&action, &event, &source, &target](const auto&... optionalDependency){
+                bh::unpack(optionalDependency, 
+                    [&action, &event, &source, &target](const auto&... optionalDependency){
                     using Target = typename TargetPtr::element_type::element_type;
-                    bh::if_(is_default_constructable(bh::type_c<Target>),
-                        [](auto action, auto &event, auto source, auto target, auto... optionalDependency){
-                            action(event, **source, **target, get(optionalDependency)...);    
-                        },
-                        [](auto action, auto &event, auto source, auto &target, auto... optionalDependency){
-                            action(event, **source, target, get(optionalDependency)...);    
-                        })(action, event, source, target, optionalDependency...);
+                    if constexpr(is_default_constructable(bh::type_c<Target>)){
+                        action(event, **source, **target, get(optionalDependency)...);
+                    }
+                    else {
+                        action(event, **source, target, get(optionalDependency)...);
+                    }
                 });
-            })
-        (m_action, event, m_source, m_target, m_optionalDependency);
+            }(m_action, event, m_source, m_target, m_optionalDependency);
+        }
         // clang-format on
     }
 
     auto executeGuard(Event& event) -> bool override
     {
         // clang-format off
-        return bh::if_(
-            is_no_guard(m_guard),
-            [](auto&&...) { return true; },
-            [](auto& guard,
+        if constexpr(is_guard<Guard>()){
+            return [](auto& guard,
                auto& event,
                const auto& source,
                const auto& target,
@@ -1505,7 +1511,11 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
                     [&guard, &event, &source, &target](const auto&... optionalDependency) {
                         return guard(event, **source, **target, get(optionalDependency)...);
                     });
-            })(m_guard, event, m_source, m_target, m_optionalDependency);
+            }(m_guard, event, m_source, m_target, m_optionalDependency);
+        }
+        else {
+            return true;
+        }
         // clang-format on
     }
 
@@ -1572,6 +1582,7 @@ constexpr auto get_dispatch_table = [](auto rootState, auto eventTypeid) -> auto
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/functional/apply.hpp>
 #include <boost/hana/functional/capture.hpp>
+#include <boost/hana/greater.hpp>
 #include <boost/hana/if.hpp>
 #include <boost/hana/length.hpp>
 #include <boost/hana/mult.hpp>
@@ -1599,9 +1610,9 @@ template <class State> constexpr auto nEvents(State rootState)
     return bh::length(collect_event_typeids_recursive(rootState));
 }
 
-template <class State> constexpr auto hasRegions(State rootState)
+template <class State> constexpr decltype(auto) hasParallelRegions(State rootState)
 {
-    return bh::equal(bh::size_c<1>, maxInitialStates(rootState));
+    return bh::greater(maxInitialStates(rootState), bh::size_c<1>);
 }
 
 template <
@@ -1748,8 +1759,9 @@ constexpr auto getDeferingTransitions = [](auto rootState) {
     return bh::filter(transitions, transitionHasDeferedEvents);
 };
 
-constexpr auto hasDeferedEvents
-    = [](auto rootState) { return bh::size(getDeferingTransitions(rootState)); };
+constexpr auto hasDeferedEvents = [](auto rootState) {
+    return bh::not_equal(bh::size_c<0>, bh::size(getDeferingTransitions(rootState)));
+};
 
 template <class RootState, class OptionalDependency>
 constexpr auto
@@ -1817,6 +1829,7 @@ template <class State> constexpr auto make_states_map(State&& parentState)
 }
 
 #include <boost/hana/filter.hpp>
+#include <boost/hana/not_equal.hpp>
 #include <boost/hana/size.hpp>
 
 namespace hsm {
@@ -1835,14 +1848,14 @@ template <class State> constexpr auto has_anonymous_transition(State rootState)
 {
     auto transitions = flatten_transition_table(rootState);
     auto anonymousTransition = bh::filter(transitions, is_anonymous_transition);
-    return bh::size(anonymousTransition);
+    return bh::not_equal(bh::size_c<0>, bh::size(anonymousTransition));
 }
 
 template <class State> constexpr auto has_history(State rootState)
 {
     auto transitions = flatten_transition_table(rootState);
     auto historyTransitions = bh::filter(transitions, is_history_transition);
-    return bh::size(historyTransitions);
+    return bh::not_equal(bh::size_c<0>, bh::size(historyTransitions));
 }
 }
 
@@ -1914,9 +1927,9 @@ public:
 
 #include <array>
 #include <cstdint>
+#include <iostream>
 #include <sstream>
 #include <vector>
-#include <iostream>
 
 namespace hsm {
 
@@ -1925,36 +1938,38 @@ using namespace boost::hana;
 }
 
 template <class RootState, class... OptionalParameters> class sm {
+    static constexpr state_t<RootState> rootState {};
+
     using Region = std::uint8_t;
-    using Events = decltype(collect_event_typeids_recursive(state_t<RootState> {}));
-    using StatesMap = decltype(make_states_map(state_t<RootState> {}));
-    std::array<StateIdx, maxInitialStates(state_t<RootState> {})> m_currentCombinedState;
-    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_initial_states;
-    std::array<std::vector<std::size_t>, nParentStates(state_t<RootState> {})> m_history;
+    using Events = decltype(collect_event_typeids_recursive(rootState));
+    using StatesMap = decltype(make_states_map(rootState));
+    std::array<StateIdx, maxInitialStates(rootState)> m_currentCombinedState;
+    std::array<std::vector<std::size_t>, nParentStates(rootState)> m_initial_states;
+    std::array<std::vector<std::size_t>, nParentStates(rootState)> m_history;
     variant_queue<Events> m_defer_queue;
-    std::size_t m_currentRegions{};
+    std::size_t m_currentRegions;
     StatesMap m_statesMap;
 
   public:
     sm(OptionalParameters&... optionalParameters)
         : m_initial_states()
         , m_history()
-        , m_defer_queue(collect_event_typeids_recursive(state_t<RootState> {}))
-        , m_statesMap(make_states_map(state_t<RootState> {}))
+        , m_defer_queue(collect_event_typeids_recursive(rootState))
+        , m_currentRegions(0)
+        , m_statesMap(make_states_map(rootState))
     {
         static_assert(
-            has_transition_table(state_t<RootState> {}),
-            "Root state has no make_transition_table method");
+            has_transition_table(rootState), "Root state has no make_transition_table method");
         static_assert(
-            bh::size(flatten_transition_table(state_t<RootState> {})),
+            bh::size(flatten_transition_table(rootState)),
             "Transition table needs at least one transition");
         static_assert(
-            maxInitialStates(state_t<RootState> {}),
+            maxInitialStates(rootState),
             "Transition table needs to have at least one initial state");
 
         fill_dispatch_table(optionalParameters...);
-        fill_initial_state_table(rootState(), m_initial_states);
-        fill_initial_state_table(rootState(), m_history);
+        fill_initial_state_table(rootState, m_initial_states);
+        fill_initial_state_table(rootState, m_history);
         init_current_state();
         update_current_regions();
     }
@@ -1971,25 +1986,25 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class State> auto is(State state) -> bool
     {
-        return currentState(0) == getStateIdx(rootState(), state);
+        return currentState(0) == getStateIdx(rootState, state);
     }
 
     template <class ParentState, class State> auto is(ParentState parentState, State state) -> bool
     {
-        return currentParentState() == getParentStateIdx(rootState(), parentState)
-            && currentState(0) == getStateIdx(rootState(), state);
+        return currentParentState() == getParentStateIdx(rootState, parentState)
+            && currentState(0) == getStateIdx(rootState, state);
     }
 
     template <class ParentState, class State>
     auto is(Region region, ParentState parentState, State state) -> bool
     {
-        return currentParentState() == getParentStateIdx(rootState(), parentState)
-            && currentState(region) == getStateIdx(rootState(), state);
+        return currentParentState() == getParentStateIdx(rootState, parentState)
+            && currentState(region) == getStateIdx(rootState, state);
     }
 
     template <class ParentState> auto parent_is(ParentState parentState) -> bool
     {
-        return currentParentState() == getParentStateIdx(rootState(), parentState);
+        return currentParentState() == getParentStateIdx(rootState, parentState);
     }
 
     auto status() -> std::string
@@ -2020,12 +2035,12 @@ template <class RootState, class... OptionalParameters> class sm {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
-            if(result.defer){
+            if (result.defer) {
                 m_defer_queue.push(event);
                 return true;
             }
 
-            if(!result.valid){
+            if (!result.valid) {
                 continue;
             }
 
@@ -2054,128 +2069,113 @@ template <class RootState, class... OptionalParameters> class sm {
 
     auto process_deferred_events()
     {
-        bh::if_(
-            hasDeferedEvents(rootState()),
-            [this]() {
-                if (!m_defer_queue.empty()) {
-                    m_defer_queue.visit([this](auto event) { this->process_event_internal(event); });
-                }
-            },
-            []() {})();
+        if constexpr (hasDeferedEvents(rootState)) {
+            if (!m_defer_queue.empty()) {
+                m_defer_queue.visit([this](auto event) { this->process_event_internal(event); });
+            }
+        }
     }
 
     auto apply_anonymous_transitions()
     {
-        bh::if_(
-            has_anonymous_transition(rootState()),
-            [this]() {
-                while (true) {
-                    for (Region region = 0; region < current_regions(); region++) {
+        if constexpr (has_anonymous_transition(rootState)) {
+            while (true) {
+                for (Region region = 0; region < current_regions(); region++) {
 
-                        auto event = noneEvent {};
-                        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                        auto& result = dispatch_table_at(m_currentCombinedState[region], event);
+                    auto event = noneEvent {};
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                    auto& result = dispatch_table_at(m_currentCombinedState[region], event);
 
-                        if (!result.valid) {
-                            return;
-                        }
-
-                        if (!result.transition->executeGuard(event)) {
-                            continue;
-                        }
-
-                        update_current_state(region, result);
-                        result.transition->executeAction(event);
+                    if (!result.valid) {
+                        return;
                     }
+
+                    if (!result.transition->executeGuard(event)) {
+                        continue;
+                    }
+
+                    update_current_state(region, result);
+                    result.transition->executeAction(event);
                 }
-            },
-            []() {})();
+            }
+        }
     }
 
-    template <class Event> constexpr auto dispatch_table_at(StateIdx index, const Event& /*event*/) -> auto&
+    template <class Event>
+    constexpr auto dispatch_table_at(StateIdx index, const Event /*event*/) -> auto&
     {
         return bh::apply(
             [](auto states, StateIdx index) -> auto& {
                 return DispatchTable<states, Event>::table[index];
             },
-            nStates(state_t<RootState> {}) * nParentStates(state_t<RootState> {}),
+            nStates(rootState) * nParentStates(rootState),
             index);
     }
 
     template <class DispatchTableEntry>
     void update_current_state(Region region, const DispatchTableEntry& dispatchTableEntry)
     {
-        bh::if_(
-            has_history(rootState()),
-            [&, this]() {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
-                m_history[currentParentState()][region] = m_currentCombinedState[region];
+        if constexpr (has_history(rootState)) {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_history[currentParentState()][region] = m_currentCombinedState[region];
 
-                if (dispatchTableEntry.history) {
-                    auto parent = calcParentStateIdx(
-                        nStates(rootState()), dispatchTableEntry.combinedState);
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                    auto combined = m_history[parent][region];
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                    m_currentCombinedState[region] = combined;
-                } else {
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)    
-                    m_currentCombinedState[region] = dispatchTableEntry.combinedState;
-                }
-            },
-            [&, this]() { 
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
-                m_currentCombinedState[region] = dispatchTableEntry.combinedState; 
-            })();
+            if (dispatchTableEntry.history) {
+                auto parent
+                    = calcParentStateIdx(nStates(rootState), dispatchTableEntry.combinedState);
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                auto combined = m_history[parent][region];
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                m_currentCombinedState[region] = combined;
+            } else {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                m_currentCombinedState[region] = dispatchTableEntry.combinedState;
+            }
+        } else {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_currentCombinedState[region] = dispatchTableEntry.combinedState;
+        }
 
         update_current_regions();
     }
 
     void update_current_regions()
     {
-        bh::if_(
-            hasRegions(rootState()),
-            []() {},
-            [this]() { 
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)        
-                m_currentRegions = m_initial_states[currentParentState()].size(); 
-            })();
+        if constexpr (hasParallelRegions(rootState)) {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            m_currentRegions = m_initial_states[currentParentState()].size();
+        }
     }
 
     auto current_regions() -> std::size_t
     {
-        return bh::if_(
-            hasRegions(rootState()), [](auto) { return 1; }, [](auto regions) { return regions; })(
-            m_currentRegions);
+        if constexpr (hasParallelRegions(rootState)) {
+            return m_currentRegions;
+        } else {
+            return 1;
+        }
     }
 
     template <class Event> auto call_unexpected_event_handler(Event event)
     {
-        const auto handler = get_unexpected_event_handler(rootState());
+        const auto handler = get_unexpected_event_handler(rootState);
         handler(event);
-    }
-
-    constexpr auto rootState()
-    {
-        return state_t<RootState> {};
     }
 
     auto currentState(Region region)
     {
-        return calcStateIdx(nStates(rootState()), m_currentCombinedState.at(region));
+        return calcStateIdx(nStates(rootState), m_currentCombinedState.at(region));
     }
 
     auto currentParentState()
     {
-        return calcParentStateIdx(nStates(rootState()), m_currentCombinedState[0]);
+        return calcParentStateIdx(nStates(rootState), m_currentCombinedState[0]);
     }
 
     void init_current_state()
     {
-        const auto initialParentState = getParentStateIdx(rootState(), rootState());
+        const auto initialParentState = getParentStateIdx(rootState, rootState);
 
-        for (Region region = 0; region < m_initial_states[initialParentState].size();
-             region++) {
+        for (Region region = 0; region < m_initial_states[initialParentState].size(); region++) {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             m_currentCombinedState[region] = m_initial_states[initialParentState][region];
         }
@@ -2184,9 +2184,9 @@ template <class RootState, class... OptionalParameters> class sm {
     void fill_dispatch_table(OptionalParameters&... optionalParameters)
     {
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
-        fill_dispatch_table_with_internal_transitions(rootState(), m_statesMap, optionalDependency);
-        fill_dispatch_table_with_external_transitions(rootState(), m_statesMap, optionalDependency);
-        fill_dispatch_table_with_deferred_events(rootState(), optionalDependency);
+        fill_dispatch_table_with_internal_transitions(rootState, m_statesMap, optionalDependency);
+        fill_dispatch_table_with_external_transitions(rootState, m_statesMap, optionalDependency);
+        fill_dispatch_table_with_deferred_events(rootState, optionalDependency);
     }
 };
 }
