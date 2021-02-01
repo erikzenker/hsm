@@ -70,7 +70,7 @@ install(
 
 install(
     EXPORT hsm-targets
-    NAMESPACE ska::
+    NAMESPACE hsm::
     DESTINATION "${hsm_install_cmakedir}"
     COMPONENT hsm_Development
 )
