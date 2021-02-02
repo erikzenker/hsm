@@ -15,15 +15,16 @@ if("${HSM_GCC_COVERAGE}")
 endif()
 
 if("${HSM_ASAN}")
-    set(CMAKE_CXX_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+  set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 if("${HSM_UBSAN}")
-    set(CMAKE_CXX_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer -fno-sanitize-recover -fsanitize=float-divide-by-zero")
+  set(CMAKE_CXX_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer -fno-sanitize-recover -fsanitize=float-divide-by-zero")
 endif()
 
 if("${HSM_TIME_TRACE}")
-    set(CMAKE_CXX_FLAGS "-ftime-trace")
+  set(CMAKE_CXX_FLAGS "-ftime-trace")
 endif()
 
 if("${HSM_TEMPLIGHT_PROFILER}")
