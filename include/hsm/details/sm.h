@@ -130,6 +130,7 @@ template <class RootState, class... OptionalParameters> class sm {
             }
 
             if (!result.transition->executeGuard(event)) {
+                allTransitionsInvalid = false;
                 continue;
             }
 
