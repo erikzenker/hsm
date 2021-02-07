@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(hsm SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
 FetchContent_MakeAvailable(hsm)
 
-find_package(GTest CONFIG REQUIRED)
+find_package(GTest 1.8.1 REQUIRED)
 include(GoogleTest)
 
 # ---- Flags ----

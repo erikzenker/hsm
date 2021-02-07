@@ -1,5 +1,8 @@
 [requires]
 boost/1.72.0
 
+[build_requires]
+gtest/1.10.0
+
 [generators]
 cmake_find_package

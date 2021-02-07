@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(
     hsm
-    VERSION 0.0.1
+    VERSION 1.3.5
     DESCRIPTION "Finite state machine library based on Boost.Hana"
     HOMEPAGE_URL "https://github.com/erikzenker/hsm"
     LANGUAGES CXX

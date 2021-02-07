@@ -36,19 +36,9 @@ jobs:
         cd build/dependencies/conan
         conan install ../../.. --build missing -o boost:without_fiber=True
 
-    - name: Cache GTest
-      uses: actions/cache@v2
-      with:
-        path: build/dependencies/gtest
-        key: gtest-cache-${{ hashFiles('script/install_gtest.sh') }}-macos
-
-    - name: Install GoogleTest
-      run: script/install_gtest.sh
-
     - name: Configure Hsm
       run: cmake -S test -B build/test -D CMAKE_BUILD_TYPE=Release
         -D "CMAKE_MODULE_PATH=${PWD}/build/dependencies/conan"
-        -D "CMAKE_PREFIX_PATH=${PWD}/build/dependencies/gtest"
 
     - name: Build Hsm
       run: cmake --build build/test -j 2

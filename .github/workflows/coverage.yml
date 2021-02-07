@@ -40,20 +40,10 @@ jobs:
         cd build/dependencies/conan
         conan install ../../.. -s compiler.libcxx=libstdc++11 --build missing
 
-    - name: Cache GTest
-      uses: actions/cache@v2
-      with:
-        path: build/dependencies/gtest
-        key: gtest-cache-${{ hashFiles('script/install_gtest.sh') }}-g++-10
-
-    - name: Install GoogleTest
-      run: script/install_gtest.sh
-
     - name: Configure Hsm
       run: cmake -S test -B build/test -D CMAKE_BUILD_TYPE=Release
         -D HSM_GCC_COVERAGE=ON
         -D "CMAKE_MODULE_PATH=${PWD}/build/dependencies/conan"
-        -D "CMAKE_PREFIX_PATH=${PWD}/build/dependencies/gtest"
 
     - name: Build Hsm
       run: cmake --build build/test -j 2

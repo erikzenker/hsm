@@ -37,23 +37,12 @@ jobs:
       env: { CONAN_USER_HOME: '${{ github.workspace }}/.conan' }
       run: conan install ../../.. --build missing
 
-    - name: Cache GTest
-      uses: actions/cache@v2
-      with:
-        path: build/dependencies/gtest
-        key: gtest-cache-${{ hashFiles('script/install_gtest.sh') }}-windows
-
-    - name: Install GoogleTest
-      shell: bash
-      run: script/install_gtest.sh Debug
-
     - name: Configure Hsm
       run: >-
         $pwd = (Get-Location) -replace "\\", "/"
 
         & cmake -S test -B build/test
         -D "CMAKE_MODULE_PATH=${pwd}/build/dependencies/conan"
-        -D "CMAKE_PREFIX_PATH=${pwd}/build/dependencies/gtest"
 
         if ($LASTEXITCODE -ne 0) { throw "Exit code is $LASTEXITCODE" }
 
