@@ -1,26 +1,29 @@
 name: Clang tidy
+
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-      
-    - name: Install Dependencies
-      run: | 
-        sudo apt install clang-tidy-10 libboost-all-dev
-        clang-tidy-10 --version
 
-    - name: Clang tidy
-      run: |
-        CHECKS=-\*,clang-analyzer-\*,boost-\*,cppcoreguidelines-\*,modernize-\*,performance-\*
-        clang-tidy-10 --warnings-as-errors=${CHECKS} \
-                     -checks=${CHECKS} \
-                     -header-filter=src/include/hsm/\* \
-                     benchmark/simple/hsm.cpp \
-                     -- -Isrc/include/ -Ibenchmark/ -std=c++17
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: | 
+          sudo apt install clang-tidy-10 libboost-all-dev
+          clang-tidy-10 --version
+
+      - name: Clang tidy
+        run: >-
+          CHECKS=-\*,clang-analyzer-\*,boost-\*,cppcoreguidelines-\*,modernize-\*,performance-\*
+
+          clang-tidy-10 --warnings-as-errors=${CHECKS} -checks=${CHECKS}
+          -header-filter=include/hsm/\* benchmark/simple/hsm.cpp
+          -- -Iinclude/ -Ibenchmark/ -std=c++17
