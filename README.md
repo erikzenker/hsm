@@ -232,6 +232,10 @@ auto main() -> int
 }
 ```
 
+## Play with it Online
+* Follow the link to the compiler explorer: [https://godbolt.org/z/jqPbcj](https://godbolt.org/z/jqPbcj)
+
+
 ## Runtime Benchmark Results
 
 The benchmark result are taken from the [state machine benchmark repository](https://github.com/erikzenker/state-machine-benchmark).
@@ -291,48 +295,63 @@ The benchmark result are taken from the [state machine benchmark repository](htt
 * C++17
 * \>= g++-8
 * \>= clang-8
+* Cmake 3.14
 
-## Play with it Online
-* Follow the link to the compiler explorer: [https://godbolt.org/z/jqPbcj](https://godbolt.org/z/jqPbcj)
+## Dev Dependencies
+* Gtest
 
-## Usage as Single Header
+## Integration
+### Usage as Single Header
 * Download [amalgamation header](https://raw.githubusercontent.com/erikzenker/hsm/master/src/include/hsm/gen/hsm.h) and put it into your project src folder
 * Include amalgamation header:
   ```c++
   #include "path/to/amalgamation/header/hsm.h"
   ```
 
-## Install with CMake
-``` bash
-mkdir src/build && cd src/build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
-cmake --build . --target install
+### CMake
+To use this library from a CMake project, you can locate it directly with find_package() and use the namespaced imported target from the generated package configuration:
+
+```cmake
+# CMakeLists.txt
+find_package(hsm 1.3.5 REQUIRED)
+...
+add_library(foo ...)
+...
+target_link_libraries(foo PRIVATE hsm::hsm)
 ```
 
-## Install with Conan/Cmake
+## Install 
+
+### CMake
 ``` bash
-mkdir src/build && cd src/build
-conan install ../..
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/
-cmake --build . --target install
+cmake -S . -B build
+cmake --install build/ --prefix /tmp/
 ```
-## Install from Conan [![Download](https://api.bintray.com/packages/erikzenker/conan-erikzenker/hsm%3Aerikzenker/images/download.svg) ](https://bintray.com/erikzenker/conan-erikzenker/hsm%3Aerikzenker/_latestVersion)
+
+### Conan/Cmake
+``` bash
+mkdir -p build/dependencies/conan
+conan install . -if build/dependencies/conan -s compiler.libcxx=libstdc++11 --build missing
+cmake -S . -B build
+cmake --install build/ --prefix /tmp/ -D "CMAKE_MODULE_PATH=${PWD}/build/dependencies/conan"
+```
+### Conan [![Download](https://api.bintray.com/packages/erikzenker/conan-erikzenker/hsm%3Aerikzenker/images/download.svg) ](https://bintray.com/erikzenker/conan-erikzenker/hsm%3Aerikzenker/_latestVersion)
 ``` bash
 conan remote add conan-erikzenker https://api.bintray.com/conan/erikzenker/conan-erikzenker
 conan install hsm/1.0@erikzenker/testing --build missing
 ```
 
-## Install from AUR
+### Install from Arch Linux AUR
 ``` bash
 pacaur -S hsm-git
 ```
 
 ## Compile and Run the Tests Using the Installed Library
 ``` bash
-mkdir test/build/ && cd test/build/
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --target hsmTests
-ctest -VV
+cmake -S test -B build
+cmake --build build/test
+cd build/test
+ctest --output-on-failure
 ```
 
 ## Author
