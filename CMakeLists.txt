@@ -30,7 +30,7 @@ target_include_directories(
 
 target_compile_features(hsm INTERFACE cxx_std_17)
 
-find_package(Boost 1.72 REQUIRED COMPONENTS boost)
+find_package(Boost 1.72 REQUIRED)
 target_link_libraries(hsm INTERFACE Boost::boost)
 
 # ---- Install ----
