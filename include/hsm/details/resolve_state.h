@@ -110,10 +110,15 @@ template <class Transition> constexpr auto resolveInitialStateEntryAction(Transi
 
 template <class Transition> constexpr auto resolveExitAction(Transition transition)
 {
+    const auto hasPseudoExitAction = has_pseudo_exit_action(transition);
+    (void)hasPseudoExitAction;
+
     if constexpr (transition.internal()) {
         return [](auto&&...) {};
     } else if constexpr (has_exit_action(transition.source())) {
         return get_exit_action(transition.source());
+    } else if constexpr (hasPseudoExitAction) {
+        return get_exit_action(resolveSrcParent(transition));
     } else {
         return [](auto&&...) {};
     }

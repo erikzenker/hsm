@@ -32,7 +32,7 @@ template <class RootState, class... OptionalParameters> class sm {
     std::array<std::vector<std::size_t>, nParentStates(rootState)> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(rootState)> m_history;
     variant_queue<Events> m_defer_queue;
-    std::size_t m_currentRegions;
+    std::size_t m_currentRegions {};
     StatesMap m_statesMap;
 
   public:
@@ -40,7 +40,6 @@ template <class RootState, class... OptionalParameters> class sm {
         : m_initial_states()
         , m_history()
         , m_defer_queue(collect_event_typeids_recursive(rootState))
-        , m_currentRegions(0)
         , m_statesMap(make_states_map(rootState))
     {
         static_assert(

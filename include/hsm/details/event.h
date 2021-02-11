@@ -16,23 +16,23 @@ using namespace boost::hana;
 template <class Event> struct event_t {
     static constexpr bh::type<Event> typeid_ {};
 
-    constexpr auto operator+()
+    constexpr auto operator+() const
     {
         return details::internal_transition(event_t<Event> {}, noGuard {}, noAction {});
     }
 
-    template <class Guard> constexpr auto operator[](const Guard& guard)
+    template <class Guard> constexpr auto operator[](const Guard& guard) const
     {
         return TransitionEG<event_t<Event>, Guard> { guard };
     }
 
-    template <class Action> constexpr auto operator/(const Action& guard)
+    template <class Action> constexpr auto operator/(const Action& guard) const
     {
         return TransitionEA<event_t<Event>, Action> { guard };
     }
 };
 
-template <class Event> event_t<Event> event {};
+template <class Event> const event_t<Event> event {};
 
 struct noneEvent {
 };

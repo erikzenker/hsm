@@ -24,15 +24,15 @@ struct pause2 {
 struct open_close {};
 struct cd_detected {};
 
-auto start_playback = [](auto, auto, auto) {};
-auto resume_playback = [](auto, auto, auto) {};
-auto close_drawer = [](auto, auto, auto) {};
-auto open_drawer = [](auto, auto, auto) {};
-auto stop_and_open = [](auto, auto, auto) {};
-auto stopped_again = [](auto, auto, auto) {};
-auto store_cd_info = [](auto, auto, auto) {};
-auto pause_playback = [](auto, auto, auto) {};
-auto stop_playback = [](auto, auto, auto) {};
+constexpr auto start_playback = [](auto, auto, auto) {};
+constexpr auto resume_playback = [](auto, auto, auto) {};
+constexpr auto close_drawer = [](auto, auto, auto) {};
+constexpr auto open_drawer = [](auto, auto, auto) {};
+constexpr auto stop_and_open = [](auto, auto, auto) {};
+constexpr auto stopped_again = [](auto, auto, auto) {};
+constexpr auto store_cd_info = [](auto, auto, auto) {};
+constexpr auto pause_playback = [](auto, auto, auto) {};
+constexpr auto stop_playback = [](auto, auto, auto) {};
 
 struct player {
     static constexpr auto make_transition_table()

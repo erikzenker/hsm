@@ -137,10 +137,12 @@ template <StateIdx NStates, class Event>
 using DispatchArray = std::array<NextState<Event>, NStates>;
 
 template <StateIdx NStates, class Event> struct DispatchTable {
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
     static DispatchArray<NStates, Event> table;
 };
 
 template <StateIdx NStates, class Event>
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 DispatchArray<NStates, Event> DispatchTable<NStates, Event>::table {};
 
 constexpr auto get_dispatch_table = [](auto rootState, auto eventTypeid) -> auto&

@@ -14,12 +14,18 @@ struct S1 {
 struct S2 {
     static constexpr auto on_entry()
     {
-        return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
+        return [](auto event, auto /*source*/, auto /*target*/, auto& /*dep*/) {
+            event.called->set_value();
+        };
     }
     static constexpr auto on_exit()
     {
-        return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
+        return [](auto event, auto /*source*/, auto /*target*/, auto& /*dep*/) {
+            event.called->set_value();
+        };
     }
+};
+struct Exit {
 };
 
 // Events
@@ -44,25 +50,32 @@ struct e3 {
     }
     std::shared_ptr<std::promise<void>> called;
 };
+struct e4 {
+};
 
 struct SubState {
-    static constexpr auto make_transition_table()
-    {
-        // clang-format off
-        return hsm::transition_table(
-            * hsm::state<S1> + hsm::event<e1> =  hsm::state<S1>
-        );
-        // clang-format on
-    }
 
     static constexpr auto on_entry()
     {
-        return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
+        return [](auto event, auto /*source*/, auto /*target*/, auto& /*dep*/) {
+            event.called->set_value();
+        };
     }
 
     static constexpr auto on_exit()
     {
-        return [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
+        return [](auto event, auto /*source*/, auto /*target*/, auto& /*dep*/) {
+            event.called->set_value();
+        };
+    }
+
+    static constexpr auto make_transition_table()
+    {
+        // clang-format off
+        return hsm::transition_table(
+            * hsm::state<S1> + hsm::event<e1> = hsm::state<S1>
+        );
+        // clang-format on
     }
 };
 
@@ -71,7 +84,25 @@ struct SubState2 {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S2> + hsm::event<e1> =  hsm::state<S2>
+            * hsm::state<S2> + hsm::event<e1> = hsm::state<S2>
+        );
+        // clang-format on
+    }
+};
+
+struct SubState3 {
+    static constexpr auto on_exit()
+    {
+        return [](auto /*event*/, auto /*source*/, auto /*target*/, auto& dep) {
+            dep.called.set_value();
+        };
+    }
+
+    static constexpr auto make_transition_table()
+    {
+        // clang-format off
+        return hsm::transition_table(
+            * hsm::state<S1> + hsm::event<e4> = hsm::state<Exit>
         );
         // clang-format on
     }
@@ -82,20 +113,32 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>       + hsm::event<e1> = hsm::state<S2>,
-              hsm::state<S2>       + hsm::event<e1> = hsm::state<S1>,
-              hsm::state<S1>       + hsm::event<e2> = hsm::state<SubState>,
-              hsm::state<S1>       + hsm::event<e3> = hsm::state<SubState2>,
-              hsm::state<SubState> + hsm::event<e2> = hsm::state<S1>
+            * hsm::state<S1>             + hsm::event<e1> = hsm::state<S2>
+            , hsm::state<S2>             + hsm::event<e1> = hsm::state<S1>
+            , hsm::state<S1>             + hsm::event<e2> = hsm::state<SubState>
+            , hsm::state<S1>             + hsm::event<e3> = hsm::state<SubState2>
+            , hsm::state<S1>             + hsm::event<e4> = hsm::state<SubState3>
+            , hsm::state<SubState>       + hsm::event<e2> = hsm::state<S1>
+            , hsm::exit<SubState3, Exit>                  = hsm::state<S1>
         );
         // clang-format on
     }
 };
 }
 
+struct Dependency {
+    std::promise<void> called;
+};
+
 class EntryExitActionsTests : public Test {
-    protected:    
-        hsm::sm<MainState> sm;
+  protected:
+    EntryExitActionsTests()
+        : sm(dep)
+    {
+    }
+
+    Dependency dep;
+    hsm::sm<MainState, Dependency> sm;
 };
 
 TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action)
@@ -136,7 +179,6 @@ TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action_of_substate)
         exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
-// Entry action of sub state initial state is not called see github #104
 TEST_F(EntryExitActionsTests, should_call_entry_action_of_substate_initial_state)
 {
     auto entryActionCalled = std::make_shared<std::promise<void>>();
@@ -147,4 +189,15 @@ TEST_F(EntryExitActionsTests, should_call_entry_action_of_substate_initial_state
     ASSERT_EQ(
         std::future_status::ready,
         entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
+}
+
+TEST_F(EntryExitActionsTests, should_call_exit_action_on_pseudo_exit)
+{
+    sm.process_event(e4 {});
+    ASSERT_TRUE(sm.is(hsm::state<SubState3>, hsm::state<S1>));
+
+    sm.process_event(e4 {});
+    ASSERT_TRUE(sm.is(hsm::state<S1>));
+
+    ASSERT_EQ(std::future_status::ready, dep.called.get_future().wait_for(std::chrono::seconds(1)));
 }
