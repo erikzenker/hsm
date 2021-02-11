@@ -13,6 +13,7 @@
 #include <boost/hana/equal.hpp>
 #include <boost/hana/filter.hpp>
 #include <boost/hana/find.hpp>
+#include <boost/hana/fold.hpp>
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/functional/apply.hpp>
 #include <boost/hana/functional/capture.hpp>
@@ -74,8 +75,8 @@ constexpr auto addDispatchTableEntry(
                         [=](auto& dispatchTable, auto&& transition2) -> void {
                             const auto defer = false;
                             const auto valid = true;
-                            dispatchTable[fromIdx]
-                                = { toIdx, history, defer, valid, std::move(transition2) };
+                            dispatchTable[fromIdx].push_front(
+                                { toIdx, history, defer, valid, std::move(transition2) });
                         },
                         dispatchTables[eventTypeid],
                         make_transition(
@@ -132,8 +133,10 @@ constexpr auto addDispatchTableEntryOfSubMachineExits(
                                 [=](auto& dispatchTable, auto&& transition2) {
                                     const auto defer = false;
                                     const auto valid = true;
-                                    dispatchTable[fromIdx]
-                                        = { toIdx, history, defer, valid, std::move(transition2) };
+                                    // TODO: Since dispatch table is static, transitions might be
+                                    // added twice
+                                    dispatchTable[fromIdx].push_front(
+                                        { toIdx, history, defer, valid, std::move(transition2) });
                                 },
                                 dispatchTables[eventTypeid],
                                 make_transition(
@@ -229,7 +232,9 @@ constexpr auto fill_dispatch_table_with_deferred_events(
             auto& dispatchTable = dispatchTables[event];
             const auto from = getCombinedStateIdx(
                 combinedStateTypeids, resolveSrcParent(transition), resolveSrc(transition));
-            dispatchTable[from].defer = true;
+
+            dispatchTable[from].push_front({});
+            dispatchTable[from].front().defer = true;
         });
     });
 }

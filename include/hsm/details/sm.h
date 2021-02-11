@@ -121,27 +121,31 @@ template <class RootState, class... OptionalParameters> class sm {
         for (Region region = 0; region < current_regions(); region++) {
 
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-            auto& result = get_dispatch_table_entry(event, region);
+            auto& results = get_dispatch_table_entry(event, region);
 
-            if (result.defer) {
-                m_defer_queue.push(event);
-                return true;
-            }
-
-            if (!result.valid) {
+            if (results.empty()) {
                 continue;
             }
 
-            if (!result.transition->executeGuard(event)) {
+            for (auto& result : results) {
+
+                if (result.defer) {
+                    m_defer_queue.push(event);
+                    return true;
+                }
+
+                if (!result.transition->executeGuard(event)) {
+                    allTransitionsInvalid = false;
+                    continue;
+                }
+
                 allTransitionsInvalid = false;
-                continue;
+                allGuardsFailed = false;
+                update_current_state(region, result);
+
+                result.transition->executeAction(event);
+                break;
             }
-
-            allTransitionsInvalid = false;
-            allGuardsFailed = false;
-            update_current_state(region, result);
-
-            result.transition->executeAction(event);
         }
 
         if (allTransitionsInvalid) {
@@ -152,7 +156,7 @@ template <class RootState, class... OptionalParameters> class sm {
             return true;
         }
 
-        apply_anonymous_transitions();
+        process_anonymous_transitions();
         return true;
     }
 
@@ -165,7 +169,7 @@ template <class RootState, class... OptionalParameters> class sm {
         }
     }
 
-    auto apply_anonymous_transitions()
+    auto process_anonymous_transitions()
     {
         if constexpr (has_anonymous_transition(rootState)) {
             while (true) {
@@ -173,18 +177,22 @@ template <class RootState, class... OptionalParameters> class sm {
 
                     auto event = noneEvent {};
                     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                    auto& result = get_dispatch_table_entry(event, region);
+                    auto& results = get_dispatch_table_entry(event, region);
 
-                    if (!result.valid) {
+                    if (results.empty()) {
                         return;
                     }
 
-                    if (!result.transition->executeGuard(event)) {
-                        continue;
-                    }
+                    int i = 0;
+                    for (auto& result : results) {
+                        std::cout << i++ << std::endl;
+                        if (!result.transition->executeGuard(event)) {
+                            continue;
+                        }
 
-                    update_current_state(region, result);
-                    result.transition->executeAction(event);
+                        update_current_state(region, result);
+                        result.transition->executeAction(event);
+                    }
                 }
             }
         }

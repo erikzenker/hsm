@@ -93,7 +93,9 @@ struct SubState2 {
 struct SubState3 {
     static constexpr auto on_exit()
     {
-        return [](auto /*event*/, auto /*source*/, auto /*target*/, auto& dep) {
+        return [](auto event, auto source, auto target, auto& dep) {
+            std::cout << "on_exit" << std::endl;
+            hsm::log(event, source, target, dep);
             dep.called.set_value();
         };
     }
@@ -102,7 +104,7 @@ struct SubState3 {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> + hsm::event<e4> = hsm::state<Exit>
+            * hsm::state<S1> + hsm::event<e4> / hsm::log = hsm::state<Exit>
         );
         // clang-format on
     }
@@ -117,9 +119,9 @@ struct MainState {
             , hsm::state<S2>             + hsm::event<e1> = hsm::state<S1>
             , hsm::state<S1>             + hsm::event<e2> = hsm::state<SubState>
             , hsm::state<S1>             + hsm::event<e3> = hsm::state<SubState2>
-            , hsm::state<S1>             + hsm::event<e4> = hsm::state<SubState3>
+            , hsm::state<S1>             + hsm::event<e4> / hsm::log = hsm::state<SubState3>
             , hsm::state<SubState>       + hsm::event<e2> = hsm::state<S1>
-            , hsm::exit<SubState3, Exit>                  = hsm::state<S1>
+            , hsm::exit<SubState3, Exit>                  / hsm::log = hsm::state<S1>
         );
         // clang-format on
     }

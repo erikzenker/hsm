@@ -125,5 +125,5 @@ TEST_F(DirectTransitionTests, should_transit_directly_between_substates_with_act
     sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S4>));
     sm.process_event(e2 {});
-    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S4>));
+    ASSERT_TRUE(sm.is(hsm::state<SubState2>, hsm::state<S4>));
 }

@@ -41,6 +41,8 @@ struct e7 {
 };
 struct e8 {
 };
+struct e9 {
+};
 
 template <class Event, class Source, class Target>
 auto print_transition(Event event, Source source, Target target, std::string context)
@@ -52,8 +54,8 @@ auto print_transition(Event event, Source source, Target target, std::string con
 }
 
 // Guards
-const auto g2 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return false; };
-const auto g3 = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
+const auto fail = [](auto /*event*/, auto /*source*/, auto /*target*/) { return false; };
+const auto success = [](auto /*event*/, auto /*source*/, auto /*target*/) { return true; };
 
 // Actions
 const auto a2 = [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
@@ -110,13 +112,15 @@ struct MainState {
         return hsm::transition_table(
             * hsm::state<S1> + hsm::event<e1> /  a2 = hsm::state<S1>
             , hsm::state<S1> + hsm::event<e2>       = hsm::state<SubState>
-            , hsm::state<S1> + hsm::event<e3>  [g2] = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e4>  [g3] = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e3>  [fail] = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e4>  [success] = hsm::state<S2>
             // The following transitions show different possibilities to provide actions
             , hsm::state<S1> + hsm::event<e5> / Functor{} = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e6> / free_function_adapter = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e7> / lambda  = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e8> / member_function_adapter = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e9> [fail] = hsm::state<S2>                                 
+            , hsm::state<S1> + hsm::event<e9> [success] = hsm::state<S2>
         );
         // clang-format on
     }
@@ -187,5 +191,11 @@ TEST_F(GuardsActionsTests, should_use_lambda_function)
 TEST_F(GuardsActionsTests, should_use_member_function)
 {
     sm.process_event(e8 {});
+}
+
+TEST_F(GuardsActionsTests, should_recognize_same_transition_with_different_guards)
+{
+    sm.process_event(e9 {});
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }
 }
