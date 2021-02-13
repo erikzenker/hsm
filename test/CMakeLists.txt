@@ -44,10 +44,6 @@ add_executable(
     unit/chain_actions_tests.cpp
     unit/has_action_tests.cpp
 )
-set_property(
-    TARGET hsmUnitTests PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreadedDebug$<$<CONFIG:Debug>:Debug>"
-)
 target_compile_features(hsmUnitTests PRIVATE cxx_std_17)
 target_link_libraries(hsmUnitTests PRIVATE hsm::hsm GTest::gtest_main)
 gtest_discover_tests(hsmUnitTests TEST_PREFIX unit.)
