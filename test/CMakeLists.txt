@@ -43,6 +43,7 @@ add_executable(
     unit/transition_table_traits_tests.cpp
     unit/chain_actions_tests.cpp
     unit/has_action_tests.cpp
+    unit/make_dispatch_tables_tests.cpp
 )
 set_property(
     TARGET hsmUnitTests PROPERTY

@@ -1,4 +1,5 @@
 #include "hsm/details/fill_dispatch_table.h"
+#include "hsm/details/make_dispatch_tables.h"
 #include "hsm/details/make_states_map.h"
 #include "hsm/details/state.h"
 #include "hsm/details/transition_table.h"
@@ -47,7 +48,8 @@ TEST_F(FillDispatchTableTests, should_will_dispatch_table_with_external_transiti
     constexpr auto rootState = hsm::state_t<MainState> {};
     constexpr auto transitions = hsm::flatten_transition_table(rootState);
     auto statesMap = hsm::make_states_map(rootState);
+    auto dispatchTables = hsm::make_dispatch_tables(rootState);
 
     hsm::fill_dispatch_table_with_transitions(
-        rootState, statesMap, bh::make_basic_tuple(), transitions);
+        rootState, dispatchTables, statesMap, bh::make_basic_tuple(), transitions);
 }
