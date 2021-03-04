@@ -1,10 +1,9 @@
 #pragma once
 
 #include "hsm/details/collect_states.h"
+#include "hsm/details/to_map.h"
 #include "hsm/details/to_pairs.h"
 
-#include <boost/hana/append.hpp>
-#include <boost/hana/map.hpp>
 #include <boost/hana/transform.hpp>
 #include <boost/hana/zip.hpp>
 
@@ -13,10 +12,6 @@ namespace hsm {
 namespace bh {
 using namespace boost::hana;
 }
-
-constexpr auto to_map = [](auto tupleOfPairs) {
-    return bh::unpack(tupleOfPairs, [](auto... pairs) { return bh::make_map(pairs...); });
-};
 
 /***
  * Returns a map from typeid(state<State>) -> State

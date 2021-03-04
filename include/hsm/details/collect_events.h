@@ -33,7 +33,7 @@ template <class State> constexpr auto collect_event_typeids_recursive(State stat
 }
 
 template <class TransitionTuple>
-constexpr auto collect_event_typeids_recursive_with_transitions(TransitionTuple transitions)
+constexpr auto collect_event_typeids_recursive_from_transitions(TransitionTuple transitions)
 {
     return remove_duplicates(bh::transform(transitions, collectEventTypeids));
 }

@@ -3,12 +3,14 @@
 #include "hsm/details/collect_events.h"
 #include "hsm/details/fill_dispatch_table.h"
 #include "hsm/details/idx.h"
+#include "hsm/details/make_dispatch_tables.h"
 #include "hsm/details/make_states_map.h"
 #include "hsm/details/transition_table_traits.h"
 #include "hsm/details/variant_queue.h"
 
 #include <boost/hana/basic_tuple.hpp>
-#include <boost/hana/if.hpp>
+#include <boost/hana/contains.hpp>
+#include <boost/hana/type.hpp>
 
 #include <array>
 #include <cstdint>
@@ -28,12 +30,14 @@ template <class RootState, class... OptionalParameters> class sm {
     using Region = std::uint8_t;
     using Events = decltype(collect_event_typeids_recursive(rootState));
     using StatesMap = decltype(make_states_map(rootState));
+    using DispatchTables = decltype(make_dispatch_tables(rootState));
     std::array<StateIdx, maxInitialStates(rootState)> m_currentCombinedState;
     std::array<std::vector<std::size_t>, nParentStates(rootState)> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(rootState)> m_history;
     variant_queue<Events> m_defer_queue;
     std::size_t m_currentRegions {};
     StatesMap m_statesMap;
+    DispatchTables m_dispatchTables;
 
   public:
     sm(OptionalParameters&... optionalParameters)
@@ -117,7 +121,7 @@ template <class RootState, class... OptionalParameters> class sm {
         for (Region region = 0; region < current_regions(); region++) {
 
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-            auto& result = dispatch_table_at(m_currentCombinedState[region], event);
+            auto& result = get_dispatch_table_entry(event, region);
 
             if (result.defer) {
                 m_defer_queue.push(event);
@@ -169,7 +173,7 @@ template <class RootState, class... OptionalParameters> class sm {
 
                     auto event = noneEvent {};
                     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-                    auto& result = dispatch_table_at(m_currentCombinedState[region], event);
+                    auto& result = get_dispatch_table_entry(event, region);
 
                     if (!result.valid) {
                         return;
@@ -187,14 +191,9 @@ template <class RootState, class... OptionalParameters> class sm {
     }
 
     template <class Event>
-    constexpr auto dispatch_table_at(StateIdx index, const Event /*event*/) -> auto&
+    constexpr auto dispatch_table_at(StateIdx index, const Event event) -> auto&
     {
-        return bh::apply(
-            [](auto states, StateIdx index) -> auto& {
-                return DispatchTable<states, Event>::table[index];
-            },
-            nStates(rootState) * nParentStates(rootState),
-            index);
+        return m_dispatchTables[event][index];
     }
 
     template <class DispatchTableEntry>
@@ -266,12 +265,21 @@ template <class RootState, class... OptionalParameters> class sm {
         }
     }
 
+    template <class Event, class Region>
+    constexpr auto get_dispatch_table_entry(Event event, Region region) -> decltype(auto)
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+        return m_dispatchTables[bh::typeid_(event)][m_currentCombinedState[region]];
+    }
+
     void fill_dispatch_table(OptionalParameters&... optionalParameters)
     {
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
-        fill_dispatch_table_with_internal_transitions(rootState, m_statesMap, optionalDependency);
-        fill_dispatch_table_with_external_transitions(rootState, m_statesMap, optionalDependency);
-        fill_dispatch_table_with_deferred_events(rootState, optionalDependency);
+        fill_dispatch_table_with_internal_transitions(
+            rootState, m_dispatchTables, m_statesMap, optionalDependency);
+        fill_dispatch_table_with_external_transitions(
+            rootState, m_dispatchTables, m_statesMap, optionalDependency);
+        fill_dispatch_table_with_deferred_events(rootState, m_dispatchTables, optionalDependency);
     }
 };
 }
