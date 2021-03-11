@@ -53,15 +53,15 @@ target_compile_features(hsmUnitTests PRIVATE cxx_std_17)
 target_link_libraries(hsmUnitTests PRIVATE hsm::hsm GTest::gtest_main)
 gtest_discover_tests(hsmUnitTests TEST_PREFIX unit.)
 
-# add_executable(hsmPerformanceTests performance/main.cpp)
-# target_compile_features(hsmPerformanceTests PRIVATE cxx_std_17)
-# target_link_libraries(hsmPerformanceTests PRIVATE hsm::hsm GTest::gtest_main)
-# gtest_discover_tests(hsmPerformanceTests TEST_PREFIX performance.)
+add_executable(hsmPerformanceTests performance/main.cpp)
+target_compile_features(hsmPerformanceTests PRIVATE cxx_std_17)
+target_link_libraries(hsmPerformanceTests PRIVATE hsm::hsm GTest::gtest_main)
+gtest_discover_tests(hsmPerformanceTests TEST_PREFIX performance.)
 
-# add_executable(
-#     hsmIntegrationTests 
-    # integration/main.cpp 
-    # integration/basic_transitions.cpp
+add_executable(
+    hsmIntegrationTests 
+    integration/main.cpp 
+    integration/basic_transitions.cpp
     # integration/direct_transition.cpp
     # integration/entry_exit_actions.cpp
     # integration/entry_exit_pseudo_states.cpp
@@ -81,7 +81,7 @@ gtest_discover_tests(hsmUnitTests TEST_PREFIX unit.)
     # integration/amalgamation_header.cpp
     # integration/custom_targets.cpp
     # integration/chain_actions.cpp
-# )
-# target_compile_features(hsmIntegrationTests PRIVATE cxx_std_17)
-# target_link_libraries(hsmIntegrationTests PRIVATE hsm::hsm GTest::gtest_main)
-# gtest_discover_tests(hsmIntegrationTests TEST_PREFIX integration.)
+)
+target_compile_features(hsmIntegrationTests PRIVATE cxx_std_17)
+target_link_libraries(hsmIntegrationTests PRIVATE hsm::hsm GTest::gtest_main)
+gtest_discover_tests(hsmIntegrationTests TEST_PREFIX integration.)
