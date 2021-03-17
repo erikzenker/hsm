@@ -37,20 +37,20 @@ jobs:
       run: for dir in . test; do conan install $dir -if deps; done
 
     - name: Configure Hsm
-      run: cmake -S test -B build/test -D CMAKE_BUILD_TYPE=Release
+      run: cmake -S test -B build -D CMAKE_BUILD_TYPE=Release
         -D HSM_GCC_COVERAGE=ON
         -D "CMAKE_PREFIX_PATH=${PWD}/deps"
 
     - name: Build Hsm
-      run: cmake --build build/test -j 2
+      run: cmake --build build -j 2
 
     - name: Install Hsm
-      run: cmake --install build/test --prefix install
+      run: cmake --install build --prefix install
 
     - name: Run Hsm Tests
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
-        cd build/test
+        cd build
         ctest --output-on-failure
         bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
