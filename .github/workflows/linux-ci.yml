@@ -38,28 +38,14 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.conan
-        key: conan-cache-${{ hashFiles('conanfile.txt') }}-${{ env.CXX }}
+        key: conan-cache-${{ hashFiles('**/conanfile.txt') }}-${{ env.CXX }}
 
     - name: Install Conan Dependencies
-      run: |
-        set -e
-        mkdir -p build/dependencies/conan
-        cd build/dependencies/conan
-        conan install ../../.. -s compiler.libcxx=libstdc++11 --build missing
-
-    - name: Cache GTest
-      uses: actions/cache@v2
-      with:
-        path: build/dependencies/gtest
-        key: gtest-cache-${{ hashFiles('script/install_gtest.sh') }}-${{ env.CXX }}
-
-    - name: Install GoogleTest
-      run: script/install_gtest.sh
+      run: for dir in . test; do conan install $dir -if deps; done
 
     - name: Configure Hsm
       run: cmake -S test -B build/test -D CMAKE_BUILD_TYPE=Release
-        -D "CMAKE_MODULE_PATH=${PWD}/build/dependencies/conan"
-        -D "CMAKE_PREFIX_PATH=${PWD}/build/dependencies/gtest"
+        -D "CMAKE_PREFIX_PATH=${PWD}/deps"
 
     - name: Build Hsm
       run: cmake --build build/test -j 2

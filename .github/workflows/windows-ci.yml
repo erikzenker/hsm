@@ -27,35 +27,16 @@ jobs:
       uses: actions/cache@v2
       with:
         path: .conan
-        key: conan-cache-${{ hashFiles('conanfile.txt') }}-windows
-
-    - run: mkdir -p build/dependencies/conan
+        key: conan-cache-${{ hashFiles('**/conanfile.txt') }}-windows
 
     - name: Install Conan Dependencies
-      working-directory: build/dependencies/conan
       shell: bash
       env: { CONAN_USER_HOME: '${{ github.workspace }}/.conan' }
-      run: conan install ../../.. --build missing
-
-    - name: Cache GTest
-      uses: actions/cache@v2
-      with:
-        path: build/dependencies/gtest
-        key: gtest-cache-${{ hashFiles('script/install_gtest.sh') }}-windows
-
-    - name: Install GoogleTest
-      shell: bash
-      run: script/install_gtest.sh Debug
+      run: for dir in . test; do conan install $dir -if deps; done
 
     - name: Configure Hsm
-      run: >-
-        $pwd = (Get-Location) -replace "\\", "/"
-
-        & cmake -S test -B build/test
-        -D "CMAKE_MODULE_PATH=${pwd}/build/dependencies/conan"
-        -D "CMAKE_PREFIX_PATH=${pwd}/build/dependencies/gtest"
-
-        if ($LASTEXITCODE -ne 0) { throw "Exit code is $LASTEXITCODE" }
+      shell: cmd
+      run: cmake -S test -B build/test -D "CMAKE_PREFIX_PATH=%cd:\=/%/deps"
 
     - name: Build Hsm
       run: cmake --build build/test --config Debug -j 2
