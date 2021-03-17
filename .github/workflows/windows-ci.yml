@@ -39,11 +39,11 @@ jobs:
       run: cmake -S test -B build/test -D "CMAKE_PREFIX_PATH=%cd:\=/%/deps"
 
     - name: Build Hsm
-      run: cmake --build build/test --config Debug -j 2
+      run: cmake --build build/test --config Release -j 2
 
     - name: Install Hsm
-      run: cmake --install build/test --config Debug --prefix install
+      run: cmake --install build/test --config Release --prefix install
 
     - name: Run Hsm Tests
       working-directory: build/test
-      run: ctest --output-on-failure -C Debug
+      run: ctest --output-on-failure -C Release
