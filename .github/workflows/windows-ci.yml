@@ -32,7 +32,10 @@ jobs:
     - name: Install Conan Dependencies
       shell: bash
       env: { CONAN_USER_HOME: '${{ github.workspace }}/.conan' }
-      run: for dir in . test; do conan install $dir -if deps; done
+      run: |
+        for dir in . test; do
+          conan install $dir -if deps --build missing
+        done
 
     - name: Configure Hsm
       shell: cmd

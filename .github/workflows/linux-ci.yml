@@ -41,7 +41,10 @@ jobs:
         key: conan-cache-${{ hashFiles('**/conanfile.txt') }}-${{ env.CXX }}
 
     - name: Install Conan Dependencies
-      run: for dir in . test; do conan install $dir -if deps; done
+      run: |
+        for dir in . test; do
+          conan install $dir -if deps --build missing
+        done
 
     - name: Configure Hsm
       run: cmake -S test -B build -D CMAKE_BUILD_TYPE=Release

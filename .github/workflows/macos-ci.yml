@@ -32,7 +32,9 @@ jobs:
     - name: Install Conan Dependencies
       run: |
         for dir in . test; do
-          conan install $dir -if deps -o boost:without_fiber=True
+          conan install $dir -if deps \
+          -o boost:without_fiber=True \
+          --build missing
         done
 
     - name: Configure Hsm
