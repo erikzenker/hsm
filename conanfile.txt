@@ -2,4 +2,4 @@
 boost/1.72.0
 
 [generators]
-cmake_find_package
+cmake_find_package_multi
