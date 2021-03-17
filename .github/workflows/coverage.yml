@@ -36,7 +36,9 @@ jobs:
     - name: Install Conan Dependencies
       run: |
         for dir in . test; do
-          conan install $dir -if deps --build missing
+          conan install $dir -if deps \
+          -s compiler.libcxx=libstdc++11 \
+          --build missing
         done
 
     - name: Configure Hsm
