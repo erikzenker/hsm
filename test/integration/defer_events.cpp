@@ -1,4 +1,5 @@
 #include "hsm/hsm.h"
+#include <boost/hana/experimental/printable.hpp>
 
 #include <boost/hana.hpp>
 #include <gtest/gtest.h>
@@ -46,12 +47,20 @@ struct MainState {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1>  + hsm::event<e1>       = hsm::state<S2>
-            , hsm::state<S1>  + hsm::event<defered2> = hsm::state<S2>
-            , hsm::state<S2>  + hsm::event<defered1> = hsm::state<S1>
-            ,*hsm::state<PS1> + hsm::event<e4>       = hsm::state<PS2>              
+            * hsm::state<S1>  + hsm::event<e1>       / hsm::log = hsm::state<S2>
+            , hsm::state<S1>  + hsm::event<defered2> / hsm::log = hsm::state<S2>
+            , hsm::state<S2>  + hsm::event<defered1> / hsm::log = hsm::state<S1>
+            ,*hsm::state<PS1> + hsm::event<e4>       / hsm::log = hsm::state<PS2>              
         );
         // clang-format on
+    }
+
+    static constexpr auto on_unexpected_event()
+    {
+        return [](auto event) {
+            std::cout << "unexpected event: "
+                      << boost::hana::experimental::print(boost::hana::typeid_(event));
+        };
     }
 };
 

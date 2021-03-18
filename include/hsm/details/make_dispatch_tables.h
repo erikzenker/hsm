@@ -9,6 +9,8 @@
 #include <boost/hana/pair.hpp>
 #include <boost/hana/transform.hpp>
 
+#include <deque>
+
 namespace hsm {
 
 namespace bh {
@@ -21,7 +23,8 @@ template <class RootState> constexpr auto make_dispatch_tables(RootState rootSta
         return bh::transform(eventTypeids, [rootState](auto eventTypeid) {
             return [eventTypeid](auto states) {
                 using Event = typename decltype(eventTypeid)::type;
-                return bh::make_pair(eventTypeid, std::array<NextState<Event>, states>());
+                return bh::make_pair(
+                    eventTypeid, std::array<std::deque<NextState<Event>>, states>());
             }(nStates(rootState) * nParentStates(rootState));
         });
     }(collect_event_typeids_recursive(rootState)));
