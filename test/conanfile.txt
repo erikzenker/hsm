@@ -1,5 +1,5 @@
 [requires]
-boost/1.72.0
+gtest/cci.20210126
 
 [generators]
 cmake_find_package_multi

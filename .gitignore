@@ -3,3 +3,5 @@
 build*/
 benchmark/*.dat
 benchmark/*.svg
+deps/
+install/

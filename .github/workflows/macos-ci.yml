@@ -27,35 +27,26 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.conan
-        key: conan-cache-${{ hashFiles('conanfile.txt') }}-macos
+        key: conan-cache-${{ hashFiles('**/conanfile.txt') }}-macos
 
     - name: Install Conan Dependencies
       run: |
-        set -e
-        mkdir -p build/dependencies/conan
-        cd build/dependencies/conan
-        conan install ../../.. --build missing -o boost:without_fiber=True
-
-    - name: Cache GTest
-      uses: actions/cache@v2
-      with:
-        path: build/dependencies/gtest
-        key: gtest-cache-${{ hashFiles('script/install_gtest.sh') }}-macos
-
-    - name: Install GoogleTest
-      run: script/install_gtest.sh
+        for dir in . test; do
+          conan install $dir -if deps \
+          -o boost:without_fiber=True \
+          --build missing
+        done
 
     - name: Configure Hsm
-      run: cmake -S test -B build/test -D CMAKE_BUILD_TYPE=Release
-        -D "CMAKE_MODULE_PATH=${PWD}/build/dependencies/conan"
-        -D "CMAKE_PREFIX_PATH=${PWD}/build/dependencies/gtest"
+      run: cmake -S test -B build -D CMAKE_BUILD_TYPE=Release
+        -D "CMAKE_PREFIX_PATH=${PWD}/deps"
 
     - name: Build Hsm
-      run: cmake --build build/test -j 2
+      run: cmake --build build -j 2
 
     - name: Install Hsm
-      run: cmake --install build/test --prefix install
+      run: cmake --install build --prefix install
 
     - name: Run Hsm Tests
-      working-directory: build/test
+      working-directory: build
       run: ctest --output-on-failure
