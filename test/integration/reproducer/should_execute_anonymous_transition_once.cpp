@@ -103,7 +103,7 @@ class ReproducerTests : public Test {
     hsm::sm<MainState, Dependency> sm;
 };
 
-TEST_F(ReproducerTests, shouldOnlyExecuteOneAnonymousTransition)
+TEST_F(ReproducerTests, shouldExecuteAnonymousTransitionOnce)
 {
     ASSERT_TRUE(sm.is(hsm::state<MainState>, hsm::state<S1>));
     sm.process_event(e2 {});

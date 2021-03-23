@@ -130,6 +130,7 @@ template <class Event> struct NextState {
     bool history{};
     bool defer{};
     bool valid = false;
+    bool internal = false;
     std::unique_ptr<IDispatchTableEntry<Event>> transition;
 };
 }

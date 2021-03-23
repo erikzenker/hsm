@@ -206,6 +206,10 @@ template <class RootState, class... OptionalParameters> class sm {
     template <class DispatchTableEntry>
     void update_current_state(Region region, const DispatchTableEntry& dispatchTableEntry)
     {
+        if (dispatchTableEntry.internal) {
+            return;
+        }
+
         if constexpr (has_history(rootState)) {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             m_history[currentParentState()][region] = m_currentCombinedState[region];

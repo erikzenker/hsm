@@ -56,6 +56,10 @@ struct e6 {
 struct e7 {
     std::string name = "e7";
 };
+struct e8 {
+};
+struct e9 {
+};
 
 // Guards
 const auto fail = [](auto /*event*/, auto /*source*/, auto /*target*/) { return false; };
@@ -81,7 +85,8 @@ struct SubState {
     {
         // clang-format off
         return hsm::transition_table(
-            + (hsm::event<e1>)
+            + (hsm::event<e1>),
+            + (hsm::event<e8>)
         );
         // clang-format on
     }
@@ -107,7 +112,9 @@ struct MainState {
             + (hsm::event<e1> ),
             + (hsm::event<e2> / action),
             + (hsm::event<e5> [fail] / hsm::log),
-            + (hsm::event<e4> [fail] / action)
+            + (hsm::event<e4> [fail] / action),
+            + (hsm::event<e8>),
+            + (hsm::event<e9>)
         );
         // clang-format on
     }
@@ -175,6 +182,26 @@ TEST_F(
     ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S1>));
     sm.process_event(e5 {});
     ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S3>));
+}
+
+TEST_F(
+    InternalTransitionTests,
+    should_not_overwrite_substate_internal_transition_by_parent_internal_transition)
+{
+    sm.process_event(e3 {});
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S2>));
+    sm.process_event(e8 {});
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S2>));
+}
+
+TEST_F(InternalTransitionTests, should_not_transit_when_internal_transition_on_parent_state)
+{
+    sm.process_event(e3 {});
+    sm.process_event(e1 {});
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S2>));
+    sm.process_event(e9 {});
+    ASSERT_TRUE(sm.is(hsm::state<SubState>, hsm::state<S2>));
 }
 
 TEST_F(InternalTransitionTests, should_not_transit_to_initial_state)
