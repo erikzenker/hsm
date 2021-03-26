@@ -183,15 +183,14 @@ template <class RootState, class... OptionalParameters> class sm {
                         return;
                     }
 
-                    int i = 0;
                     for (auto& result : results) {
-                        std::cout << i++ << std::endl;
                         if (!result.transition->executeGuard(event)) {
                             continue;
                         }
 
                         update_current_state(region, result);
                         result.transition->executeAction(event);
+                        break;
                     }
                 }
             }
@@ -207,6 +206,10 @@ template <class RootState, class... OptionalParameters> class sm {
     template <class DispatchTableEntry>
     void update_current_state(Region region, const DispatchTableEntry& dispatchTableEntry)
     {
+        if (dispatchTableEntry.internal) {
+            return;
+        }
+
         if constexpr (has_history(rootState)) {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             m_history[currentParentState()][region] = m_currentCombinedState[region];

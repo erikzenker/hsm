@@ -77,6 +77,7 @@ add_executable(
     integration/amalgamation_header.cpp
     integration/custom_targets.cpp
     integration/chain_actions.cpp
+    integration/reproducer/should_execute_anonymous_transition_once.cpp
 )
 target_compile_features(hsmIntegrationTests PRIVATE cxx_std_17)
 target_link_libraries(hsmIntegrationTests PRIVATE hsm::hsm GTest::gtest_main)

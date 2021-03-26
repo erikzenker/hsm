@@ -72,11 +72,11 @@ constexpr auto addDispatchTableEntry(
                     auto fromIdx, auto toIdx, auto history, auto mappedSource, auto mappedTarget)
                     -> void {
                     bh::apply(
-                        [=](auto& dispatchTable, auto&& transition2) -> void {
+                        [=](auto& dispatchTable, auto&& transition2, bool internal) -> void {
                             const auto defer = false;
                             const auto valid = true;
                             dispatchTable[fromIdx].push_front(
-                                { toIdx, history, defer, valid, std::move(transition2) });
+                                { toIdx, history, defer, valid, internal, std::move(transition2) });
                         },
                         dispatchTables[eventTypeid],
                         make_transition(
@@ -85,7 +85,8 @@ constexpr auto addDispatchTableEntry(
                             eventTypeid,
                             mappedSource,
                             mappedTarget,
-                            optionalDependency));
+                            optionalDependency),
+                        transition.internal());
                 },
                 getCombinedStateIdx(combinedStateIds, resolveSrcParent(transition), source),
                 getCombinedStateIdx(combinedStateIds, resolveDstParent(transition), target),
@@ -130,13 +131,17 @@ constexpr auto addDispatchTableEntryOfSubMachineExits(
                             auto mappedParent,
                             auto mappedTarget) {
                             bh::apply(
-                                [=](auto& dispatchTable, auto&& transition2) {
+                                [=](auto& dispatchTable, auto&& transition2, bool internal) {
                                     const auto defer = false;
                                     const auto valid = true;
                                     // TODO: Since dispatch table is static, transitions might be
                                     // added twice
-                                    dispatchTable[fromIdx].push_front(
-                                        { toIdx, history, defer, valid, std::move(transition2) });
+                                    dispatchTable[fromIdx].push_front({ toIdx,
+                                                                        history,
+                                                                        defer,
+                                                                        valid,
+                                                                        internal,
+                                                                        std::move(transition2) });
                                 },
                                 dispatchTables[eventTypeid],
                                 make_transition(
@@ -145,7 +150,8 @@ constexpr auto addDispatchTableEntryOfSubMachineExits(
                                     eventTypeid,
                                     mappedParent,
                                     mappedTarget,
-                                    optionalDependency));
+                                    optionalDependency),
+                                transition.internal());
                         },
                         getCombinedStateIdx(combinedStateTypeids, parentState, state),
                         getCombinedStateIdx(
