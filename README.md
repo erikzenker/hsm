@@ -166,7 +166,7 @@ A click on a particular feature check mark will forward to the feature documenta
   </tr>
 </table> 
 
-## Example ([Run](https://godbolt.org/z/szEPEG))
+## Example ([Run](https://godbolt.org/z/1YYc9fo8a))
 ```c++
 #include "hsm/hsm.h"
 
@@ -233,7 +233,7 @@ auto main() -> int
 ```
 
 ## Play with it Online
-* Follow the link to the compiler explorer: [https://godbolt.org/z/jqPbcj](https://godbolt.org/z/jqPbcj)
+* Follow the link to the compiler explorer: [https://godbolt.org/z/r9sTrMfqE](https://godbolt.org/z/r9sTrMfqE)
 
 
 ## Runtime Benchmark Results
@@ -302,7 +302,7 @@ The benchmark result are taken from the [state machine benchmark repository](htt
 
 ## Integration
 ### Usage as Single Header
-* Download [amalgamation header](https://raw.githubusercontent.com/erikzenker/hsm/master/src/include/hsm/gen/hsm.h) and put it into your project src folder
+* Download [amalgamation header](https://raw.githubusercontent.com/erikzenker/hsm/master/include/hsm/gen/hsm.h) and put it into your project src folder
 * Include amalgamation header:
   ```c++
   #include "path/to/amalgamation/header/hsm.h"
