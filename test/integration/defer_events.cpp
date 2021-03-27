@@ -57,7 +57,7 @@ struct MainState {
 
     static constexpr auto on_unexpected_event()
     {
-        return [](auto event) {
+        return [](auto event, auto /*currentState*/) {
             std::cout << "unexpected event: "
                       << boost::hana::experimental::print(boost::hana::typeid_(event));
         };

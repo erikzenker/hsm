@@ -2,9 +2,11 @@
 
 #include "hsm/details/collect_events.h"
 #include "hsm/details/fill_dispatch_table.h"
+#include "hsm/details/fill_unexpected_event_handler_tables.h"
 #include "hsm/details/idx.h"
 #include "hsm/details/make_dispatch_tables.h"
 #include "hsm/details/make_states_map.h"
+#include "hsm/details/make_unexpected_event_handler_tables.h"
 #include "hsm/details/transition_table_traits.h"
 #include "hsm/details/variant_queue.h"
 
@@ -31,6 +33,7 @@ template <class RootState, class... OptionalParameters> class sm {
     using Events = decltype(collect_event_typeids_recursive(rootState));
     using StatesMap = decltype(make_states_map(rootState));
     using DispatchTables = decltype(make_dispatch_tables(rootState));
+    using UnexpectedEventHandlerTables = decltype(make_unexpected_event_handler_tables(rootState));
     std::array<StateIdx, maxInitialStates(rootState)> m_currentCombinedState;
     std::array<std::vector<std::size_t>, nParentStates(rootState)> m_initial_states;
     std::array<std::vector<std::size_t>, nParentStates(rootState)> m_history;
@@ -38,6 +41,7 @@ template <class RootState, class... OptionalParameters> class sm {
     std::size_t m_currentRegions {};
     StatesMap m_statesMap;
     DispatchTables m_dispatchTables;
+    UnexpectedEventHandlerTables m_unexpectedEventHandlerTables;
 
   public:
     sm(OptionalParameters&... optionalParameters)
@@ -55,7 +59,14 @@ template <class RootState, class... OptionalParameters> class sm {
             maxInitialStates(rootState),
             "Transition table needs to have at least one initial state");
 
-        fill_dispatch_table(optionalParameters...);
+        auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
+        fill_unexpected_event_handler_tables(
+            rootState,
+            m_statesMap,
+            m_unexpectedEventHandlerTables,
+            get_unexpected_event_handler(rootState),
+            optionalDependency);
+        fill_dispatch_table(optionalDependency);
         fill_initial_state_table(rootState, m_initial_states);
         fill_initial_state_table(rootState, m_history);
         init_current_state();
@@ -109,7 +120,8 @@ template <class RootState, class... OptionalParameters> class sm {
 
     auto set_dependency(OptionalParameters&... optionalParameters)
     {
-        fill_dispatch_table(optionalParameters...);
+        auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
+        fill_dispatch_table(optionalDependency);
     }
 
   private:
@@ -250,10 +262,12 @@ template <class RootState, class... OptionalParameters> class sm {
         }
     }
 
-    template <class Event> auto call_unexpected_event_handler(Event event)
+    template <class Event> auto call_unexpected_event_handler(Event& event)
     {
-        const auto handler = get_unexpected_event_handler(rootState);
-        handler(event);
+        // TODO: What todo in a multi region state machine?
+        m_unexpectedEventHandlerTables[bh::typeid_(event)]
+            .at(m_currentCombinedState.at(0))
+            ->executeHandler(event);
     }
 
     auto currentState(Region region)
@@ -277,15 +291,15 @@ template <class RootState, class... OptionalParameters> class sm {
     }
 
     template <class Event, class Region>
-    constexpr auto get_dispatch_table_entry(Event event, Region region) -> decltype(auto)
+    constexpr auto get_dispatch_table_entry(Event& event, Region region) -> decltype(auto)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
         return m_dispatchTables[bh::typeid_(event)][m_currentCombinedState[region]];
     }
 
-    void fill_dispatch_table(OptionalParameters&... optionalParameters)
+    template <class OptionalDependency>
+    void fill_dispatch_table(OptionalDependency& optionalDependency)
     {
-        auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
         fill_dispatch_table_with_internal_transitions(
             rootState, m_dispatchTables, m_statesMap, optionalDependency);
         fill_dispatch_table_with_external_transitions(

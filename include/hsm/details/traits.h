@@ -150,7 +150,7 @@ const auto get_unexpected_event_handler = [](auto rootState) {
     if constexpr (has_unexpected_event_handler(rootState)) {
         return decltype(rootState)::type::on_unexpected_event();
     } else {
-        return [](auto /*event*/) {};
+        return [](auto&&...) {};
     }
 };
 }
