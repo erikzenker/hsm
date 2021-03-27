@@ -44,6 +44,7 @@ add_executable(
     unit/chain_actions_tests.cpp
     unit/has_action_tests.cpp
     unit/make_dispatch_tables_tests.cpp
+    unit/unexpected_event_handler_tables_tests.cpp
 )
 target_compile_features(hsmUnitTests PRIVATE cxx_std_17)
 target_link_libraries(hsmUnitTests PRIVATE hsm::hsm GTest::gtest_main)
@@ -65,7 +66,7 @@ add_executable(
     integration/guards_actions.cpp
     integration/orthogonal_regions.cpp
     integration/internal_transition.cpp
-    integration/unexpected_transition_handler.cpp
+    integration/unexpected_event_handler.cpp
     integration/history_pseudo_state.cpp
     integration/dependency_injection.cpp
     integration/defer_events.cpp

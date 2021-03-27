@@ -18,17 +18,13 @@ struct S3 {
 
 // Events
 struct e1 {
+    bool called = false;
 };
 struct e2 {
-    e2(const std::shared_ptr<std::promise<void>>& called)
-        : called(called)
-    {
-    }
-
-    std::shared_ptr<std::promise<void>> called;
+    bool called = false;
 };
 struct e3 {
-    std::shared_ptr<std::promise<void>> called;
+    bool called = false;
 };
 
 // Guards
@@ -52,31 +48,33 @@ struct MainState {
 
     static constexpr auto on_unexpected_event()
     {
-        return [](auto event) { event.called->set_value(); };
+        return [](auto& event, auto /*currentState*/) { event.called = true; };
     }
 };
 
 }
 
-class NoTransitionHandlerTests : public Test {
+class UnexpectedEventHandler : public Test {
   protected:
     hsm::sm<MainState> sm;
     hsm::sm<MainState> sm2;
 };
 
-TEST_F(NoTransitionHandlerTests, should_call_no_transition_handler)
+TEST_F(UnexpectedEventHandler, should_call_unexpected_event_handler)
 {
-    auto called = std::make_shared<std::promise<void>>();
-    sm.process_event(e2 { called });
+    auto event = e2 {};
+    sm.process_event(event);
 
-    ASSERT_EQ(std::future_status::ready, called->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(event.called);
 }
 
-TEST_F(NoTransitionHandlerTests, should_not_call_transition_handler_when_guard_fails)
+TEST_F(UnexpectedEventHandler, should_not_call_unexpected_event_handler_when_guard_fails)
 {
-    auto called = std::make_shared<std::promise<void>>();
-    sm.process_event(e3 {});
-    sm.process_event(e2 { called });
 
-    ASSERT_EQ(std::future_status::timeout, called->get_future().wait_for(std::chrono::seconds(1)));
+    sm.process_event(e3 {});
+
+    auto event = e2 {};
+    sm.process_event(event);
+
+    ASSERT_FALSE(event.called);
 }

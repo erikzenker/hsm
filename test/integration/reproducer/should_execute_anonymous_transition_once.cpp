@@ -79,7 +79,7 @@ struct MainState {
 
     static constexpr auto on_unexpected_event()
     {
-        return [](auto event) {
+        return [](auto event, auto /*currentState*/, auto /* dependency */) {
             throw std::runtime_error(
                 std::string("unexpected event ") + experimental::print(typeid_(event)));
         };
