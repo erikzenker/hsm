@@ -18,6 +18,8 @@ struct S1 {
 };
 struct S2 {
 };
+struct S3 {
+};
 
 // Events
 struct e1 {
@@ -42,6 +44,8 @@ struct e7 {
 struct e8 {
 };
 struct e9 {
+};
+struct e10 {
 };
 
 template <class Event, class Source, class Target>
@@ -110,17 +114,19 @@ struct MainState {
 
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> + hsm::event<e1> /  a2 = hsm::state<S1>
-            , hsm::state<S1> + hsm::event<e2>       = hsm::state<SubState>
-            , hsm::state<S1> + hsm::event<e3>  [fail] = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e4>  [success] = hsm::state<S2>
+            * hsm::state<S1> + hsm::event<e1>            /  a2                     = hsm::state<S1>
+            , hsm::state<S1> + hsm::event<e2>                                      = hsm::state<SubState>
+            , hsm::state<S1> + hsm::event<e3>  [fail]                              = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e4>  [success]                           = hsm::state<S2>
             // The following transitions show different possibilities to provide actions
-            , hsm::state<S1> + hsm::event<e5> / Functor{} = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e6> / free_function_adapter = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e7> / lambda  = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e8> / member_function_adapter = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e9> [fail] = hsm::state<S2>                                 
-            , hsm::state<S1> + hsm::event<e9> [success] = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e5>            / Functor{}               = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e6>            / free_function_adapter   = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e7>            / lambda                  = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e8>            / member_function_adapter = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e9>  [fail]                              = hsm::state<S2>                                 
+            , hsm::state<S1> + hsm::event<e9>  [success]                           = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e10>                                     = hsm::state<S3>
+            , hsm::state<S3>                   [fail]                              = hsm::state<S1>
         );
         // clang-format on
     }
@@ -197,5 +203,11 @@ TEST_F(GuardsActionsTests, should_recognize_same_transition_with_different_guard
 {
     sm.process_event(e9 {});
     ASSERT_TRUE(sm.is(hsm::state<S2>));
+}
+
+TEST_F(GuardsActionsTests, should_guard_anon_transition)
+{
+    sm.process_event(e10 {});
+    ASSERT_TRUE(sm.is(hsm::state<S3>));
 }
 }

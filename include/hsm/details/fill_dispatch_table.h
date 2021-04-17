@@ -80,6 +80,7 @@ constexpr auto addDispatchTableEntry(
                         },
                         dispatchTables[eventTypeid],
                         make_transition(
+                            transition,
                             resolveAction(transition),
                             transition.guard(),
                             eventTypeid,
@@ -145,6 +146,7 @@ constexpr auto addDispatchTableEntryOfSubMachineExits(
                                 },
                                 dispatchTables[eventTypeid],
                                 make_transition(
+                                    transition,
                                     resolveAction(transition),
                                     transition.guard(),
                                     eventTypeid,

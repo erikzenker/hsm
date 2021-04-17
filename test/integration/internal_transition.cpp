@@ -86,7 +86,7 @@ struct SubState {
         // clang-format off
         return hsm::transition_table(
             + (hsm::event<e1>),
-            + (hsm::event<e8>)
+            + (hsm::event<e8> / hsm::log)
         );
         // clang-format on
     }
@@ -113,7 +113,7 @@ struct MainState {
             + (hsm::event<e2> / action),
             + (hsm::event<e5> [fail] / hsm::log),
             + (hsm::event<e4> [fail] / action),
-            + (hsm::event<e8>),
+            + (hsm::event<e8> / hsm::log),
             + (hsm::event<e9>)
         );
         // clang-format on

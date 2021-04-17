@@ -185,6 +185,8 @@ template <class RootState, class... OptionalParameters> class sm {
     {
         if constexpr (has_anonymous_transition(rootState)) {
             while (true) {
+                auto allGuardsFailed = true;
+
                 for (Region region = 0; region < current_regions(); region++) {
 
                     auto event = noneEvent {};
@@ -202,8 +204,13 @@ template <class RootState, class... OptionalParameters> class sm {
 
                         update_current_state(region, result);
                         result.transition->executeAction(event);
+                        allGuardsFailed = false;
                         break;
                     }
+                }
+
+                if (allGuardsFailed) {
+                    return;
                 }
             }
         }
