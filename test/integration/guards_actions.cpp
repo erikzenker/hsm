@@ -15,8 +15,10 @@ namespace hsm::test {
 
 // States
 struct S1 {
+    bool isS1 = true;
 };
 struct S2 {
+    bool isS2 = true;
 };
 struct S3 {
 };
@@ -47,6 +49,8 @@ struct e9 {
 };
 struct e10 {
 };
+struct e11 {
+};
 
 template <class Event, class Source, class Target>
 auto print_transition(Event event, Source source, Target target, std::string context)
@@ -63,6 +67,11 @@ const auto success = [](auto /*event*/, auto /*source*/, auto /*target*/) { retu
 
 // Actions
 const auto a2 = [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
+
+const auto accessSourceAndTarget = [](auto /*event*/, auto source, auto target) {
+    EXPECT_TRUE(source.isS1);
+    EXPECT_TRUE(target.isS2);
+};
 
 struct Functor {
     template <class Event, class Source, class Target>
@@ -118,15 +127,16 @@ struct MainState {
             , hsm::state<S1> + hsm::event<e2>                                      = hsm::state<SubState>
             , hsm::state<S1> + hsm::event<e3>  [fail]                              = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e4>  [success]                           = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e9>  [fail]                              = hsm::state<S2>                                 
+            , hsm::state<S1> + hsm::event<e9>  [success]                           = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<e10>                                     = hsm::state<S3>
+            , hsm::state<S1> + hsm::event<e11>           / accessSourceAndTarget   = hsm::state<S2>
+            , hsm::state<S3>                   [fail]                              = hsm::state<S1>
             // The following transitions show different possibilities to provide actions
             , hsm::state<S1> + hsm::event<e5>            / Functor{}               = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e6>            / free_function_adapter   = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e7>            / lambda                  = hsm::state<S2>
             , hsm::state<S1> + hsm::event<e8>            / member_function_adapter = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e9>  [fail]                              = hsm::state<S2>                                 
-            , hsm::state<S1> + hsm::event<e9>  [success]                           = hsm::state<S2>
-            , hsm::state<S1> + hsm::event<e10>                                     = hsm::state<S3>
-            , hsm::state<S3>                   [fail]                              = hsm::state<S1>
         );
         // clang-format on
     }
@@ -209,5 +219,11 @@ TEST_F(GuardsActionsTests, should_guard_anon_transition)
 {
     sm.process_event(e10 {});
     ASSERT_TRUE(sm.is(hsm::state<S3>));
+}
+
+TEST_F(GuardsActionsTests, should_access_source_and_target_member)
+{
+    sm.process_event(e11 {});
+    ASSERT_TRUE(sm.is(hsm::state<S2>));
 }
 }

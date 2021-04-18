@@ -2,8 +2,15 @@
 
 #include <type_traits>
 
+#include <boost/hana/bool.hpp>
+
 namespace hsm {
 namespace details {
+
+namespace bh {
+using namespace boost::hana;
+}
+
 template <class Source, class Event, class Guard, class Action, class Target> struct Transition {
     constexpr Transition(Source, Event, Guard guard, Action action, Target)
         : m_guard(guard)
