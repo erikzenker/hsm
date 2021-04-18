@@ -120,7 +120,7 @@ constexpr auto addDispatchTableEntryOfSubMachineExits(
     (void)optionalDependency;
 
     if constexpr (transition.internal()) {
-        static_assert(transition.internal());
+        return;
     }
 
     constexpr auto parentState = transition.source();

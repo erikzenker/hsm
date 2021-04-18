@@ -28,7 +28,7 @@ constexpr auto isNotEmpty
     = [](const auto& tuple) { return bh::not_(bh::equal(bh::size_c<0>, bh::size(tuple))); };
 
 /**
- * Returns a typle of internal transitions of a state if it exists.
+ * Returns a tuple of internal transitions of a state if it exists.
  * Otherwise a empty tuple is returned. Source and target of the
  * transition are set to parentstate as a placeholder and need to
  * be filled with all child states of the particular state.
