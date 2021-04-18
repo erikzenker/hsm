@@ -119,6 +119,10 @@ constexpr auto addDispatchTableEntryOfSubMachineExits(
     (void)eventTypeid;
     (void)optionalDependency;
 
+    if constexpr (transition.internal()) {
+        static_assert(transition.internal());
+    }
+
     constexpr auto parentState = transition.source();
     if constexpr (has_transition_table(parentState)) {
         bh::for_each(collect_child_state_typeids(parentState), [=, &dispatchTables](auto state) {

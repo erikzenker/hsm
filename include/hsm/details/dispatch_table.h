@@ -19,7 +19,7 @@ template <class T> auto get(std::reference_wrapper<T> ref) -> auto&
     return ref.get();
 }
 
-// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)    
+// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 template <class Event> struct IDispatchTableEntry {
     virtual ~IDispatchTableEntry() = default;
     virtual void executeAction(Event& event) = 0;
@@ -27,7 +27,7 @@ template <class Event> struct IDispatchTableEntry {
 };
 
 template <
-    class Transition,
+    bool Internal,
     class Action,
     class Guard,
     class SourcePtr,
@@ -37,14 +37,12 @@ template <
 class DispatchTableEntry final : public IDispatchTableEntry<Event> {
   public:
     constexpr DispatchTableEntry(
-        Transition transition,
         Action action,
         Guard guard,
         SourcePtr source,
         TargetPtr target,
         OptionalDependency optionalDependency)
-        : m_transition(std::move(transition))
-        , m_action(action)
+        : m_action(action)
         , m_guard(guard)
         , m_source(std::move(source))
         , m_target(std::move(target))
@@ -56,18 +54,17 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     {
         // clang-format off
         if constexpr(is_action<Action>()){
-            [](auto& transition,
-               auto& action, 
+            [](auto& action, 
                auto& event, 
                const auto& source, 
                auto& target, 
                const auto& optionalDependency) {
                 bh::unpack(optionalDependency, 
-                    [&transition, &action, &event, &source, &target](const auto&... optionalDependency){
-                    (void) transition;    
+                    [&action, &event, &source, &target](const auto&... optionalDependency){
                     using Target = typename TargetPtr::element_type::element_type;
+                    (void) target;
                     if constexpr(is_default_constructable(bh::type_c<Target>)){
-                        if (transition.internal()){
+                        if constexpr (Internal){
                             action(event, **source, **source, get(optionalDependency)...);
                         }
                         else 
@@ -79,7 +76,7 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
                         action(event, **source, target, get(optionalDependency)...);
                     }
                 });
-            }(m_transition, m_action, event, m_source, m_target, m_optionalDependency);
+            }(m_action, event, m_source, m_target, m_optionalDependency);
         }
         // clang-format on
     }
@@ -89,7 +86,6 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
         // clang-format off
         if constexpr(is_guard<Guard>()){
             return [](
-               auto& transition,    
                auto& guard,
                auto& event,
                const auto& source,
@@ -97,8 +93,9 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
                const auto& optionalDependency) {
                 return bh::unpack(
                     optionalDependency,
-                    [&transition, &guard, &event, &source, &target](const auto&... optionalDependency) {
-                        if (transition.internal())
+                    [&guard, &event, &source, &target](const auto&... optionalDependency) {
+                        (void) target;    
+                        if constexpr (Internal)
                         {
                             return guard(event, **source, **source, get(optionalDependency)...);
                         }
@@ -108,7 +105,7 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
                         }
                         
                     });
-            }(m_transition, m_guard, event, m_source, m_target, m_optionalDependency);
+            }(m_guard, event, m_source, m_target, m_optionalDependency);
         }
         else {
             return true;
@@ -117,7 +114,6 @@ class DispatchTableEntry final : public IDispatchTableEntry<Event> {
     }
 
   private:
-    Transition m_transition;
     Action m_action;
     Guard m_guard;
     SourcePtr m_source;
@@ -145,20 +141,19 @@ constexpr auto make_transition(
     using Event = typename decltype(eventTypeid)::type;
 
     return std::make_unique<DispatchTableEntry<
-        Transition,
+        transition.internal(),
         Action,
         Guard,
         Source,
         Target,
         Event,
-        decltype(optionalDependency)>>(
-        transition, action, guard, source, target, optionalDependency);
+        decltype(optionalDependency)>>(action, guard, source, target, optionalDependency);
 }
 
 template <class Event> struct NextState {
-    StateIdx combinedState{};
-    bool history{};
-    bool defer{};
+    StateIdx combinedState {};
+    bool history {};
+    bool defer {};
     bool valid = false;
     bool internal = false;
     std::unique_ptr<IDispatchTableEntry<Event>> transition;
