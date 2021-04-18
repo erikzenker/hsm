@@ -67,6 +67,8 @@ const auto fail = [](auto /*event*/, auto /*source*/, auto /*target*/) { return 
 // Actions
 const auto action = [](auto event, auto /*source*/, auto /*target*/) { event.called->set_value(); };
 
+const auto error = [](auto /*event*/, auto /*source*/, auto /*target*/) { EXPECT_TRUE(false); };
+
 using namespace ::testing;
 using namespace boost::hana;
 
@@ -113,7 +115,7 @@ struct MainState {
             + (hsm::event<e2> / action),
             + (hsm::event<e5> [fail] / hsm::log),
             + (hsm::event<e4> [fail] / action),
-            + (hsm::event<e8> / hsm::log),
+            + (hsm::event<e8> / hsm::chain(hsm::log, error)),
             + (hsm::event<e9>)
         );
         // clang-format on
