@@ -38,7 +38,7 @@ target_link_libraries(hsm INTERFACE Boost::boost)
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-set(hsm_include_directory "${CMAKE_INSTALL_INCLUDEDIR}/hsm")
+set(hsm_include_directory "${CMAKE_INSTALL_INCLUDEDIR}")
 
 install(
     DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
