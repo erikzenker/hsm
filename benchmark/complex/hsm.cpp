@@ -1,5 +1,5 @@
+#include "../benchmark.hpp"
 #include "ComplexStateMachine.h"
-#include "benchmark.hpp"
 
 using namespace hsm;
 

@@ -5,6 +5,7 @@
 #include "hsm/details/fill_dispatch_table.h"
 #include "hsm/details/flatten_transition_table.h"
 #include "hsm/details/to_map.h"
+#include "hsm/details/utils/dunique_ptr.h"
 
 #include <boost/hana/pair.hpp>
 #include <boost/hana/transform.hpp>
@@ -55,7 +56,9 @@ template <class RootState> constexpr auto make_unexpected_event_handler_tables(R
                 using Event = typename decltype(eventTypeid)::type;
                 return bh::make_pair(
                     eventTypeid,
-                    std::array<std::unique_ptr<IUnexpectedEventHandler<Event>>, states>());
+                    std::array<
+                        hsm::details::utils::dunique_ptr<IUnexpectedEventHandler<Event>>,
+                        states>());
             }(nStates(rootState) * nParentStates(rootState));
         });
     }(collect_event_typeids_recursive(rootState)));
