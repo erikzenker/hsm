@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hsm/details/idx.h"
+#include "hsm/details/utils/dunique_ptr.h"
 
 #include <boost/any.hpp>
 
@@ -140,14 +141,15 @@ constexpr auto make_transition(
 {
     using Event = typename decltype(eventTypeid)::type;
 
-    return std::make_unique<DispatchTableEntry<
-        transition.internal(),
-        Action,
-        Guard,
-        Source,
-        Target,
-        Event,
-        decltype(optionalDependency)>>(action, guard, source, target, optionalDependency);
+    return hsm::details::utils::dunique_ptr<IDispatchTableEntry<Event>>(
+        new DispatchTableEntry<
+            transition.internal(),
+            Action,
+            Guard,
+            Source,
+            Target,
+            Event,
+            decltype(optionalDependency)>(action, guard, source, target, optionalDependency));
 }
 
 template <class Event> struct NextState {
@@ -156,6 +158,6 @@ template <class Event> struct NextState {
     bool defer {};
     bool valid = false;
     bool internal = false;
-    std::unique_ptr<IDispatchTableEntry<Event>> transition;
+    hsm::details::utils::dunique_ptr<IDispatchTableEntry<Event>> transition;
 };
 }

@@ -19,6 +19,7 @@ include(../cmake/test-flags.cmake)
 set(
     components_benchmarks
     fill_dispatch_table_benchmark
+    fill_unexpected_event_handler_tables_benchmark
     flatten_transition_table_benchmark
     getCombinedStateTypeids_benchmark
     collect_parent_state_typeids_benchmark

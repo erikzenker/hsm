@@ -6,6 +6,7 @@
 #include "hsm/details/flatten_transition_table.h"
 #include "hsm/details/make_unexpected_event_handler_tables.h"
 #include "hsm/details/to_map.h"
+#include "hsm/details/utils/dunique_ptr.h"
 
 #include <boost/hana/pair.hpp>
 #include <boost/hana/transform.hpp>
@@ -26,9 +27,10 @@ constexpr auto make_unexpected_event_handler(
     OptionalDependency optionalDependency)
 {
     using Event = typename decltype(eventTypeid)::type;
-    return std::make_unique<
-        UnexpectedEventHandler<Handler, CurrentStatePtr, Event, OptionalDependency>>(
-        handler, currentStatePtr, optionalDependency);
+
+    return hsm::details::utils::dunique_ptr<IUnexpectedEventHandler<Event>>(
+        new UnexpectedEventHandler<Handler, CurrentStatePtr, Event, OptionalDependency>(
+            handler, currentStatePtr, optionalDependency));
 }
 
 template <
