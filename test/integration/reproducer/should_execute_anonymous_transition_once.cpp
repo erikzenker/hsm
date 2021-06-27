@@ -86,11 +86,10 @@ struct MainState {
     }
 };
 
-}
-
 struct Dependency {
     std::size_t callCount = 0;
 };
+}
 
 class ReproducerTests : public Test {
   protected:

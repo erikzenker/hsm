@@ -782,13 +782,14 @@ constexpr auto calcParentStateIdx
 constexpr auto calcStateIdx
     = [](std::size_t nStates, Idx combinedState) -> Idx { return combinedState % nStates; };
 
-constexpr decltype(auto) resolveEvent = [](auto event) {
+template <class Event>
+constexpr decltype(auto) resolveEvent(Event event) {
     if constexpr (is_event(event)) {
         return event.typeid_;
     } else {
         return bh::typeid_(event);
     }
-};
+}
 
 constexpr auto getEventIdx = [](auto rootState, auto event) {
     return index_of(collect_event_typeids_recursive(rootState), resolveEvent(event));
@@ -2308,6 +2309,7 @@ template <class RootState, class... OptionalParameters> class sm {
             "Transition table needs to have at least one initial state");
 
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
+        // std::cout << (bh::at_c<0>(optionalDependency).get().callCount) << std::endl;
         fill_unexpected_event_handler_tables(
             rootState,
             m_statesMap,

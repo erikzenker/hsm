@@ -60,6 +60,7 @@ template <class RootState, class... OptionalParameters> class sm {
             "Transition table needs to have at least one initial state");
 
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
+        // std::cout << (bh::at_c<0>(optionalDependency).get().callCount) << std::endl;
         fill_unexpected_event_handler_tables(
             rootState,
             m_statesMap,
