@@ -11,8 +11,8 @@
 #define MPLLIBS_LIMIT_STRING_SIZE BOOST_MPL_LIMIT_STRING_SIZE
 #include "../benchmark.hpp"
 #include <boost/msm/back/state_machine.hpp>
-#include <boost/msm/front/state_machine_def.hpp>
 #include <boost/msm/front/euml2/euml2.hpp>
+#include <boost/msm/front/state_machine_def.hpp>
 
 namespace msm = boost::msm;
 

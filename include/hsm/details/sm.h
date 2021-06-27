@@ -60,13 +60,16 @@ template <class RootState, class... OptionalParameters> class sm {
             "Transition table needs to have at least one initial state");
 
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
-        // std::cout << (bh::at_c<0>(optionalDependency).get().callCount) << std::endl;
-        fill_unexpected_event_handler_tables(
-            rootState,
-            m_statesMap,
-            m_unexpectedEventHandlerTables,
-            get_unexpected_event_handler(rootState),
-            optionalDependency);
+
+        if constexpr (has_unexpected_event_handler(rootState)) {
+            fill_unexpected_event_handler_tables(
+                rootState,
+                m_statesMap,
+                m_unexpectedEventHandlerTables,
+                get_unexpected_event_handler(rootState),
+                optionalDependency);
+        }
+
         fill_dispatch_table(optionalDependency);
         fill_initial_state_table(rootState, m_initial_states);
         fill_initial_state_table(rootState, m_history);
@@ -272,10 +275,12 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> auto call_unexpected_event_handler(Event& event)
     {
-        // TODO: What todo in a multi region state machine?
-        m_unexpectedEventHandlerTables[bh::typeid_(event)]
-            .at(m_currentCombinedState.at(0))
-            ->executeHandler(event);
+        if constexpr (has_unexpected_event_handler(rootState)) {
+            // TODO: What todo in a multi region state machine?
+            m_unexpectedEventHandlerTables[bh::typeid_(event)]
+                .at(m_currentCombinedState.at(0))
+                ->executeHandler(event);
+        }
     }
 
     auto currentState(Region region)
