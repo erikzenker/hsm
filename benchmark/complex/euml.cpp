@@ -7,7 +7,7 @@
 //
 #define FUSION_MAX_VECTOR_SIZE 50
 #define BOOST_MPL_LIMIT_VECTOR_SIZE 50
-#include "benchmark.hpp"
+#include "../benchmark.hpp"
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/front/euml/euml.hpp>
 #include <boost/msm/front/euml/stl.hpp>

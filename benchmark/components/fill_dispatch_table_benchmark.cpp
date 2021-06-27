@@ -6,10 +6,13 @@ using namespace hsm;
 
 int main()
 {
-    auto statesMap = make_states_map(state<ComplexStateMachine>);
+    auto rootState = state<ComplexStateMachine>;
+    auto statesMap = make_states_map(rootState);
+    auto dispatchTables = make_dispatch_tables(rootState);
+    auto optionalDependencies = boost::hana::make_tuple();
 
     fill_dispatch_table_with_external_transitions(
-        state<ComplexStateMachine>, statesMap, boost::hana::make_tuple());
+        rootState, dispatchTables, statesMap, optionalDependencies);
 
     return 0;
 }
