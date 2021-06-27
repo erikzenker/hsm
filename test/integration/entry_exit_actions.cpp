@@ -126,11 +126,11 @@ struct MainState {
         // clang-format on
     }
 };
-}
 
 struct Dependency {
     std::promise<void> called;
 };
+}
 
 class EntryExitActionsTests : public Test {
   protected:
