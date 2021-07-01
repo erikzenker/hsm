@@ -1,9 +1,110 @@
-#include <iostream>
-
-#include "ComplexStateMachine.h"
 #include "hsm/details/index_map.h"
 
 using namespace hsm;
+
+namespace {
+class s1 {
+};
+class s2 {
+};
+class s3 {
+};
+class s4 {
+};
+class s5 {
+};
+class s6 {
+};
+class s7 {
+};
+class s8 {
+};
+class s9 {
+};
+class s10 {
+};
+class s11 {
+};
+class s12 {
+};
+class s13 {
+};
+class s14 {
+};
+class s15 {
+};
+class s16 {
+};
+class s17 {
+};
+class s18 {
+};
+class s19 {
+};
+class s20 {
+};
+class s21 {
+};
+class s22 {
+};
+class s23 {
+};
+class s24 {
+};
+class s25 {
+};
+class s26 {
+};
+class s27 {
+};
+class s28 {
+};
+class s29 {
+};
+class s30 {
+};
+class s31 {
+};
+class s32 {
+};
+class s33 {
+};
+class s34 {
+};
+class s35 {
+};
+class s36 {
+};
+class s37 {
+};
+class s38 {
+};
+class s39 {
+};
+class s40 {
+};
+class s41 {
+};
+class s42 {
+};
+class s43 {
+};
+class s44 {
+};
+class s45 {
+};
+class s46 {
+};
+class s47 {
+};
+class s48 {
+};
+class s49 {
+};
+class s50 {
+};
+
+}
 
 int main()
 {
