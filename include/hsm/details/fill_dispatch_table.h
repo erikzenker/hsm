@@ -75,6 +75,8 @@ constexpr auto addDispatchTableEntry(
                         [=](auto& dispatchTable, auto&& transition2, bool internal) -> void {
                             const auto defer = false;
                             const auto valid = true;
+
+                            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
                             dispatchTable[fromIdx].push_front(
                                 { toIdx, history, defer, valid, internal, std::move(transition2) });
                         },

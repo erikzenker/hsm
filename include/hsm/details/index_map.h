@@ -11,7 +11,31 @@
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/zip.hpp>
 
-//#include <boost/mp11.hpp>
+namespace {
+template <class X, class Tuple> class GetIdx;
+
+template <class X, class... T> class GetIdx<X, boost::hana::tuple<T...>> {
+    template <std::size_t... idx>
+    static constexpr auto find_idx(std::index_sequence<idx...> seq) -> std::size_t
+    {
+        return seq.size() + ((std::is_same<X, T>::value ? idx - seq.size() : 0) + ...);
+    }
+
+  public:
+    static constexpr std::size_t value = find_idx(std::index_sequence_for<T...> {});
+};
+
+template <class X, class... T> class GetIdx<X, boost::hana::basic_tuple<T...>> {
+    template <std::size_t... idx>
+    static constexpr auto find_idx(std::index_sequence<idx...> seq) -> std::size_t
+    {
+        return seq.size() + ((std::is_same<X, T>::value ? idx - seq.size() : 0) + ...);
+    }
+
+  public:
+    static constexpr std::size_t value = find_idx(std::index_sequence_for<T...> {});
+};
+}
 
 namespace hsm {
 
@@ -19,13 +43,9 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class Iterable, class Element>
-constexpr auto index_of(Iterable const& iterable, Element const& element)
+template <class Iterable, class Element> constexpr auto index_of(Iterable const&, Element const&)
 {
-    return bh::apply(
-        [](auto size, auto dropped) { return size - dropped; },
-        bh::size(iterable),
-        bh::size(bh::drop_while(iterable, bh::not_equal.to(element))));
+    return GetIdx<Element, Iterable>::value;
 }
 
 template <class Typeids> constexpr auto make_index_map(Typeids typeids)
