@@ -320,6 +320,42 @@ add_library(foo ...)
 target_link_libraries(foo PRIVATE hsm::hsm)
 ```
 
+Since CMake v3.11, [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can be used to automatically download the repository as a dependency at configure time. You can follow this [example](integration/fetch_content) and 
+implement the following snippet:
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(hsm
+  GIT_REPOSITORY https://github.com/erikzenker/hsm.git
+  GIT_TAG v1.4.7)
+
+FetchContent_GetProperties(hsm)
+if(NOT hsm_POPULATED)
+  FetchContent_Populate(hsm)
+  add_subdirectory(${hsm_SOURCE_DIR} ${hsm_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+target_link_libraries(foo PRIVATE hsm::hsm)
+```
+
+If you are using [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake), you can follow this [example](integration/cpm). Implement the following snippet:
+
+```cmake
+include(cmake/CPM.cmake)
+
+CPMAddPackage(
+    NAME hsm
+    GITHUB_REPOSITORY erikzenker/hsm
+    VERSION 1.4.7)
+
+target_link_libraries(foo PRIVATE hsm::hsm)
+```
+
+### Package Managers
+
+If you are using [Conan](https://conan.io/) to manage your dependencies, merely add hsm/x.y.z to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues here if you experience problems with the packages.
+
 ## Install 
 
 ### CMake
