@@ -80,7 +80,9 @@ add_executable(
     integration/custom_targets.cpp
     integration/chain_actions.cpp
     integration/reproducer/should_execute_anonymous_transition_once.cpp
+    integration/reproducer/should_enter_substate_with_multiple_regions.cpp
 )
+
 target_compile_features(hsmIntegrationTests PRIVATE cxx_std_17)
 target_link_libraries(hsmIntegrationTests PRIVATE hsm::hsm GTest::gtest_main)
 gtest_discover_tests(hsmIntegrationTests TEST_PREFIX integration.)
