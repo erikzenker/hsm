@@ -45,6 +45,5 @@ struct MainState {
 TEST(ReproducerTests2, shouldEnterSubStateWithMultipleRegions)
 {
     hsm::sm<MainState> sm;
-
     sm.process_event(e1 {});
 }

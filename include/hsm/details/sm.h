@@ -113,7 +113,8 @@ template <class RootState, class... OptionalParameters> class sm {
     auto status() -> std::string
     {
         std::stringstream statusStream;
-        for (Region region = 0; region < current_regions(); region++) {
+        const auto currentRegions = current_regions();
+        for (Region region = 0; region < currentRegions; region++) {
             statusStream << "[" << region << "] "
                          << "combined: " << m_currentCombinedState[region] << " "
                          << "parent: " << currentParentState() << " "
@@ -134,7 +135,8 @@ template <class RootState, class... OptionalParameters> class sm {
         bool allGuardsFailed = true;
         bool allTransitionsInvalid = true;
 
-        for (Region region = 0; region < current_regions(); region++) {
+        const auto currentRegions = current_regions();
+        for (Region region = 0; region < currentRegions; region++) {
 
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             auto& results = get_dispatch_table_entry(event, region);
@@ -191,7 +193,8 @@ template <class RootState, class... OptionalParameters> class sm {
             while (true) {
                 auto allGuardsFailed = true;
 
-                for (Region region = 0; region < current_regions(); region++) {
+                const auto currentRegions = current_regions();
+                for (Region region = 0; region < currentRegions; region++) {
 
                     auto event = noneEvent {};
                     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
