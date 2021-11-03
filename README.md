@@ -288,7 +288,33 @@ The benchmark result are taken from the [state machine benchmark repository](htt
     <td><center>25.54 s</center></td>
     <td><center>4.27 s</center></td>
   </tr>
-</table>  
+</table>
+
+## Compilememory Benchmark Results
+
+ <table style="width:100%">
+  <tr>
+    <th>Benchmark</th>
+    <th><a href="https://github.com/erikzenker/hsm">Hsm</a></th>
+    <th><a href="https://boost-experimental.github.io/sml/index.html">Sml</a></th>
+    <th><a href="https://www.boost.org/doc/libs/1_73_0/libs/msm/doc/HTML/index.html">Msm</a></th>
+    <th><a href="https://www.boost.org/doc/libs/1_73_0/libs/statechart/doc/index.html">Statechart</a></th>
+  </tr>
+  <tr>
+    <td><a href="benchmark/simple/">Simple state machine</a></td>
+    <td><center>174.649 MB</center></td>
+    <td><center>28.474 MB</center></td>
+    <td><center>404.621 MB</center></td>
+    <td><center>70.976 MB</center></td>
+  </tr>
+  <tr>
+    <td><a href="benchmark/complex/">Complex state machine</a></td>
+    <td><center>815.720 MB</center></td>
+    <td><center>188.333 MB</center></td>
+    <td><center>1323.477 MB</center></td>
+    <td><center>122.720 MB</center></td>
+  </tr>
+</table>
 
 ## Dependencies
 * Boost 1.72
