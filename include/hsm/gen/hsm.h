@@ -678,7 +678,31 @@ template <class Tuple> constexpr auto to_pairs(const Tuple& tuple)
 #include <boost/hana/size.hpp>
 #include <boost/hana/zip.hpp>
 
-//#include <boost/mp11.hpp>
+namespace {
+template <class X, class Tuple> class GetIdx;
+
+template <class X, class... T> class GetIdx<X, boost::hana::tuple<T...>> {
+    template <std::size_t... idx>
+    static constexpr auto find_idx(std::index_sequence<idx...> seq) -> std::size_t
+    {
+        return seq.size() + ((std::is_same<X, T>::value ? idx - seq.size() : 0) + ...);
+    }
+
+  public:
+    static constexpr std::size_t value = find_idx(std::index_sequence_for<T...> {});
+};
+
+template <class X, class... T> class GetIdx<X, boost::hana::basic_tuple<T...>> {
+    template <std::size_t... idx>
+    static constexpr auto find_idx(std::index_sequence<idx...> seq) -> std::size_t
+    {
+        return seq.size() + ((std::is_same<X, T>::value ? idx - seq.size() : 0) + ...);
+    }
+
+  public:
+    static constexpr std::size_t value = find_idx(std::index_sequence_for<T...> {});
+};
+}
 
 namespace hsm {
 
@@ -686,13 +710,9 @@ namespace bh {
 using namespace boost::hana;
 }
 
-template <class Iterable, class Element>
-constexpr auto index_of(Iterable const& iterable, Element const& element)
+template <class Iterable, class Element> constexpr auto index_of(Iterable const&, Element const&)
 {
-    return bh::apply(
-        [](auto size, auto dropped) { return size - dropped; },
-        bh::size(iterable),
-        bh::size(bh::drop_while(iterable, bh::not_equal.to(element))));
+    return GetIdx<Element, Iterable>::value;
 }
 
 template <class Typeids> constexpr auto make_index_map(Typeids typeids)
@@ -782,8 +802,8 @@ constexpr auto calcParentStateIdx
 constexpr auto calcStateIdx
     = [](std::size_t nStates, Idx combinedState) -> Idx { return combinedState % nStates; };
 
-template <class Event>
-constexpr decltype(auto) resolveEvent(Event event) {
+template <class Event> constexpr decltype(auto) resolveEvent(Event event)
+{
     if constexpr (is_event(event)) {
         return event.typeid_;
     } else {
@@ -1770,6 +1790,8 @@ constexpr auto addDispatchTableEntry(
                         [=](auto& dispatchTable, auto&& transition2, bool internal) -> void {
                             const auto defer = false;
                             const auto valid = true;
+
+                            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
                             dispatchTable[fromIdx].push_front(
                                 { toIdx, history, defer, valid, internal, std::move(transition2) });
                         },
@@ -2309,13 +2331,16 @@ template <class RootState, class... OptionalParameters> class sm {
             "Transition table needs to have at least one initial state");
 
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
-        // std::cout << (bh::at_c<0>(optionalDependency).get().callCount) << std::endl;
-        fill_unexpected_event_handler_tables(
-            rootState,
-            m_statesMap,
-            m_unexpectedEventHandlerTables,
-            get_unexpected_event_handler(rootState),
-            optionalDependency);
+
+        if constexpr (has_unexpected_event_handler(rootState)) {
+            fill_unexpected_event_handler_tables(
+                rootState,
+                m_statesMap,
+                m_unexpectedEventHandlerTables,
+                get_unexpected_event_handler(rootState),
+                optionalDependency);
+        }
+
         fill_dispatch_table(optionalDependency);
         fill_initial_state_table(rootState, m_initial_states);
         fill_initial_state_table(rootState, m_history);
@@ -2359,7 +2384,8 @@ template <class RootState, class... OptionalParameters> class sm {
     auto status() -> std::string
     {
         std::stringstream statusStream;
-        for (Region region = 0; region < current_regions(); region++) {
+        const auto currentRegions = current_regions();
+        for (Region region = 0; region < currentRegions; region++) {
             statusStream << "[" << region << "] "
                          << "combined: " << m_currentCombinedState[region] << " "
                          << "parent: " << currentParentState() << " "
@@ -2380,7 +2406,8 @@ template <class RootState, class... OptionalParameters> class sm {
         bool allGuardsFailed = true;
         bool allTransitionsInvalid = true;
 
-        for (Region region = 0; region < current_regions(); region++) {
+        const auto currentRegions = current_regions();
+        for (Region region = 0; region < currentRegions; region++) {
 
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             auto& results = get_dispatch_table_entry(event, region);
@@ -2437,7 +2464,8 @@ template <class RootState, class... OptionalParameters> class sm {
             while (true) {
                 auto allGuardsFailed = true;
 
-                for (Region region = 0; region < current_regions(); region++) {
+                const auto currentRegions = current_regions();
+                for (Region region = 0; region < currentRegions; region++) {
 
                     auto event = noneEvent {};
                     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -2521,10 +2549,12 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> auto call_unexpected_event_handler(Event& event)
     {
-        // TODO: What todo in a multi region state machine?
-        m_unexpectedEventHandlerTables[bh::typeid_(event)]
-            .at(m_currentCombinedState.at(0))
-            ->executeHandler(event);
+        if constexpr (has_unexpected_event_handler(rootState)) {
+            // TODO: What todo in a multi region state machine?
+            m_unexpectedEventHandlerTables[bh::typeid_(event)]
+                .at(m_currentCombinedState.at(0))
+                ->executeHandler(event);
+        }
     }
 
     auto currentState(Region region)
