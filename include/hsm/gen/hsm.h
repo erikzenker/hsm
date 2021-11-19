@@ -2350,6 +2350,12 @@ template <class RootState, class... OptionalParameters> class sm {
 
     template <class Event> auto process_event(Event&& event)
     {
+        static_assert(
+            bh::contains(
+                collect_event_typeids_recursive(rootState),
+                bh::type_c<typename std::remove_reference<Event>::type>),
+            "Processed event was not found in the transition table");
+
         if (!process_event_internal(event)) {
             call_unexpected_event_handler(event);
             return;

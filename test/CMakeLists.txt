@@ -10,6 +10,8 @@ include(FetchContent)
 FetchContent_Declare(hsm SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
 FetchContent_MakeAvailable(hsm)
 
+MESSAGE(STATUS ${CMAKE_MODULE_PATH})
+
 find_package(GTest CONFIG REQUIRED)
 include(GoogleTest)
 
