@@ -394,8 +394,8 @@ cmake --install build/ --prefix /tmp/
 ``` bash
 mkdir -p build/dependencies/conan
 conan install . -if build/dependencies/conan -s compiler.libcxx=libstdc++11 --build missing
-cmake -S . -B build
-cmake --install build/ --prefix /tmp/ -D "CMAKE_MODULE_PATH=${PWD}/build/dependencies/conan"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -D "CMAKE_PREFIX_PATH=${PWD}/build/dependencies/conan"
+cmake --install build/ --prefix /tmp/
 ```
 ### Conan [![Download](https://api.bintray.com/packages/erikzenker/conan-erikzenker/hsm%3Aerikzenker/images/download.svg) ](https://bintray.com/erikzenker/conan-erikzenker/hsm%3Aerikzenker/_latestVersion)
 ``` bash
@@ -412,6 +412,16 @@ pacaur -S hsm-git
 ``` bash
 cmake -S test -B build
 cmake --build build/test
+cd build/test
+ctest --output-on-failure
+```
+
+## Compile and Run the Tests Using Conan
+``` bash
+mkdir -p build/dependencies/conan
+conan install . -if build/dependencies/conan -s compiler.libcxx=libstdc++11 --build missing
+cmake -S test/ -B build/test -DCMAKE_BUILD_TYPE=Release -D "CMAKE_PREFIX_PATH=${PWD}/build/dependencies/conan"
+cmake --build build/test/
 cd build/test
 ctest --output-on-failure
 ```
