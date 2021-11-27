@@ -77,7 +77,7 @@ template <class RootState, class... OptionalParameters> class sm {
         update_current_regions();
     }
 
-    template <class Event> auto process_event(Event&& event)
+    template <class Event> auto process_event(Event&& event) -> bool
     {
         static_assert(
             bh::contains(
@@ -87,10 +87,11 @@ template <class RootState, class... OptionalParameters> class sm {
 
         if (!process_event_internal(event)) {
             call_unexpected_event_handler(event);
-            return;
+            return false;
         }
 
         process_deferred_events();
+        return true;
     }
 
     template <class State> auto is(State state) -> bool
