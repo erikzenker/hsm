@@ -63,7 +63,7 @@ class UnexpectedEventHandler : public Test {
 TEST_F(UnexpectedEventHandler, should_call_unexpected_event_handler)
 {
     auto event = e2 {};
-    sm.process_event(event);
+    ASSERT_FALSE(sm.process_event(event));
 
     ASSERT_TRUE(event.called);
 }
@@ -71,10 +71,10 @@ TEST_F(UnexpectedEventHandler, should_call_unexpected_event_handler)
 TEST_F(UnexpectedEventHandler, should_not_call_unexpected_event_handler_when_guard_fails)
 {
 
-    sm.process_event(e3 {});
+    ASSERT_TRUE(sm.process_event(e3 {}));
 
     auto event = e2 {};
-    sm.process_event(event);
+    ASSERT_TRUE(sm.process_event(event));
 
     ASSERT_FALSE(event.called);
 }
