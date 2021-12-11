@@ -10,8 +10,6 @@ include(FetchContent)
 FetchContent_Declare(hsm SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
 FetchContent_MakeAvailable(hsm)
 
-MESSAGE(STATUS ${CMAKE_MODULE_PATH})
-
 find_package(GTest CONFIG REQUIRED)
 include(GoogleTest)
 
@@ -68,6 +66,7 @@ add_executable(
     integration/anonymous_transition.cpp
     integration/guards_actions.cpp
     integration/orthogonal_regions.cpp
+    integration/process_event_return_bool.cpp
     integration/internal_transition.cpp
     integration/unexpected_event_handler.cpp
     integration/history_pseudo_state.cpp

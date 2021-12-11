@@ -74,7 +74,7 @@ TEST_F(UnexpectedEventHandler, should_not_call_unexpected_event_handler_when_gua
     ASSERT_TRUE(sm.process_event(e3 {}));
 
     auto event = e2 {};
-    ASSERT_TRUE(sm.process_event(event));
+    ASSERT_FALSE(sm.process_event(event));
 
     ASSERT_FALSE(event.called);
 }

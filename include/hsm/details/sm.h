@@ -85,12 +85,16 @@ template <class RootState, class... OptionalParameters> class sm {
                 bh::type_c<typename std::remove_reference<Event>::type>),
             "Processed event was not found in the transition table");
 
-        if (!process_event_internal(event)) {
+        switch (process_event_internal(event)) {
+        case ProcessEventResult::AllTransitionsInvalid:
             call_unexpected_event_handler(event);
+            [[fallthrough]];
+        case ProcessEventResult::EventDefered:
+        case ProcessEventResult::AllGuardsFailed:
             return false;
+        case ProcessEventResult::EventProcessed:
+            process_deferred_events();
         }
-
-        process_deferred_events();
         return true;
     }
 
@@ -137,7 +141,14 @@ template <class RootState, class... OptionalParameters> class sm {
     }
 
   private:
-    template <class Event> auto process_event_internal(Event&& event) -> bool
+    enum class ProcessEventResult {
+        AllTransitionsInvalid,
+        AllGuardsFailed,
+        EventProcessed,
+        EventDefered
+    };
+
+    template <class Event> auto process_event_internal(Event&& event) -> ProcessEventResult
     {
         bool allGuardsFailed = true;
         bool allTransitionsInvalid = true;
@@ -156,7 +167,7 @@ template <class RootState, class... OptionalParameters> class sm {
 
                 if (result.defer) {
                     m_defer_queue.push(event);
-                    return true;
+                    return ProcessEventResult::EventDefered;
                 }
 
                 if (!result.transition->executeGuard(event)) {
@@ -174,15 +185,15 @@ template <class RootState, class... OptionalParameters> class sm {
         }
 
         if (allTransitionsInvalid) {
-            return false;
+            return ProcessEventResult::AllTransitionsInvalid;
         }
 
         if (allGuardsFailed) {
-            return true;
+            return ProcessEventResult::AllGuardsFailed;
         }
 
         process_anonymous_transitions();
-        return true;
+        return ProcessEventResult::EventProcessed;
     }
 
     auto process_deferred_events()
