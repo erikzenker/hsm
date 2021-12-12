@@ -192,7 +192,7 @@ template <class RootState, class... OptionalParameters> class sm {
             return ProcessEventResult::AllGuardsFailed;
         }
 
-        process_anonymous_transitions();
+        process_anonymous_transitions(noneEvent {});
         return ProcessEventResult::EventProcessed;
     }
 
@@ -205,7 +205,7 @@ template <class RootState, class... OptionalParameters> class sm {
         }
     }
 
-    auto process_anonymous_transitions()
+    template <class Event> auto process_anonymous_transitions(Event&& event)
     {
         if constexpr (has_anonymous_transition(rootState)) {
             while (true) {
@@ -213,8 +213,6 @@ template <class RootState, class... OptionalParameters> class sm {
 
                 const auto currentRegions = current_regions();
                 for (Region region = 0; region < currentRegions; region++) {
-
-                    auto event = noneEvent {};
                     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
                     auto& results = get_dispatch_table_entry(event, region);
 
