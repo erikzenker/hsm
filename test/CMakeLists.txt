@@ -75,7 +75,6 @@ add_executable(
     integration/transition_postfix_dsl.cpp
     integration/transition_prefix_dsl.cpp
     integration/no_action.cpp
-    integration/state_data_members.cpp
     integration/transition_logging.cpp
     integration/amalgamation_header.cpp
     integration/custom_targets.cpp
@@ -83,6 +82,15 @@ add_executable(
     integration/reproducer/should_execute_anonymous_transition_once.cpp
     integration/reproducer/should_enter_substate_with_multiple_regions.cpp
 )
+
+if (UNIX)
+    target_sources(
+        hsmIntegrationTests         
+        PRIVATE
+            # Test compilation fails with msvc with: fatal error C1001: Internal compiler error
+            integration/state_data_members.cpp
+    )
+endif()
 
 target_compile_features(hsmIntegrationTests PRIVATE cxx_std_17)
 target_link_libraries(hsmIntegrationTests PRIVATE hsm::hsm GTest::gtest_main)
