@@ -131,7 +131,7 @@ A click on a particular feature check mark will forward to the feature documenta
   </tr>
   <tr>
     <td>Unexpected event / no transition handler</td>
-    <td><center><a href="test/integration/unexpected_transition_handler.cpp">✓</a></center></td>
+    <td><center><a href="test/integration/unexpected_event_handler.cpp">✓</a></center></td>
     <td><center>✗</center></td>
     <td><center><a href="https://www.boost.org/doc/libs/1_73_0/libs/msm/doc/HTML/ch03s02.html#d0e471">✓</a></center></td>
     <td><center>✗</center></td>
@@ -145,7 +145,7 @@ A click on a particular feature check mark will forward to the feature documenta
   </tr>
   <tr>
     <td>Single amalgamation header</td>
-    <td><center><a href="src/include/hsm_gen.h">✓</a></center></td>
+    <td><center><a href="include/hsm/gen/hsm.h">✓</a></center></td>
     <td><center><a href="https://raw.githubusercontent.com/boost-ext/sml/master/include/boost/sml.hpp">✓</a></center></td>
     <td><center>✗</center></td>
     <td><center>✗</center></td>
