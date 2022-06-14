@@ -154,12 +154,12 @@ TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action)
     sm.process_event(e1 { exitActionCalled });
     ASSERT_TRUE(sm.is(hsm::state<S1>));
 
-    ASSERT_EQ(
-        std::future_status::ready,
-        entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
-    ASSERT_EQ(
-        std::future_status::ready,
-        exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready
+        == entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready
+        == exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action_of_substate)
@@ -173,12 +173,12 @@ TEST_F(EntryExitActionsTests, should_call_entry_and_exit_action_of_substate)
     sm.process_event(e2 { exitActionCalled });
     ASSERT_TRUE(sm.is(hsm::state<S1>));
 
-    ASSERT_EQ(
-        std::future_status::ready,
-        entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
-    ASSERT_EQ(
-        std::future_status::ready,
-        exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready
+        == entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready
+        == exitActionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(EntryExitActionsTests, should_call_entry_action_of_substate_initial_state)
@@ -188,9 +188,9 @@ TEST_F(EntryExitActionsTests, should_call_entry_action_of_substate_initial_state
     sm.process_event(e3 { entryActionCalled });
     ASSERT_TRUE(sm.is(hsm::state<SubState2>, hsm::state<S2>));
 
-    ASSERT_EQ(
-        std::future_status::ready,
-        entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready
+        == entryActionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(EntryExitActionsTests, should_call_exit_action_on_pseudo_exit)
@@ -201,5 +201,6 @@ TEST_F(EntryExitActionsTests, should_call_exit_action_on_pseudo_exit)
     sm.process_event(e4 {});
     ASSERT_TRUE(sm.is(hsm::state<S1>));
 
-    ASSERT_EQ(std::future_status::ready, dep.called.get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready == dep.called.get_future().wait_for(std::chrono::seconds(1)));
 }

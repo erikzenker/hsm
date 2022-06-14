@@ -129,6 +129,30 @@ template <class RootState, class... OptionalParameters> class sm {
         return currentParentState() == getParentStateIdx(rootState, parentState);
     }
 
+    template <class State> auto set(State state) -> void
+    {
+        set(0, rootState, state);
+    }
+
+    template <class ParentState, class State> auto set(ParentState parentState, State state) -> void
+    {
+        set(0, parentState, state);
+    }
+
+    template <class ParentState, class State>
+    auto set(Region region, ParentState parentState, State state) -> void
+    {
+        static_assert(
+            bh::contains(collect_state_typeids_recursive(rootState), bh::typeid_(state)),
+            "State does not exist in transition table");
+        static_assert(
+            bh::contains(collect_parent_state_typeids(rootState), bh::typeid_(parentState)),
+            "Parent state does not exist in transition table");
+
+        m_currentCombinedState.at(region)
+            = getCombinedStateIdx(getCombinedStateTypeids(rootState), parentState, state);
+    }
+
     auto status() -> std::string
     {
         std::stringstream statusStream;

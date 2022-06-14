@@ -45,6 +45,8 @@ TEST_F(ComposeActionTests, should_call_chained_actions)
 
     sm.process_event(e1 { a1Called, a2Called });
 
-    ASSERT_EQ(std::future_status::ready, a1Called->get_future().wait_for(std::chrono::seconds(1)));
-    ASSERT_EQ(std::future_status::ready, a2Called->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready == a1Called->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready == a2Called->get_future().wait_for(std::chrono::seconds(1)));
 }
