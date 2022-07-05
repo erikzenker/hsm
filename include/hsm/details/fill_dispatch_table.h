@@ -125,7 +125,7 @@ constexpr auto addDispatchTableEntryOfSubMachineExits(
         return;
     }
 
-    constexpr auto parentState = transition.source();
+    const auto parentState = transition.source();
     if constexpr (has_transition_table(parentState)) {
         bh::for_each(collect_child_state_typeids(parentState), [=, &dispatchTables](auto state) {
             bh::apply(

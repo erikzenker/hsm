@@ -3,6 +3,12 @@ if(NOT MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror -Wall -Wextra -Wpedantic -g3 -O0")
 endif()
 
+
+if(MSVC_VERSION VERSION_GREATER_EQUAL 1920)
+	# Make sure __cplusplus is set correctly depending on std
+	string(APPEND CMAKE_CXX_FLAGS " /Zc:__cplusplus")
+endif()
+
 if("${HSM_CLANG_COVERAGE}")
   set(CMAKE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
 endif()
