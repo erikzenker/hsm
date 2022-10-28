@@ -58,6 +58,12 @@ template <class RootState, class... OptionalParameters> class sm {
         static_assert(
             maxInitialStates(rootState),
             "Transition table needs to have at least one initial state");
+        static_assert(
+            bh::not_(at_least_one_initial_state_has_transition_table(rootState)),
+            "At least one initial state of the state machine has sub states/transition tables. This is not allowed.");
+        static_assert(
+            bh::not_(at_least_one_initial_state_has_internal_transition_table(rootState)),
+            "At least one initial state of the state machine has internal transition tables. This is not allowed.");
 
         auto optionalDependency = bh::make_basic_tuple(std::ref(optionalParameters)...);
 

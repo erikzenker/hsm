@@ -70,6 +70,7 @@ add_executable(
     integration/internal_transition.cpp
     integration/unexpected_event_handler.cpp
     integration/history_pseudo_state.cpp
+    integration/initial_state.cpp
     integration/dependency_injection.cpp
     integration/defer_events.cpp
     integration/transition_postfix_dsl.cpp
