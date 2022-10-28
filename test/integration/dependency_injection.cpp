@@ -52,6 +52,11 @@ struct MainState {
 class DependencyInjectionTests : public Test {
   protected:
     struct Dependency {
+        explicit Dependency(int callCount)
+            : callCount(callCount)
+        {
+        }
+
         // Dependency is not copied, assigned, or moved
         Dependency(const Dependency&) = delete;
         Dependency(Dependency&&) = delete;
