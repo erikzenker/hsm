@@ -113,9 +113,9 @@ struct MainStateWithActions {
     {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<S1> + hsm::event<readEvent>   / readDataAction  = hsm::state<S2>,
-              hsm::state<S1> + hsm::event<writeEvent>  / writeDataAction = hsm::state<S2>,
-              hsm::state<S2> + hsm::event<resetEvent>                    = hsm::state<S1>
+            * hsm::state<S1> + hsm::event<writeEvent>  / writeDataAction = hsm::state<S2>
+            , hsm::state<S1> + hsm::event<readEvent>   / readDataAction  = hsm::state<S2>
+            , hsm::state<S2> + hsm::event<readEvent>   / readDataAction  = hsm::state<S1>
         );
         // clang-format on
     }
@@ -184,14 +184,13 @@ TEST_F(StateDataMembersActionTests, should_read_state_data_member_in_action)
 
 TEST_F(StateDataMembersActionTests, should_write_state_data_member_in_action)
 {
-    sm.process_event(writeEvent { "42", "43" });
-    sm.process_event(resetEvent {});
+    sm.process_event(writeEvent { "S1-42", "S2-43" });
 
     auto event = readEvent { "", "" };
 
     sm.process_event(event);
-    ASSERT_EQ("42", event.sourceData);
-    ASSERT_EQ("43", event.targetData);
+    ASSERT_EQ("S2-43", event.sourceData);
+    ASSERT_EQ("S1-42", event.targetData);
 }
 
 class StateDataMembersGuardTests : public Test {
