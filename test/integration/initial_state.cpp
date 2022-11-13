@@ -12,27 +12,28 @@ struct e1 {
 struct e2 {
 };
 
-struct SubInitial{
+struct SubInitial {
 };
 
 // States
 struct Initial {
 
     /***
-    * Initial states with transition table are not allowed
-    *     
-    */
+     * Initial states with transition table are not allowed
+     *
+     */
     // static constexpr auto make_transition_table()
     // {
     //     // clang-format off
-    //     return hsm::transition_table(* hsm::state<SubInitial> + hsm::event<e2> = hsm::state<SubInitial>);
+    //     return hsm::transition_table(* hsm::state<SubInitial> + hsm::event<e2> =
+    //     hsm::state<SubInitial>);
     //     // clang-format on
     // }
 
     /***
-    * Initial states with internal transition table are not allowed
-    *     
-    */
+     * Initial states with internal transition table are not allowed
+     *
+     */
     // static constexpr auto make_internal_transition_table()
     // {
     //     // clang-format off
@@ -40,7 +41,7 @@ struct Initial {
     //         + (hsm::event<e1>)
     //     );
     //     // clang-format on
-    // }    
+    // }
 };
 struct S2 {
 };
@@ -58,9 +59,10 @@ struct MainState {
 }
 
 /***
-* Currently when the initial state has sub statemachine then this sub statemachine is not entered in the beginning.
-* The sub statemachine is entered if you transition to the initial state via an event.
-*/
+ * Currently when the initial state has sub statemachine then this sub statemachine is not entered
+ * in the beginning. The sub statemachine is entered if you transition to the initial state via an
+ * event.
+ */
 TEST(InitialState, shouldStartInInitial)
 {
     hsm::sm<MainState> sm;
