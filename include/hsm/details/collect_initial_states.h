@@ -3,6 +3,7 @@
 #include "hsm/details/collect_states.h"
 #include "hsm/details/for_each_idx.h"
 #include "hsm/details/idx.h"
+#include "traits.h"
 
 #include <boost/hana/find.hpp>
 #include <boost/hana/maximum.hpp>
@@ -99,6 +100,24 @@ constexpr auto fill_initial_state_table(State rootState, StateTable& initialStat
                 parentStateId,
                 initialStateTable,
                 bh::find(make_initial_state_map(rootState), parentStateTypeid).value());
+        });
+}
+
+template <class State>
+constexpr auto at_least_one_initial_state_has_transition_table(State rootState)
+{
+    return bh::fold_left(
+        collect_initial_states(rootState), bh::false_c, [](auto result, auto initialState) {
+            return bh::or_(result, has_transition_table(initialState));
+        });
+}
+
+template <class State>
+constexpr auto at_least_one_initial_state_has_internal_transition_table(State rootState)
+{
+    return bh::fold_left(
+        collect_initial_states(rootState), bh::false_c, [](auto result, auto initialState) {
+            return bh::or_(result, has_internal_transition_table(initialState));
         });
 }
 
