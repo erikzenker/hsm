@@ -13,15 +13,20 @@
 using namespace ::testing;
 namespace bh = boost::hana;
 
-class CollectInitialStatesTests : public Test { };
+class CollectInitialStatesTests : public Test {
+};
 
 namespace {
-struct E1 { };
-struct Initial1 { };
-struct S1 { };
-struct S2 { };
-struct S3 { };
-
+struct E1 {
+};
+struct Initial1 {
+};
+struct S1 {
+};
+struct S2 {
+};
+struct S3 {
+};
 
 struct SubState1 {
     static constexpr auto make_transition_table()
@@ -63,10 +68,11 @@ struct Initial2 {
             + (hsm::event<E1>)
         );
         // clang-format on
-    }        
+    }
 };
 
-struct Initial3 {};
+struct Initial3 {
+};
 
 struct Root2 {
     static constexpr auto make_transition_table()
@@ -113,9 +119,11 @@ TEST_F(CollectInitialStatesTests, should_make_initial_state_map)
 
     ASSERT_EQ(bh::size_c<2>, bh::size(initialStatesS));
     ASSERT_EQ(
-        bh::size_c<stateIdx(hsm::state_t<Root1> {}, hsm::state_t<Initial1> {})>, bh::at_c<0>(initialStatesS));
+        bh::size_c<stateIdx(hsm::state_t<Root1> {}, hsm::state_t<Initial1> {})>,
+        bh::at_c<0>(initialStatesS));
     ASSERT_EQ(
-        bh::size_c<stateIdx(hsm::state_t<Root1> {}, hsm::state_t<S2> {})>, bh::at_c<1>(initialStatesS));
+        bh::size_c<stateIdx(hsm::state_t<Root1> {}, hsm::state_t<S2> {})>,
+        bh::at_c<1>(initialStatesS));
 
     constexpr auto initialStatesSubState
         = bh::find(initialStateMap, bh::typeid_(hsm::state_t<SubState1> {})).value();
@@ -159,14 +167,15 @@ TEST_F(CollectInitialStatesTests, should_fill_initial_state_table)
 
 TEST_F(CollectInitialStatesTests, should_test_if_initial_states_have_transition_table)
 {
-    ASSERT_FALSE(hsm::has_transition_table(hsm::state_t<Initial1> {}));    
-    ASSERT_FALSE(hsm::has_transition_table(hsm::state_t<S3> {}));    
+    ASSERT_FALSE(hsm::has_transition_table(hsm::state_t<Initial1> {}));
+    ASSERT_FALSE(hsm::has_transition_table(hsm::state_t<S3> {}));
     ASSERT_FALSE(hsm::at_least_one_initial_state_has_transition_table(hsm::state_t<Root1> {}));
-    ASSERT_FALSE(hsm::at_least_one_initial_state_has_internal_transition_table(hsm::state_t<Root1> {}));
-    
+    ASSERT_FALSE(
+        hsm::at_least_one_initial_state_has_internal_transition_table(hsm::state_t<Root1> {}));
 
     ASSERT_TRUE(hsm::has_transition_table(hsm::state_t<Initial2> {}));
     ASSERT_FALSE(hsm::has_transition_table(hsm::state_t<Initial3> {}));
     ASSERT_TRUE(hsm::at_least_one_initial_state_has_transition_table(hsm::state_t<Root2> {}));
-    ASSERT_TRUE(hsm::at_least_one_initial_state_has_internal_transition_table(hsm::state_t<Root2> {}));
+    ASSERT_TRUE(
+        hsm::at_least_one_initial_state_has_internal_transition_table(hsm::state_t<Root2> {}));
 }
