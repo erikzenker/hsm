@@ -1,5 +1,5 @@
 [requires]
-boost/1.72.0
+boost/1.80.0
 
 [generators]
 cmake_find_package_multi
