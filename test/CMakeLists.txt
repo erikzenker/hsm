@@ -68,6 +68,7 @@ add_executable(
     integration/guards_actions.cpp
     integration/orthogonal_regions.cpp
     integration/process_event_return_bool.cpp
+    integration/set_state.cpp
     integration/internal_transition.cpp
     integration/unexpected_event_handler.cpp
     integration/history_pseudo_state.cpp

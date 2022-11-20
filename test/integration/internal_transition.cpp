@@ -151,8 +151,8 @@ TEST_F(InternalTransitionTests, should_call_action_on_internal_transition)
     sm.process_event(e2 { actionCalled });
     ASSERT_TRUE(sm.is(hsm::state<S1>));
 
-    ASSERT_EQ(
-        std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready == actionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(InternalTransitionTests, should_guard_internal_transition)
@@ -172,9 +172,9 @@ TEST_F(InternalTransitionTests, should_guard_internal_transition_with_action)
     sm.process_event(e4 { actionCalled });
     ASSERT_TRUE(sm.is(hsm::state<S1>));
 
-    ASSERT_EQ(
-        std::future_status::timeout,
-        actionCalled->get_future().wait_for(std::chrono::milliseconds(1)));
+    ASSERT_TRUE(
+        std::future_status::timeout
+        == actionCalled->get_future().wait_for(std::chrono::milliseconds(1)));
 }
 
 TEST_F(

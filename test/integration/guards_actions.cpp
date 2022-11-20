@@ -160,8 +160,8 @@ TEST_F(GuardsActionsTests, should_call_action)
 
     sm.process_event(e1 { actionCalled });
 
-    ASSERT_EQ(
-        std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready == actionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(GuardsActionsTests, should_call_substate_action)
@@ -171,8 +171,8 @@ TEST_F(GuardsActionsTests, should_call_substate_action)
     sm.process_event(e2 {});
     sm.process_event(e1 { actionCalled });
 
-    ASSERT_EQ(
-        std::future_status::ready, actionCalled->get_future().wait_for(std::chrono::seconds(1)));
+    ASSERT_TRUE(
+        std::future_status::ready == actionCalled->get_future().wait_for(std::chrono::seconds(1)));
 }
 
 TEST_F(GuardsActionsTests, should_block_transition_guard)
