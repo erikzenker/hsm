@@ -125,7 +125,7 @@ constexpr auto is_initial_state = [](auto typeid_) {
 constexpr auto is_no_action
     = [](auto action) { return bh::equal(bh::typeid_(action), bh::typeid_(noAction {})); };
 
-template <class Action> constexpr decltype(auto) is_action()
+template <class Action> constexpr auto is_action() -> decltype(auto)
 {
     return bh::not_equal(bh::type_c<Action>, bh::typeid_(noAction {}));
 }
@@ -133,7 +133,7 @@ template <class Action> constexpr decltype(auto) is_action()
 constexpr auto is_no_guard
     = [](auto guard) { return bh::equal(bh::typeid_(guard), bh::typeid_(noGuard {})); };
 
-template <class Guard> constexpr decltype(auto) is_guard()
+template <class Guard> constexpr auto is_guard() -> decltype(auto)
 {
     return bh::not_equal(bh::type_c<Guard>, bh::typeid_(noGuard {}));
 }
