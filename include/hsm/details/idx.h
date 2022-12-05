@@ -70,7 +70,7 @@ constexpr auto calcParentStateIdx
 constexpr auto calcStateIdx
     = [](std::size_t nStates, Idx combinedState) -> Idx { return combinedState % nStates; };
 
-template <class Event> constexpr decltype(auto) resolveEvent(Event event)
+template <class Event> constexpr auto resolveEvent(Event event) -> decltype(auto)
 {
     if constexpr (is_event(event)) {
         return event.typeid_;

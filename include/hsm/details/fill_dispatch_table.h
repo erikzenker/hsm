@@ -45,7 +45,7 @@ template <class State> constexpr auto nEvents(State rootState)
     return bh::length(collect_event_typeids_recursive(rootState));
 }
 
-template <class State> constexpr decltype(auto) hasParallelRegions(State rootState)
+template <class State> constexpr auto hasParallelRegions(State rootState) -> decltype(auto)
 {
     return bh::greater(maxInitialStates(rootState), bh::size_c<1>);
 }

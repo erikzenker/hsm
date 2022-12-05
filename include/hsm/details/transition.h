@@ -4,8 +4,7 @@
 
 #include <boost/hana/bool.hpp>
 
-namespace hsm {
-namespace details {
+namespace hsm::details {
 
 namespace bh {
 using namespace boost::hana;
@@ -168,5 +167,4 @@ constexpr auto internal_extended_transition = [](auto parent, auto transition) {
                 transition.action(),
                 transition.target() };
 };
-}
 }

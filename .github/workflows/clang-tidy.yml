@@ -10,20 +10,20 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Install Dependencies
         run: | 
-          sudo apt install clang-tidy-10 libboost-all-dev
-          clang-tidy-10 --version
+          sudo apt install clang-tidy-14 libboost-all-dev
+          clang-tidy-14 --version
 
       - name: Clang tidy
         run: >-
           CHECKS=-\*,clang-analyzer-\*,boost-\*,cppcoreguidelines-\*,modernize-\*,performance-\*
 
-          clang-tidy-10 --warnings-as-errors=${CHECKS} -checks=${CHECKS}
+          clang-tidy-14 --warnings-as-errors=${CHECKS} -checks=${CHECKS}
           -header-filter=include/hsm/\* benchmark/simple/hsm.cpp
-          -- -Iinclude/ -Ibenchmark/ -std=c++17
+          -- -Iinclude/ -Ibenchmark/ -std=c++20
