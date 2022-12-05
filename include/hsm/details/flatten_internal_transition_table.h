@@ -76,29 +76,57 @@ constexpr auto extend_internal_transition(Transition internalTransition, States 
 }
 
 /**
- * Returns the internal transitions for each for each state
+ * Extends an internal transitions to all provided states
+ *
+ * @param internalTranstion Internal transition that should be extended
+ * @param states tuple of states
+ */
+template <class Transition, class ParentState, class State>
+constexpr auto
+extend_internal_transition2(Transition internalTransition, ParentState parent, State state)
+{
+    return bh::make_basic_tuple(details::internal_extended_transition(
+        parent,
+        details::transition(
+            state,
+            internalTransition.event(),
+            internalTransition.guard(),
+            internalTransition.action(),
+            state)));
+}
+
+/**
+ * Returns the internal transitions for each state
  * [[transition1, transition2], [transition3, transition4], []]
  *
  * @param states a tuple of states
  */
-constexpr auto get_internal_transitions = [](auto states) {
+constexpr auto get_internal_transitions = [](auto stateAndParentStatePairs) {
     return bh::flatten(bh::filter(
         bh::transform(
-            states,
-            [](auto parentState) {
-                constexpr auto extend
-                    = bh::capture(parentState)([](auto parentState, auto transition) {
-                          // Folowing lines satisfies older gcc -Werror=unused-but-set-parameter
-                          (void)transition;
-                          if constexpr (has_transition_table(parentState)) {
-                              return extend_internal_transition(
-                                  transition, collect_child_states(parentState));
-                          } else {
-                              return bh::make_basic_tuple();
-                          }
-                      });
+            stateAndParentStatePairs,
+            [](auto stateAndParentStatePair) {
+                constexpr auto extend = bh::capture(stateAndParentStatePair)(
+                    [](auto stateAndParentStatePair, auto internalTransition) {
+                        // Folowing lines satisfies older gcc -Werror=unused-but-set-parameter
+                        (void)internalTransition;
+                        if constexpr (has_transition_table(bh::second(stateAndParentStatePair))) {
+                            return extend_internal_transition(
+                                internalTransition,
+                                collect_child_states(bh::second(stateAndParentStatePair)));
+                        } else if constexpr (has_internal_transition_table(
+                                                 bh::second(stateAndParentStatePair))) {
+                            return extend_internal_transition2(
+                                internalTransition,
+                                bh::first(stateAndParentStatePair),
+                                bh::second(stateAndParentStatePair));
+                        } else {
+                            return bh::make_basic_tuple();
+                        }
+                    });
 
-                return bh::transform(get_internal_transition_table(parentState), extend);
+                return bh::transform(
+                    get_internal_transition_table(bh::second(stateAndParentStatePair)), extend);
             }),
         isNotEmpty));
 };
@@ -110,9 +138,10 @@ constexpr auto get_internal_transitions = [](auto states) {
  */
 template <class State> constexpr auto flatten_internal_transition_table(State rootState)
 {
-    return [](auto states) {
-        return bh::to<bh::basic_tuple_tag>(bh::flatten(get_internal_transitions(states)));
-    }(collect_states_recursive(rootState));
+    return [](auto stateAndParentStatePairs) {
+        return remove_duplicate_types(bh::to<bh::basic_tuple_tag>(
+            bh::flatten(get_internal_transitions(stateAndParentStatePairs))));
+    }(collect_state_parentstate_pairs_recursively(rootState));
 }
 
 } // namespace hsm

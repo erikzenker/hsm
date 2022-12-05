@@ -23,6 +23,12 @@ template <class State> constexpr auto flatten_sub_transition_table(State state);
 
 }
 
+/**
+ * This function iterates recursively trough the transition table of a state provided by
+ * `make_transition_table()` and collects all transitions.
+ *
+ * @return a list of ExtendedTransition
+ */
 template <class State> constexpr auto flatten_transition_table(State state)
 {
     auto flattenSubTransitionTable = [state](auto transition) {

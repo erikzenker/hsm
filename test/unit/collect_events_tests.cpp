@@ -62,7 +62,7 @@ TEST_F(CollectEventsTests, should_collect_event_typeids_recursive)
 {
     auto collectedEvents = hsm::collect_event_typeids_recursive(hsm::state_t<S> {});
     auto expectedEvents = bh::make_basic_tuple(
-        bh::typeid_(E1 {}), bh::typeid_(E2 {}), bh::typeid_(E4 {}), bh::typeid_(E3 {}));
+        bh::typeid_(E1 {}), bh::typeid_(E2 {}), bh::typeid_(E3 {}), bh::typeid_(E4 {}));
 
     ASSERT_EQ(bh::size(expectedEvents), bh::size(collectedEvents));
     ASSERT_TRUE(bh::equal(expectedEvents, collectedEvents));
@@ -73,7 +73,7 @@ TEST_F(CollectEventsTests, should_collect_events_recursive)
     auto collectedEvents
         = bh::transform(hsm::collect_events_recursive(hsm::state_t<S> {}), bh::typeid_);
     auto expectedEvents = bh::make_basic_tuple(
-        bh::typeid_(E1 {}), bh::typeid_(E2 {}), bh::typeid_(E4 {}), bh::typeid_(E3 {}));
+        bh::typeid_(E1 {}), bh::typeid_(E2 {}), bh::typeid_(E3 {}), bh::typeid_(E4 {}));
 
     ASSERT_EQ(bh::size(expectedEvents), bh::size(collectedEvents));
     ASSERT_TRUE(bh::equal(expectedEvents, collectedEvents));

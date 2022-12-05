@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/hana.hpp>
+#include <boost/hana/experimental/printable.hpp>
 
 using namespace ::testing;
 
@@ -300,4 +301,33 @@ TEST_F(CollectStatesTests, should_collect_parent_state_typeids)
         bh::typeid_);
 
     ASSERT_EQ(expectedParentStates, collectedParentStates);
+}
+
+TEST_F(CollectStatesTests, should_collect_parent_state_and_state_typeids)
+{
+    auto collectedParentStatesAndStatesTypesids
+        = hsm::collect_state_parentstate_pairs_recursively(hsm::state_t<MainState> {});
+
+    ASSERT_EQ(bh::size_c<11>, bh::size(collectedParentStatesAndStatesTypesids));
+
+    auto expected = bh::make_tuple(
+        bh::make_pair(hsm::state_t<MainState> {}, hsm::state_t<MainState> {}),
+        bh::make_pair(hsm::state_t<MainState> {}, hsm::state_t<S1> {}),
+        bh::make_pair(hsm::state_t<MainState> {}, hsm::state_t<S2> {}),
+        bh::make_pair(hsm::state_t<MainState> {}, hsm::state_t<SubState> {}),
+        bh::make_pair(hsm::state_t<SubState> {}, hsm::state_t<S1> {}),
+        bh::make_pair(hsm::state_t<SubState> {}, hsm::state_t<S2> {}),
+        bh::make_pair(hsm::state_t<MainState> {}, hsm::history_t<HistorySubState> {}),
+        bh::make_pair(hsm::state_t<HistorySubState> {}, hsm::state_t<S1> {}),
+        bh::make_pair(hsm::state_t<HistorySubState> {}, hsm::state_t<S2> {}),
+        bh::make_pair(hsm::state_t<MainState> {}, hsm::state_t<S3> {}),
+        bh::make_pair(hsm::state_t<MainState> {}, hsm::state_t<S4> {}));
+
+    auto toTypes = [](auto pairs) {
+        return bh::transform(pairs, [](auto pair) {
+            return bh::make_pair(bh::typeid_(bh::first(pair)), bh::typeid_(bh::second(pair)));
+        });
+    };
+
+    ASSERT_EQ(toTypes(expected), toTypes(collectedParentStatesAndStatesTypesids));
 }
