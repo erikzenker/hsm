@@ -8,6 +8,7 @@
 #include <boost/hana/at.hpp>
 #include <boost/hana/basic_tuple.hpp>
 #include <boost/hana/flatten.hpp>
+#include <boost/hana/prepend.hpp>
 #include <boost/hana/transform.hpp>
 #include <boost/hana/type.hpp>
 
@@ -51,6 +52,12 @@ constexpr auto extractStateTypeids = [](auto transition) {
 };
 }
 
+constexpr auto extractParentAndState = [](auto transition) {
+    return bh::make_basic_tuple(
+        bh::make_pair(transition.parent(), resolveInitialState(transition)),
+        bh::make_pair(transition.parent(), transition.target()));
+};
+
 template <class State> constexpr auto collect_child_state_typeids_recursive(State parentState)
 {
     auto transitions = flatten_transition_table(parentState);
@@ -62,7 +69,6 @@ template <class State> constexpr auto collect_child_state_typeids_recursive(Stat
 template <class State> constexpr auto collect_child_states_recursive(State parentState)
 {
     return bh::flatten(bh::transform(flatten_transition_table(parentState), extractExtendedStates));
-    ;
 }
 
 template <class State> constexpr auto collect_state_typeids_recursive(State parentState)
@@ -89,5 +95,12 @@ template <class State> constexpr auto collect_child_states(State state)
 {
     return remove_duplicates(
         bh::flatten(bh::transform(make_transition_table2(state), extractStates)));
+}
+
+template <class State> constexpr auto collect_state_parentstate_pairs_recursively(State rootState)
+{
+    return remove_duplicates(bh::prepend(
+        bh::flatten(bh::transform(flatten_transition_table(rootState), extractParentAndState)),
+        bh::make_pair(rootState, rootState)));
 }
 }
