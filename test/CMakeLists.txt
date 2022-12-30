@@ -57,8 +57,8 @@ target_link_libraries(hsmPerformanceTests PRIVATE hsm::hsm GTest::gtest_main)
 gtest_discover_tests(hsmPerformanceTests TEST_PREFIX performance.)
 
 add_executable(
-    hsmIntegrationTests 
-    integration/main.cpp 
+    hsmIntegrationTests
+    integration/main.cpp
     integration/basic_transitions.cpp
     integration/direct_transition.cpp
     integration/entry_exit_actions.cpp
@@ -82,13 +82,14 @@ add_executable(
     integration/amalgamation_header.cpp
     integration/custom_targets.cpp
     integration/chain_actions.cpp
+    integration/reproducer/should_check_guard_once.cpp
     integration/reproducer/should_execute_anonymous_transition_once.cpp
     integration/reproducer/should_enter_substate_with_multiple_regions.cpp
 )
 
 if (UNIX)
     target_sources(
-        hsmIntegrationTests         
+        hsmIntegrationTests
         PRIVATE
             # Test compilation fails with msvc with: fatal error C1001: Internal compiler error
             integration/state_data_members.cpp
